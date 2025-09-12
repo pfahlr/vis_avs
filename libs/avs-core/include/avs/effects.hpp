@@ -56,6 +56,63 @@ class ConvolutionEffect : public Effect {
   std::array<int, 9> kernel_;
 };
 
+class MotionBlurEffect : public Effect {
+ public:
+  void init(int w, int h) override;
+  void process(const Framebuffer& in, Framebuffer& out) override;
+
+ private:
+  Framebuffer prev_;
+};
+
+class ColorTransformEffect : public Effect {
+ public:
+  void init(int w, int h) override;
+  void process(const Framebuffer& in, Framebuffer& out) override;
+};
+
+class GlowEffect : public Effect {
+ public:
+  void process(const Framebuffer& in, Framebuffer& out) override;
+};
+
+class ZoomRotateEffect : public Effect {
+ public:
+  void init(int w, int h) override;
+  void process(const Framebuffer& in, Framebuffer& out) override;
+};
+
+class MirrorEffect : public Effect {
+ public:
+  void init(int w, int h) override;
+  void process(const Framebuffer& in, Framebuffer& out) override;
+};
+
+class TunnelEffect : public Effect {
+ public:
+  void init(int w, int h) override;
+  void process(const Framebuffer& in, Framebuffer& out) override;
+
+ private:
+  int cx_ = 0;
+  int cy_ = 0;
+};
+
+class RadialBlurEffect : public Effect {
+ public:
+  void init(int w, int h) override;
+  void process(const Framebuffer& in, Framebuffer& out) override;
+};
+
+class AdditiveBlendEffect : public Effect {
+ public:
+  void init(int w, int h) override;
+  void process(const Framebuffer& in, Framebuffer& out) override;
+
+ private:
+  Framebuffer blend_;
+};
+
 class ScriptedEffect : public Effect {
  public:
   ScriptedEffect(std::string frameScript, std::string pixelScript);

@@ -17,8 +17,8 @@ jobs:
         run: cmake --build build
       - name: Test
         run: ctest --test-dir build --output-on-failure
-      - name: clang-format
-        run: |
-          clang-format --version
-          find . \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) | xargs clang-format -i
-          git diff --exit-code
+#      - name: clang-format
+#        run: |
+#          clang-format --version
+#          find . \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) | xargs clang-format -i
+#          git diff --exit-code

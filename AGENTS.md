@@ -2,12 +2,12 @@
 
 ## Setup Commands
 - **Clone and configure**
-  ```bash
+```bash
   git clone https://github.com/your-org/avs-port.git
   cd avs-port
   mkdir build && cd build
   cmake .. -DCMAKE_BUILD_TYPE=Debug
-````
+```
 
 * **Build**
 

@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "avs/audio.hpp"
+#include "avs/effects.hpp"
 
 namespace avs {
 
@@ -38,6 +39,7 @@ void Engine::setChain(std::vector<std::unique_ptr<Effect>> chain) {
 
 void Engine::step(float dt) {
   time_ += dt;
+  ++frame_;
   auto& base = fb_[0];
   for (int y = 0; y < h_; ++y) {
     for (int x = 0; x < w_; ++x) {
@@ -51,6 +53,9 @@ void Engine::step(float dt) {
   int in = 0;
   int out = 1;
   for (auto& e : chain_) {
+    if (auto* se = dynamic_cast<ScriptedEffect*>(e.get())) {
+      se->update(time_, frame_, audio_);
+    }
     e->process(fb_[in], fb_[out]);
     std::swap(in, out);
   }

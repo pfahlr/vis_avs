@@ -2,7 +2,11 @@
 
 #include <array>
 #include <cstdint>
+#include <string>
 #include <vector>
+
+#include "avs/audio.hpp"
+#include "avs/eel.hpp"
 
 namespace avs {
 
@@ -50,6 +54,28 @@ class ConvolutionEffect : public Effect {
 
  private:
   std::array<int, 9> kernel_;
+};
+
+class ScriptedEffect : public Effect {
+ public:
+  ScriptedEffect(std::string frameScript, std::string pixelScript);
+  void init(int w, int h) override;
+  void process(const Framebuffer& in, Framebuffer& out) override;
+  void update(float time, int frame, const AudioState& audio);
+  void setScripts(std::string frameScript, std::string pixelScript);
+
+ private:
+  EelVm vm_;
+  NSEEL_CODEHANDLE frameCode_ = nullptr;
+  NSEEL_CODEHANDLE pixelCode_ = nullptr;
+  std::string frameScript_;
+  std::string pixelScript_;
+  bool dirty_ = true;
+  EEL_F *time_ = nullptr, *frame_ = nullptr, *bass_ = nullptr, *mid_ = nullptr, *treb_ = nullptr,
+        *rms_ = nullptr;
+  EEL_F *x_ = nullptr, *y_ = nullptr, *r_ = nullptr, *g_ = nullptr, *b_ = nullptr;
+  int w_ = 0;
+  int h_ = 0;
 };
 
 }  // namespace avs

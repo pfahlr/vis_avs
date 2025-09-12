@@ -27,6 +27,7 @@ add_library(avs-platform STATIC
 
 target_include_directories(avs-platform PUBLIC include
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/kissfft)
+target_compile_options(avs-platform PRIVATE -Wall -Wextra -Werror)
 
 if(PortAudio_FOUND)
   target_link_libraries(avs-platform PUBLIC SDL2::SDL2 OpenGL::GL PortAudio::PortAudio)

@@ -8,8 +8,16 @@
 - Format with `clang-format` (Google style, 100 columns).
 
 ## Dev Environment Tips
+
 - Configure with CMake ≥ 3.22.
 - Any modern C++17 compiler is supported.
+  
+-Install dependencies
+   `sudo apt-get update && sudo apt-get install -y cmake clang-format pkg-config libsdl2-dev libgl1-mesa-dev`
+- Configue 
+   `cmake -S . -B build`
+- Build
+   `cmake --build build`
 
 ## Testing
 - From the build directory run:

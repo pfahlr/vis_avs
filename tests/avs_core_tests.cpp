@@ -64,6 +64,111 @@ TEST(ColorMapEffect, ProducesColor) {
   EXPECT_EQ(out.rgba[3], 255);
 }
 
+static std::uint32_t checksum(const Framebuffer& fb) {
+  std::uint32_t sum = 0;
+  for (auto v : fb.rgba) {
+    sum += v;
+  }
+  return sum;
+}
+
+TEST(MotionBlurEffect, AveragesWithHistory) {
+  Framebuffer in;
+  in.w = 1;
+  in.h = 1;
+  in.rgba = {100, 0, 0, 50};
+  Framebuffer out;
+  MotionBlurEffect mb;
+  mb.init(in.w, in.h);
+  mb.process(in, out);
+  EXPECT_EQ(checksum(out), 75u);
+}
+
+TEST(ColorTransformEffect, InvertsColor) {
+  Framebuffer in;
+  in.w = 1;
+  in.h = 1;
+  in.rgba = {10, 20, 30, 40};
+  Framebuffer out;
+  ColorTransformEffect ct;
+  ct.init(in.w, in.h);
+  ct.process(in, out);
+  EXPECT_EQ(checksum(out), 920u);
+}
+
+TEST(GlowEffect, Brightens) {
+  Framebuffer in;
+  in.w = 1;
+  in.h = 1;
+  in.rgba = {200, 200, 200, 255};
+  Framebuffer out;
+  GlowEffect g;
+  g.process(in, out);
+  EXPECT_EQ(checksum(out), 1005u);
+}
+
+TEST(ZoomRotateEffect, Rotates180) {
+  Framebuffer in;
+  in.w = 2;
+  in.h = 1;
+  in.rgba = {1, 2, 3, 4, 5, 6, 7, 8};
+  Framebuffer out;
+  ZoomRotateEffect zr;
+  zr.init(in.w, in.h);
+  zr.process(in, out);
+  ASSERT_EQ(out.rgba[0], 5);
+  ASSERT_EQ(out.rgba[4], 1);
+}
+
+TEST(MirrorEffect, MirrorsHorizontally) {
+  Framebuffer in;
+  in.w = 2;
+  in.h = 1;
+  in.rgba = {1, 2, 3, 4, 5, 6, 7, 8};
+  Framebuffer out;
+  MirrorEffect m;
+  m.init(in.w, in.h);
+  m.process(in, out);
+  ASSERT_EQ(out.rgba[0], 5);
+  ASSERT_EQ(out.rgba[4], 1);
+}
+
+TEST(TunnelEffect, GeneratesGradient) {
+  Framebuffer in;
+  in.w = 2;
+  in.h = 2;
+  in.rgba.assign(2 * 2 * 4, 0);
+  Framebuffer out;
+  TunnelEffect t;
+  t.init(in.w, in.h);
+  t.process(in, out);
+  EXPECT_EQ(checksum(out), 1038u);
+}
+
+TEST(RadialBlurEffect, AveragesWithCenter) {
+  Framebuffer in;
+  in.w = 2;
+  in.h = 2;
+  in.rgba = {0, 0, 0, 0, 10, 10, 10, 10, 20, 20, 20, 20, 30, 30, 30, 30};
+  Framebuffer out;
+  RadialBlurEffect rb;
+  rb.init(in.w, in.h);
+  rb.process(in, out);
+  EXPECT_EQ(checksum(out), 360u);
+}
+
+TEST(AdditiveBlendEffect, AddsConstant) {
+  Framebuffer in;
+  in.w = 1;
+  in.h = 1;
+  in.rgba = {100, 100, 100, 100};
+  Framebuffer out;
+  AdditiveBlendEffect ab;
+  ab.init(in.w, in.h);
+  ab.process(in, out);
+  EXPECT_EQ(checksum(out), 440u);
+}
+
 TEST(PresetParser, ParsesChainAndReportsUnsupported) {
   auto tmp = std::filesystem::temp_directory_path() / "test.avs";
   {

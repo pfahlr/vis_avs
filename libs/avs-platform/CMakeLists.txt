@@ -1,5 +1,5 @@
 find_package(SDL2 2.28 QUIET)
-if(NOT SDL2_FOUND)
+if(NOT TARGET SDL2::SDL2)
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2>=2.28)
   add_library(SDL2::SDL2 ALIAS PkgConfig::SDL2)
@@ -21,6 +21,7 @@ add_library(avs-platform STATIC
   src/window_sdl_gl.cpp
   src/audio_portaudio.cpp
   src/fft_kiss.cpp
+  src/fs_posix.cpp
   ../third_party/kissfft/kiss_fft.c
   ../third_party/kissfft/kiss_fftr.c
 )

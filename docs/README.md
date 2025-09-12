@@ -3,6 +3,14 @@
 This project aims to reimplement Winamp's Advanced Visualization Studio (AVS) as a standalone,
 portable engine and tooling.
 
+## Prerequisites
+
+Ensure the following packages are installed:
+
+```bash
+sudo apt-get install pkg-config libsdl2-dev libgl1-mesa-dev
+```
+
 ## Build Instructions
 
 ```bash

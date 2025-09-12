@@ -4,9 +4,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 
-
 #include <memory>
-
 #include <stdexcept>
 
 namespace avs {
@@ -62,7 +60,6 @@ struct Window::Impl {
   int tex_w = 0;
   int tex_h = 0;
 };
-
 
 Window::Window(int w, int h, const char* title) : impl_(std::make_unique<Impl>()) {
   if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -139,7 +136,6 @@ Window::~Window() {
   SDL_GL_DeleteContext(impl_->ctx);
   SDL_DestroyWindow(impl_->win);
   SDL_Quit();
-  delete impl_;
 }
 
 bool Window::poll() {

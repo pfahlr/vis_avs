@@ -8,7 +8,10 @@ portable engine and tooling.
 Ensure the following packages are installed:
 
 ```bash
-sudo apt-get install pkg-config libsdl2-dev libgl1-mesa-dev
+sudo apt-get install cmake g++ clang-format git pkg-config \
+  libsdl2-dev mesa-common-dev libglu1-mesa-dev \
+  portaudio19-dev libportaudio2 libgtest-dev \
+  libjack-dev libasound2-dev
 ```
 
 ## Build Instructions

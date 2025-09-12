@@ -10,7 +10,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake clang-format pkg-config libsdl2-dev libgl1-mesa-dev
+        run: |
+          sudo apt-get update && sudo apt-get install -y \
+            cmake g++ clang-format git pkg-config \
+            libsdl2-dev mesa-common-dev libglu1-mesa-dev \
+            portaudio19-dev libportaudio2 libgtest-dev \
+            libjack-dev libasound2-dev
       - name: Configure
         run: cmake -S . -B build
       - name: Build

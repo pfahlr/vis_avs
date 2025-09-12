@@ -29,6 +29,7 @@ class Engine {
   std::vector<std::unique_ptr<Effect>> chain_;
   AudioState audio_{};
   float time_ = 0.0f;
+  int frame_ = 0;
 };
 
 }  // namespace avs

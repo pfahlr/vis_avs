@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "avs/audio.hpp"
@@ -9,7 +10,12 @@
 #include "avs/engine.hpp"
 #include "avs/window.hpp"
 
-int main() {
+int main(int argc, char** argv) {
+  bool demoScript = false;
+  for (int i = 1; i < argc; ++i) {
+    if (std::string(argv[i]) == "--demo-script") demoScript = true;
+  }
+
   avs::Window window(1920, 1080, "AVS Player");
   avs::AudioInput audio;
   if (!audio.ok()) {
@@ -19,9 +25,18 @@ int main() {
 
   avs::Engine engine(1920, 1080);
   std::vector<std::unique_ptr<avs::Effect>> chain;
-  chain.push_back(std::make_unique<avs::BlurEffect>());
-  chain.push_back(std::make_unique<avs::ColorMapEffect>());
-  chain.push_back(std::make_unique<avs::ConvolutionEffect>());
+  if (demoScript) {
+    std::string frameScript;
+    std::string pixelScript =
+        "red = clamp(sin(x*0.01 + time)*bass,0,1);"
+        "green = clamp(sin(y*0.01 + time)*mid,0,1);"
+        "blue = clamp(sin((x+y)*0.01 + time)*treb,0,1);";
+    chain.push_back(std::make_unique<avs::ScriptedEffect>(frameScript, pixelScript));
+  } else {
+    chain.push_back(std::make_unique<avs::BlurEffect>());
+    chain.push_back(std::make_unique<avs::ColorMapEffect>());
+    chain.push_back(std::make_unique<avs::ConvolutionEffect>());
+  }
   engine.setChain(std::move(chain));
 
   auto last = std::chrono::steady_clock::now();

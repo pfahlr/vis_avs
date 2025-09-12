@@ -21,6 +21,7 @@ add_library(avs-platform STATIC
   src/window_sdl_gl.cpp
   src/audio_portaudio.cpp
   src/fft_kiss.cpp
+  src/fs_posix.cpp
   ../third_party/kissfft/kiss_fft.c
   ../third_party/kissfft/kiss_fftr.c
 )

@@ -1,3 +1,8 @@
+## General Insturctions
+- the path `/docs/avs_original_source` contains the code we are porting from
+- these files are for reference only: do not alter, only read from this directory.
+
+
 ## Agents
 
 ### Architect

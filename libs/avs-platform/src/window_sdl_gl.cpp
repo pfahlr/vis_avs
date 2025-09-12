@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <stdexcept>
+#include <unordered_set>
 
 namespace avs {
 
@@ -59,6 +60,7 @@ struct Window::Impl {
   int h = 0;
   int tex_w = 0;
   int tex_h = 0;
+  std::unordered_set<int> keys;
 };
 
 Window::Window(int w, int h, const char* title) : impl_(std::make_unique<Impl>()) {
@@ -139,6 +141,7 @@ Window::~Window() {
 }
 
 bool Window::poll() {
+  impl_->keys.clear();
   SDL_Event e;
   while (SDL_PollEvent(&e)) {
     if (e.type == SDL_QUIT) return false;
@@ -147,6 +150,9 @@ bool Window::poll() {
       impl_->w = e.window.data1;
       impl_->h = e.window.data2;
       glViewport(0, 0, impl_->w, impl_->h);
+    }
+    if (e.type == SDL_KEYDOWN) {
+      impl_->keys.insert(e.key.keysym.sym);
     }
   }
   return true;
@@ -167,6 +173,15 @@ void Window::blit(const std::uint8_t* rgba, int width, int height) {
   glBindVertexArray(impl_->vao);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   SDL_GL_SwapWindow(impl_->win);
+}
+
+bool Window::keyPressed(int key) {
+  auto it = impl_->keys.find(key);
+  if (it != impl_->keys.end()) {
+    impl_->keys.erase(it);
+    return true;
+  }
+  return false;
 }
 
 }  // namespace avs

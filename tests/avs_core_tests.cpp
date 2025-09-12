@@ -1,6 +1,13 @@
 #include <gtest/gtest.h>
 
+#include <chrono>
+#include <filesystem>
+#include <fstream>
+#include <thread>
+
 #include "avs/effects.hpp"
+#include "avs/fs.hpp"
+#include "avs/preset.hpp"
 
 using namespace avs;
 
@@ -55,4 +62,34 @@ TEST(ColorMapEffect, ProducesColor) {
   cm.process(in, out);
   EXPECT_NE(out.rgba[0], out.rgba[1]);
   EXPECT_EQ(out.rgba[3], 255);
+}
+
+TEST(PresetParser, ParsesChainAndReportsUnsupported) {
+  auto tmp = std::filesystem::temp_directory_path() / "test.avs";
+  {
+    std::ofstream(tmp) << "blur radius=2\nunknown\n";
+  }
+  auto preset = avs::parsePreset(tmp);
+  EXPECT_EQ(preset.chain.size(), 2u);
+  EXPECT_TRUE(dynamic_cast<avs::BlurEffect*>(preset.chain[0].get()) != nullptr);
+  EXPECT_EQ(preset.warnings.size(), 1u);
+  std::filesystem::remove(tmp);
+}
+
+TEST(FileWatcher, DetectsModification) {
+  auto tmp = std::filesystem::temp_directory_path() / "watch.txt";
+  {
+    std::ofstream(tmp) << "a";
+  }
+  avs::FileWatcher w(tmp);
+  {
+    std::ofstream(tmp) << "b";
+  }
+  bool changed = false;
+  for (int i = 0; i < 10 && !changed; ++i) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    changed = w.poll();
+  }
+  EXPECT_TRUE(changed);
+  std::filesystem::remove(tmp);
 }

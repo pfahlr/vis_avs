@@ -1,9 +1,7 @@
 #pragma once
 
 #include <cstdint>
-
 #include <memory>
-
 #include <utility>
 
 namespace avs {
@@ -20,8 +18,6 @@ class Window {
  private:
   struct Impl;
   std::unique_ptr<Impl> impl_;
-  Impl* impl_;
-
 };
 
 }  // namespace avs

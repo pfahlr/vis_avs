@@ -1,0 +1,30 @@
+# Build directories
+/build/
+/build-*/
+/cmake-build-*/
+
+# CMake artifacts
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+
+# Compiled objects
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.ninja
+*.log
+
+# Misc
+*.swp
+*.user
+.cache/
+.clangd/

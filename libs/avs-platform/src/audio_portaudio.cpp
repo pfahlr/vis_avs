@@ -95,6 +95,7 @@ struct AudioInput::Impl {
 
     fft.compute(mono.data(), spectrum);
     state.spectrum = spectrum;
+    state.waveform = mono;
 
     std::array<float, 3> newBands{0.f, 0.f, 0.f};
     std::array<int, 3> counts{0, 0, 0};

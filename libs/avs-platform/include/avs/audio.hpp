@@ -6,10 +6,11 @@
 namespace avs {
 
 struct AudioState {
-  float rms = 0.0f;                             // 0..1
-  std::array<float, 3> bands{{0.f, 0.f, 0.f}};  // bass, mid, treble smoothed
-  std::vector<float> spectrum;                  // N/2 magnitudes [0,1]
-  double timeSeconds = 0.0;                     // audio clock
+  float rms = 0.0f;                             ///< 0..1
+  std::array<float, 3> bands{{0.f, 0.f, 0.f}};  ///< bass, mid, treble smoothed
+  std::vector<float> spectrum;                  ///< N/2 magnitudes [0,1]
+  std::vector<float> waveform;                  ///< Last mono samples [-1,1]
+  double timeSeconds = 0.0;                     ///< audio clock
 };
 
 class AudioInput {

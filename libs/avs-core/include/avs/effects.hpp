@@ -31,9 +31,13 @@ class BlurEffect : public Effect {
   explicit BlurEffect(int radius = 5);
   void init(int w, int h) override;
   void process(const Framebuffer& in, Framebuffer& out) override;
+  void setRadius(int r);  ///< Update blur radius and kernel.
+  int radius() const { return radius_; }
 
  private:
   int radius_;
+  int w_ = 0;
+  int h_ = 0;
   std::vector<float> kernel_;
   Framebuffer temp_;
 };
@@ -119,7 +123,8 @@ class ScriptedEffect : public Effect {
   void init(int w, int h) override;
   void process(const Framebuffer& in, Framebuffer& out) override;
   void update(float time, int frame, const AudioState& audio);
-  void setScripts(std::string frameScript, std::string pixelScript);
+  bool setScripts(std::string frameScript, std::string pixelScript);
+  const std::string& lastError() const { return error_; }
 
  private:
   EelVm vm_;
@@ -127,7 +132,7 @@ class ScriptedEffect : public Effect {
   NSEEL_CODEHANDLE pixelCode_ = nullptr;
   std::string frameScript_;
   std::string pixelScript_;
-  bool dirty_ = true;
+  std::string error_;
   EEL_F *time_ = nullptr, *frame_ = nullptr, *bass_ = nullptr, *mid_ = nullptr, *treb_ = nullptr,
         *rms_ = nullptr;
   EEL_F *x_ = nullptr, *y_ = nullptr, *r_ = nullptr, *g_ = nullptr, *b_ = nullptr;

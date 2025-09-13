@@ -11,6 +11,8 @@ namespace avs {
 BlurEffect::BlurEffect(int radius) : radius_(radius) {}
 
 void BlurEffect::init(int w, int h) {
+  w_ = w;
+  h_ = h;
   temp_.w = w;
   temp_.h = h;
   temp_.rgba.resize(static_cast<size_t>(w) * h * 4);
@@ -139,6 +141,11 @@ void BlurEffect::process(const Framebuffer& in, Framebuffer& out) {
   } else {
     blurScalar(in, temp_, out, kernel_, radius_);
   }
+}
+
+void BlurEffect::setRadius(int r) {
+  radius_ = r;
+  init(w_, h_);
 }
 
 }  // namespace avs

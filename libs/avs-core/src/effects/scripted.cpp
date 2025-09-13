@@ -5,12 +5,30 @@
 namespace avs {
 
 ScriptedEffect::ScriptedEffect(std::string frameScript, std::string pixelScript)
-    : frameScript_(std::move(frameScript)), pixelScript_(std::move(pixelScript)) {}
+    : frameScript_(std::move(frameScript)), pixelScript_(std::move(pixelScript)) {
+  setScripts(frameScript_, pixelScript_);
+}
 
-void ScriptedEffect::setScripts(std::string frameScript, std::string pixelScript) {
+bool ScriptedEffect::setScripts(std::string frameScript, std::string pixelScript) {
+  auto f = vm_.compile(frameScript);
+  if (!f) {
+    error_ = "frame script compile failed";
+    return false;
+  }
+  auto p = vm_.compile(pixelScript);
+  if (!p) {
+    vm_.freeCode(f);
+    error_ = "pixel script compile failed";
+    return false;
+  }
+  if (frameCode_) vm_.freeCode(frameCode_);
+  if (pixelCode_) vm_.freeCode(pixelCode_);
+  frameCode_ = f;
+  pixelCode_ = p;
   frameScript_ = std::move(frameScript);
   pixelScript_ = std::move(pixelScript);
-  dirty_ = true;
+  error_.clear();
+  return true;
 }
 
 void ScriptedEffect::init(int w, int h) {
@@ -39,14 +57,7 @@ void ScriptedEffect::update(float time, int frame, const AudioState& audio) {
 }
 
 void ScriptedEffect::process(const Framebuffer& /*in*/, Framebuffer& out) {
-  if (dirty_) {
-    if (frameCode_) vm_.freeCode(frameCode_);
-    if (pixelCode_) vm_.freeCode(pixelCode_);
-    frameCode_ = vm_.compile(frameScript_);
-    pixelCode_ = vm_.compile(pixelScript_);
-    dirty_ = false;
-  }
-
+  if (!frameCode_ || !pixelCode_) return;
   vm_.execute(frameCode_);
   for (int py = 0; py < h_; ++py) {
     if (y_) *y_ = py;

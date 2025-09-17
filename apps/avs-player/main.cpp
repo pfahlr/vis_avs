@@ -232,31 +232,44 @@ int main(int argc, char** argv) {
   }
 
   avs::Engine engine(1920, 1080);
-  std::vector<std::unique_ptr<avs::Effect>> chain;
-
   std::filesystem::path currentPreset;
   std::unique_ptr<avs::FileWatcher> watcher;
-  auto loadPreset = [&]() {
-    if (currentPreset.empty()) return;
+  auto loadPreset = [&]() -> bool {
+    if (currentPreset.empty()) return false;
     auto parsed = avs::parsePreset(currentPreset);
     if (!parsed.warnings.empty()) {
       for (const auto& w : parsed.warnings) {
         std::fprintf(stderr, "%s\n", w.c_str());
       }
     }
-    engine.setChain(std::move(parsed.chain));
+    bool success = !parsed.chain.empty();
+    if (!success) {
+      std::fprintf(stderr, "failed to parse preset: %s\n", currentPreset.string().c_str());
+    } else {
+      engine.setChain(std::move(parsed.chain));
+    }
     watcher = std::make_unique<avs::FileWatcher>(currentPreset);
+    return success;
   };
 
-  if (!presetDir.empty()) {
+  bool chainConfigured = false;
+  if (!presetPath.empty()) {
+    currentPreset = presetPath;
+    chainConfigured = loadPreset();
+  }
+
+  if (!chainConfigured && !presetDir.empty()) {
     for (auto& e : std::filesystem::directory_iterator(presetDir)) {
       if (e.is_regular_file() && e.path().extension() == ".avs") {
         currentPreset = e.path();
-        break;
+        chainConfigured = loadPreset();
+        if (chainConfigured) break;
       }
     }
-    loadPreset();
-  } else if (demoScript) {
+  }
+
+  std::vector<std::unique_ptr<avs::Effect>> chain;
+  if (!chainConfigured && demoScript) {
     std::string frameScript;
     std::string pixelScript =
         "red = clamp(sin(x*0.01 + time)*bass,0,1);"
@@ -264,11 +277,19 @@ int main(int argc, char** argv) {
         "blue = clamp(sin((x+y)*0.01 + time)*treb,0,1);";
     chain.push_back(std::make_unique<avs::ScriptedEffect>(frameScript, pixelScript));
     engine.setChain(std::move(chain));
-  } else {
+    chainConfigured = true;
+  }
+
+  if (!chainConfigured) {
     chain.push_back(std::make_unique<avs::BlurEffect>());
     chain.push_back(std::make_unique<avs::ColorMapEffect>());
     chain.push_back(std::make_unique<avs::ConvolutionEffect>());
     engine.setChain(std::move(chain));
+    chainConfigured = true;
+  }
+
+  if (!currentPreset.empty() && !watcher) {
+    watcher = std::make_unique<avs::FileWatcher>(currentPreset);
   }
 
   auto last = std::chrono::steady_clock::now();

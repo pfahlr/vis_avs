@@ -4,8 +4,24 @@
 
 #include <atomic>
 #include <cmath>
+#include <cstdint>
+#include <cstdio>
 
+#include "avs/audio_portaudio_internal.hpp"
 #include "avs/fft.hpp"
+
+namespace avs::portaudio_detail {
+
+CallbackResult processCallbackInput(const float* input, size_t samples, size_t writeIndex,
+                                    size_t mask, std::vector<float>& ring) {
+  CallbackResult result{writeIndex + samples, input == nullptr};
+  for (size_t i = 0; i < samples; ++i) {
+    ring[(writeIndex + i) & mask] = input ? input[i] : 0.0f;
+  }
+  return result;
+}
+
+}  // namespace avs::portaudio_detail
 
 namespace avs {
 
@@ -54,26 +70,40 @@ struct AudioInput::Impl {
   }
 
   static int paCallback(const void* input, void*, unsigned long frameCount,
-                        const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags, void* userData) {
+                        const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags statusFlags,
+                        void* userData) {
     auto* self = static_cast<Impl*>(userData);
     const float* in = static_cast<const float*>(input);
     const size_t samples = frameCount * self->channels;
     size_t w = self->writeIndex.load(std::memory_order_relaxed);
-    if (!in) {
-      for (size_t i = 0; i < samples; ++i) {
-        self->ring[(w + i) & self->mask] = 0.0f;
-      }
-    } else {
-      for (size_t i = 0; i < samples; ++i) {
-        self->ring[(w + i) & self->mask] = in[i];
-      }
+    const bool underflowFlagged = (statusFlags & paInputUnderflow) != 0;
+    const auto result =
+        portaudio_detail::processCallbackInput(in, samples, w, self->mask, self->ring);
+    if (underflowFlagged || result.underflow) {
+      self->inputUnderflowCount.fetch_add(1, std::memory_order_relaxed);
     }
-    self->writeIndex.store(w + samples, std::memory_order_release);
+    self->writeIndex.store(result.nextWriteIndex, std::memory_order_release);
     return paContinue;
   }
 
   AudioState poll() {
     AudioState state;
+    if (!ok) {
+      return state;
+    }
+
+    const auto underflows = inputUnderflowCount.load(std::memory_order_acquire);
+    if (underflows > lastUnderflowCount) {
+      ++consecutiveUnderflowPolls;
+      lastUnderflowCount = underflows;
+    } else {
+      consecutiveUnderflowPolls = 0;
+    }
+
+    if (consecutiveUnderflowPolls >= kMaxConsecutiveUnderflows) {
+      reportUnderflow();
+      return state;
+    }
     const size_t needed = kFftSize * static_cast<size_t>(channels);
     const size_t w = writeIndex.load(std::memory_order_acquire);
     if (w < needed) {
@@ -135,6 +165,28 @@ struct AudioInput::Impl {
   std::array<float, 3> bands{{0.f, 0.f, 0.f}};
   PaStream* stream = nullptr;
   bool ok = false;
+  std::atomic<uint32_t> inputUnderflowCount{0};
+  uint32_t lastUnderflowCount = 0;
+  int consecutiveUnderflowPolls = 0;
+  bool underflowReported = false;
+
+  static constexpr int kMaxConsecutiveUnderflows = 3;
+
+  void reportUnderflow() {
+    if (underflowReported) {
+      return;
+    }
+    underflowReported = true;
+    if (stream) {
+      Pa_StopStream(stream);
+      Pa_CloseStream(stream);
+      stream = nullptr;
+    }
+    ok = false;
+    std::fprintf(stderr,
+                 "PortAudio input underflow detected; capture has been stopped. Please verify your "
+                 "audio configuration.\n");
+  }
 };
 
 AudioInput::AudioInput(int sampleRate, int channels)
@@ -142,6 +194,15 @@ AudioInput::AudioInput(int sampleRate, int channels)
 
 AudioInput::~AudioInput() { delete impl_; }
 
-AudioState AudioInput::poll() { return impl_ ? impl_->poll() : AudioState{}; }
+AudioState AudioInput::poll() {
+  if (!impl_) {
+    return AudioState{};
+  }
+  auto state = impl_->poll();
+  if (impl_ && !impl_->ok) {
+    ok_ = false;
+  }
+  return state;
+}
 
 }  // namespace avs

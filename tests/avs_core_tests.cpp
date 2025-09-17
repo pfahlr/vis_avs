@@ -5,6 +5,7 @@
 #include <fstream>
 #include <thread>
 
+#include "avs/audio_portaudio_internal.hpp"
 #include "avs/effects.hpp"
 #include "avs/fs.hpp"
 #include "avs/preset.hpp"
@@ -197,4 +198,20 @@ TEST(FileWatcher, DetectsModification) {
   }
   EXPECT_TRUE(changed);
   std::filesystem::remove(tmp);
+}
+
+TEST(PortAudioCallback, NullInputRaisesUnderflowFlag) {
+  std::vector<float> ring(8, 1.0f);
+  const size_t mask = ring.size() - 1;
+  const size_t writeIndex = 2;
+  const size_t samples = 4;
+
+  auto result =
+      avs::portaudio_detail::processCallbackInput(nullptr, samples, writeIndex, mask, ring);
+
+  EXPECT_TRUE(result.underflow);
+  EXPECT_EQ(result.nextWriteIndex, writeIndex + samples);
+  for (size_t i = 0; i < samples; ++i) {
+    EXPECT_FLOAT_EQ(ring[(writeIndex + i) & mask], 0.0f);
+  }
 }

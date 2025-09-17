@@ -116,20 +116,45 @@ class AdditiveBlendEffect : public Effect {
 class ScriptedEffect : public Effect {
  public:
   ScriptedEffect(std::string frameScript, std::string pixelScript);
+  ScriptedEffect(std::string initScript,
+                 std::string frameScript,
+                 std::string beatScript,
+                 std::string pixelScript);
+  ~ScriptedEffect() override;
   void init(int w, int h) override;
   void process(const Framebuffer& in, Framebuffer& out) override;
   void update(float time, int frame, const AudioState& audio);
   void setScripts(std::string frameScript, std::string pixelScript);
+  void setScripts(std::string initScript,
+                  std::string frameScript,
+                  std::string beatScript,
+                  std::string pixelScript);
+  const std::string& initScript() const { return initScript_; }
+  const std::string& frameScript() const { return frameScript_; }
+  const std::string& beatScript() const { return beatScript_; }
+  const std::string& pixelScript() const { return pixelScript_; }
 
  private:
+  void setAllScripts(std::string initScript,
+                     std::string frameScript,
+                     std::string beatScript,
+                     std::string pixelScript);
+  void compile();
   EelVm vm_;
+  NSEEL_CODEHANDLE initCode_ = nullptr;
   NSEEL_CODEHANDLE frameCode_ = nullptr;
+  NSEEL_CODEHANDLE beatCode_ = nullptr;
   NSEEL_CODEHANDLE pixelCode_ = nullptr;
+  std::string initScript_;
   std::string frameScript_;
+  std::string beatScript_;
   std::string pixelScript_;
   bool dirty_ = true;
+  bool initRan_ = false;
+  bool pendingBeat_ = false;
+  float lastRms_ = 0.0f;
   EEL_F *time_ = nullptr, *frame_ = nullptr, *bass_ = nullptr, *mid_ = nullptr, *treb_ = nullptr,
-        *rms_ = nullptr;
+        *rms_ = nullptr, *beat_ = nullptr;
   EEL_F *x_ = nullptr, *y_ = nullptr, *r_ = nullptr, *g_ = nullptr, *b_ = nullptr;
   int w_ = 0;
   int h_ = 0;

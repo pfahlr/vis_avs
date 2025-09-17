@@ -182,6 +182,17 @@ TEST(PresetParser, ParsesChainAndReportsUnsupported) {
   std::filesystem::remove(tmp);
 }
 
+TEST(PresetParser, ParsesBinaryColorModifier) {
+  auto preset = avs::parsePreset(std::filesystem::path(SOURCE_DIR) / "tests/data/simple.avs");
+  ASSERT_EQ(preset.chain.size(), 1u);
+  auto* scripted = dynamic_cast<avs::ScriptedEffect*>(preset.chain[0].get());
+  ASSERT_NE(scripted, nullptr);
+  EXPECT_TRUE(scripted->initScript().empty());
+  EXPECT_TRUE(scripted->beatScript().empty());
+  EXPECT_EQ(scripted->frameScript(), "red=bass; green=mid; blue=treb;");
+  EXPECT_EQ(scripted->pixelScript(), "red=red; green=green; blue=blue;");
+}
+
 TEST(FileWatcher, DetectsModification) {
   auto tmp = std::filesystem::temp_directory_path() / "watch.txt";
   {

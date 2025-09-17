@@ -4,13 +4,51 @@
 
 namespace avs {
 
-ScriptedEffect::ScriptedEffect(std::string frameScript, std::string pixelScript)
-    : frameScript_(std::move(frameScript)), pixelScript_(std::move(pixelScript)) {}
+ScriptedEffect::ScriptedEffect(std::string frameScript, std::string pixelScript) {
+  setAllScripts("", std::move(frameScript), "", std::move(pixelScript));
+}
+
+ScriptedEffect::ScriptedEffect(std::string initScript,
+                               std::string frameScript,
+                               std::string beatScript,
+                               std::string pixelScript) {
+  setAllScripts(std::move(initScript),
+                std::move(frameScript),
+                std::move(beatScript),
+                std::move(pixelScript));
+}
+
+ScriptedEffect::~ScriptedEffect() {
+  if (initCode_) vm_.freeCode(initCode_);
+  if (frameCode_) vm_.freeCode(frameCode_);
+  if (beatCode_) vm_.freeCode(beatCode_);
+  if (pixelCode_) vm_.freeCode(pixelCode_);
+}
 
 void ScriptedEffect::setScripts(std::string frameScript, std::string pixelScript) {
+  setAllScripts("", std::move(frameScript), "", std::move(pixelScript));
+}
+
+void ScriptedEffect::setScripts(std::string initScript,
+                                std::string frameScript,
+                                std::string beatScript,
+                                std::string pixelScript) {
+  setAllScripts(std::move(initScript),
+                std::move(frameScript),
+                std::move(beatScript),
+                std::move(pixelScript));
+}
+
+void ScriptedEffect::setAllScripts(std::string initScript,
+                                   std::string frameScript,
+                                   std::string beatScript,
+                                   std::string pixelScript) {
+  initScript_ = std::move(initScript);
   frameScript_ = std::move(frameScript);
+  beatScript_ = std::move(beatScript);
   pixelScript_ = std::move(pixelScript);
   dirty_ = true;
+  pendingBeat_ = false;
 }
 
 void ScriptedEffect::init(int w, int h) {
@@ -22,11 +60,15 @@ void ScriptedEffect::init(int w, int h) {
   mid_ = vm_.regVar("mid");
   treb_ = vm_.regVar("treb");
   rms_ = vm_.regVar("rms");
+  beat_ = vm_.regVar("beat");
   x_ = vm_.regVar("x");
   y_ = vm_.regVar("y");
   r_ = vm_.regVar("red");
   g_ = vm_.regVar("green");
   b_ = vm_.regVar("blue");
+  lastRms_ = 0.0f;
+  initRan_ = false;
+  pendingBeat_ = false;
 }
 
 void ScriptedEffect::update(float time, int frame, const AudioState& audio) {
@@ -36,23 +78,61 @@ void ScriptedEffect::update(float time, int frame, const AudioState& audio) {
   if (mid_) *mid_ = audio.bands[1];
   if (treb_) *treb_ = audio.bands[2];
   if (rms_) *rms_ = audio.rms;
+  if (beat_) {
+    const float threshold = 0.6f;
+    const bool isBeat = audio.rms > threshold && lastRms_ <= threshold;
+    *beat_ = isBeat ? 1.0 : 0.0;
+    pendingBeat_ = pendingBeat_ || isBeat;
+    lastRms_ = audio.rms;
+  }
+}
+
+void ScriptedEffect::compile() {
+  if (!dirty_) return;
+  if (initCode_) {
+    vm_.freeCode(initCode_);
+    initCode_ = nullptr;
+  }
+  if (frameCode_) {
+    vm_.freeCode(frameCode_);
+    frameCode_ = nullptr;
+  }
+  if (beatCode_) {
+    vm_.freeCode(beatCode_);
+    beatCode_ = nullptr;
+  }
+  if (pixelCode_) {
+    vm_.freeCode(pixelCode_);
+    pixelCode_ = nullptr;
+  }
+  if (!initScript_.empty()) initCode_ = vm_.compile(initScript_);
+  if (!frameScript_.empty()) frameCode_ = vm_.compile(frameScript_);
+  if (!beatScript_.empty()) beatCode_ = vm_.compile(beatScript_);
+  if (!pixelScript_.empty()) pixelCode_ = vm_.compile(pixelScript_);
+  dirty_ = false;
+  initRan_ = false;
 }
 
 void ScriptedEffect::process(const Framebuffer& /*in*/, Framebuffer& out) {
-  if (dirty_) {
-    if (frameCode_) vm_.freeCode(frameCode_);
-    if (pixelCode_) vm_.freeCode(pixelCode_);
-    frameCode_ = vm_.compile(frameScript_);
-    pixelCode_ = vm_.compile(pixelScript_);
-    dirty_ = false;
-  }
+  compile();
 
-  vm_.execute(frameCode_);
+  if (!out.rgba.empty()) {
+    std::fill(out.rgba.begin(), out.rgba.end(), 0);
+  }
+  if (!initRan_) {
+    if (initCode_) vm_.execute(initCode_);
+    initRan_ = true;
+  }
+  if (frameCode_) vm_.execute(frameCode_);
+  if (pendingBeat_) {
+    if (beatCode_) vm_.execute(beatCode_);
+    pendingBeat_ = false;
+  }
   for (int py = 0; py < h_; ++py) {
     if (y_) *y_ = py;
     for (int px = 0; px < w_; ++px) {
       if (x_) *x_ = px;
-      vm_.execute(pixelCode_);
+      if (pixelCode_) vm_.execute(pixelCode_);
       int idx = (py * w_ + px) * 4;
       auto toByte = [](double v) {
         return static_cast<std::uint8_t>(std::clamp(v, 0.0, 1.0) * 255.0 + 0.5);

@@ -215,6 +215,11 @@ int main(int argc, char** argv) {
     }
   }
 
+  if (!headless && !wavPath.empty()) {
+    std::fprintf(stderr, "--wav requires --headless\n");
+    return 1;
+  }
+
   if (headless) {
     if (wavPath.empty() || presetPath.empty() || frames <= 0) {
       std::fprintf(stderr, "--headless requires --wav, --preset and --frames\n");

@@ -31,4 +31,12 @@ Run the stub player after building:
 ./apps/avs-player/avs-player
 ```
 
+To drive rendering from a WAV file, run the player in headless mode. Supplying
+`--wav` without `--headless` will terminate with an error.
+
+```bash
+./apps/avs-player/avs-player --headless --wav tests/data/test.wav \
+  --preset tests/data/simple.avs --frames 120 --out output_dir
+```
+
 More documentation will be added as the project evolves.

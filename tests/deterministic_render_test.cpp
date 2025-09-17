@@ -31,3 +31,17 @@ TEST(DeterministicRender, MatchesGolden) {
   EXPECT_FALSE(std::getline(got, gLine));
   EXPECT_FALSE(std::getline(expected, eLine));
 }
+
+TEST(DeterministicRender, WavRequiresHeadless) {
+  namespace fs = std::filesystem;
+  fs::path buildDir{BUILD_DIR};
+  fs::path sourceDir{SOURCE_DIR};
+  fs::path player = buildDir / "apps/avs-player/avs-player";
+  fs::path wav = sourceDir / "tests/data/test.wav";
+  fs::path preset = sourceDir / "tests/data/simple.avs";
+
+  std::string cmd = player.string() + " --wav " + wav.string() + " --preset " +
+                    preset.string() + " --frames 60";
+  int ret = std::system(cmd.c_str());
+  EXPECT_NE(ret, 0);
+}

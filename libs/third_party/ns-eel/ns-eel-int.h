@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 
-enum { 
+enum {
 
   // these ignore fn in opcodes, just use fntype to determine function
   FN_MULTIPLY=0,
@@ -96,12 +96,20 @@ enum {
 
 
 
+typedef struct YYLTYPE YYLTYPE;
+typedef struct opcodeRec opcodeRec;
+typedef struct _compileContext compileContext;
+
 #define YYSTYPE opcodeRec *
 
+#ifdef NSEEL_SUPER_MINIMAL_LEXER
+int nseellex(opcodeRec **output, YYLTYPE *yylloc_param, compileContext *scctx);
+#else
+int nseellex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, void *yyscanner);
+#endif
+void nseelerror(YYLTYPE *pos, compileContext *ctx, const char *str);
+
 #define NSEEL_CLOSEFACTOR 0.00001
- 
-  
-typedef struct opcodeRec opcodeRec;
 
 typedef struct _codeHandleFunctionRec 
 {
@@ -178,7 +186,7 @@ typedef struct
 #define EEL_GROWBUF_GET(gb) ((gb)->_tval)
 #define EEL_GROWBUF_GET_SIZE(gb) ((gb)->_growbuf.size/(int)sizeof((gb)->_tval[0]))
 
-typedef struct _compileContext
+struct _compileContext
 {
   eel_function_table *registered_func_tab;
   const char *(*func_check)(const char *fn_name, void *user); // return error message if not permitted
@@ -245,8 +253,7 @@ typedef struct _compileContext
   void *gram_blocks;
 
   void *caller_this;
-}
-compileContext;
+};
 
 #define NSEEL_NPARAMS_FLAG_CONST 0x80000
 typedef struct functionType {

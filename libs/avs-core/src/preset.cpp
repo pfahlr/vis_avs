@@ -27,6 +27,7 @@ class PassThroughEffect : public Effect {
 };
 
 constexpr const char kMagic[] = "Nullsoft AVS Preset 0.2\x1a";
+constexpr std::uint32_t kListId = 0xFFFFFFFEu;
 
 struct Reader {
   const std::vector<char>& data;
@@ -51,11 +52,28 @@ bool readU32(Reader& r, std::uint32_t& value) {
   return true;
 }
 
-bool parseColorModifier(Reader& r, size_t len, ParsedPreset& result) {
-  if (r.remaining() < len) return false;
-  size_t chunkEnd = r.pos + len;
+bool readByteBounded(Reader& r, size_t limit, std::uint8_t& value) {
+  if (r.pos >= limit) return false;
+  return readByte(r, value);
+}
+
+bool readU32Bounded(Reader& r, size_t limit, std::uint32_t& value) {
+  if (r.pos + 4 > limit) return false;
+  return readU32(r, value);
+}
+
+bool ensureRemaining(const Reader& r, size_t limit, size_t amount) {
+  return r.pos + amount <= limit;
+}
+
+bool parseRenderListChunk(Reader& r,
+                          size_t chunkEnd,
+                          ParsedPreset& result,
+                          std::vector<std::unique_ptr<Effect>>& chain);
+
+bool parseColorModifier(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& effect) {
   std::uint8_t version = 0;
-  if (!readByte(r, version)) return false;
+  if (!readByteBounded(r, chunkEnd, version)) return false;
   if (version != 1) {
     r.pos = chunkEnd;
     return false;
@@ -63,11 +81,12 @@ bool parseColorModifier(Reader& r, size_t len, ParsedPreset& result) {
   std::array<std::string, 4> scripts;
   for (size_t i = 0; i < scripts.size(); ++i) {
     std::uint32_t slen = 0;
-    if (!readU32(r, slen)) {
+    if (!readU32Bounded(r, chunkEnd, slen)) {
       r.pos = chunkEnd;
       return false;
     }
-    if (slen > chunkEnd - r.pos) {
+    size_t remaining = chunkEnd - r.pos;
+    if (slen > remaining) {
       r.pos = chunkEnd;
       return false;
     }
@@ -81,63 +100,143 @@ bool parseColorModifier(Reader& r, size_t len, ParsedPreset& result) {
     }
   }
   std::uint32_t recompute = 0;
-  if (!readU32(r, recompute)) {
+  if (!readU32Bounded(r, chunkEnd, recompute)) {
     r.pos = chunkEnd;
     return false;
   }
   r.pos = chunkEnd;
-  result.chain.push_back(
-      std::make_unique<ScriptedEffect>(scripts[3], scripts[1], scripts[2], scripts[0]));
+  effect = std::make_unique<ScriptedEffect>(scripts[3], scripts[1], scripts[2], scripts[0]);
   return true;
 }
 
-ParsedPreset parseBinaryPreset(const std::vector<char>& data) {
-  ParsedPreset result;
-  Reader r{data, sizeof(kMagic) - 1};
+bool parseCommentEffect(Reader& r, size_t chunkEnd, ParsedPreset& result) {
+  std::uint32_t rawLen = 0;
+  if (!readU32Bounded(r, chunkEnd, rawLen)) {
+    r.pos = chunkEnd;
+    return false;
+  }
+  size_t strLen = static_cast<size_t>(rawLen);
+  if (strLen > chunkEnd - r.pos) {
+    r.pos = chunkEnd;
+    return false;
+  }
+  std::string text;
+  if (strLen > 0) {
+    const char* begin = r.data.data() + r.pos;
+    text.assign(begin, begin + strLen);
+    if (!text.empty() && text.back() == '\0') text.pop_back();
+    r.pos += strLen;
+  }
+  result.comments.push_back(std::move(text));
+  r.pos = chunkEnd;
+  return true;
+}
+
+bool parseRenderListChunk(Reader& r,
+                          size_t chunkEnd,
+                          ParsedPreset& result,
+                          std::vector<std::unique_ptr<Effect>>& chain) {
+  if (chunkEnd > r.data.size()) {
+    result.warnings.push_back("render list exceeds buffer bounds");
+    r.pos = r.data.size();
+    return false;
+  }
+  if (r.pos >= chunkEnd) return true;
+
   std::uint8_t modeByte = 0;
-  if (!readByte(r, modeByte)) {
+  if (!readByteBounded(r, chunkEnd, modeByte)) {
     result.warnings.push_back("incomplete preset header");
-    return result;
+    r.pos = chunkEnd;
+    return false;
   }
   std::uint32_t mode = modeByte;
   if (modeByte & 0x80u) {
     std::uint32_t ext = 0;
-    if (!readU32(r, ext)) {
+    if (!readU32Bounded(r, chunkEnd, ext)) {
       result.warnings.push_back("corrupt preset mode");
-      return result;
+      r.pos = chunkEnd;
+      return false;
     }
     mode = (modeByte & ~0x80u) | ext;
   }
   std::uint32_t extendedSize = (mode >> 24) & 0xFFu;
   size_t skip = extendedSize ? static_cast<size_t>(extendedSize) + 4u : 0u;
   if (skip > 0) {
-    if (r.remaining() < skip) {
+    if (!ensureRemaining(r, chunkEnd, skip)) {
       result.warnings.push_back("truncated extended preset data");
-      return result;
+      r.pos = chunkEnd;
+      return false;
     }
     r.pos += skip;
   }
-  while (r.remaining() >= 8) {
+
+  while (ensureRemaining(r, chunkEnd, 8)) {
     std::uint32_t effectId = 0;
     std::uint32_t payloadLen = 0;
-    if (!readU32(r, effectId) || !readU32(r, payloadLen)) break;
-    if (r.remaining() < payloadLen) {
+    if (!readU32Bounded(r, chunkEnd, effectId) || !readU32Bounded(r, chunkEnd, payloadLen)) {
+      result.warnings.push_back("truncated effect header");
+      r.pos = chunkEnd;
+      return false;
+    }
+    size_t payloadStart = r.pos;
+    size_t payloadEnd = payloadStart + static_cast<size_t>(payloadLen);
+    if (payloadEnd > chunkEnd || payloadEnd > r.data.size()) {
       result.warnings.push_back("truncated effect payload");
-      break;
+      r.pos = chunkEnd;
+      return false;
     }
-    size_t chunkStart = r.pos;
-    bool handled = false;
+
+    Reader chunkReader{r.data, payloadStart};
+    std::unique_ptr<Effect> parsedEffect;
+    bool knownEffect = false;
+    bool success = false;
+
     if (effectId == 45u) {
-      Reader chunkReader{r.data, r.pos};
-      handled = parseColorModifier(chunkReader, payloadLen, result);
+      knownEffect = true;
+      success = parseColorModifier(chunkReader, payloadEnd, parsedEffect);
+    } else if (effectId == 21u) {
+      knownEffect = true;
+      success = parseCommentEffect(chunkReader, payloadEnd, result);
+    } else if (effectId == kListId) {
+      knownEffect = true;
+      std::vector<std::unique_ptr<Effect>> nestedChain;
+      success = parseRenderListChunk(chunkReader, payloadEnd, result, nestedChain);
+      if (success) {
+        auto composite = std::make_unique<CompositeEffect>();
+        for (auto& child : nestedChain) {
+          composite->addEffect(std::move(child));
+        }
+        parsedEffect = std::move(composite);
+      }
     }
-    if (!handled) {
+
+    if (knownEffect) {
+      if (success) {
+        if (parsedEffect) {
+          chain.push_back(std::move(parsedEffect));
+        }
+      } else {
+        result.warnings.push_back("failed to parse effect index: " + std::to_string(effectId));
+      }
+    } else {
       result.warnings.push_back("unsupported effect index: " + std::to_string(effectId));
-      result.chain.push_back(std::make_unique<PassThroughEffect>());
+      chain.push_back(std::make_unique<PassThroughEffect>());
       result.unknown.push_back("effect:" + std::to_string(effectId));
     }
-    r.pos = chunkStart + payloadLen;
+
+    r.pos = payloadEnd;
   }
+
+  if (r.pos < chunkEnd) {
+    r.pos = chunkEnd;
+  }
+  return true;
+}
+
+ParsedPreset parseBinaryPreset(const std::vector<char>& data) {
+  ParsedPreset result;
+  Reader r{data, sizeof(kMagic) - 1};
+  parseRenderListChunk(r, data.size(), result, result.chain);
   return result;
 }
 

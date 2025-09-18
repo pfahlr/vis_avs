@@ -13,6 +13,7 @@ struct ParsedPreset {
   std::vector<std::unique_ptr<Effect>> chain;
   std::vector<std::string> warnings;
   std::vector<std::string> unknown;
+  std::vector<std::string> comments;
 };
 
 ParsedPreset parsePreset(const std::filesystem::path& file);

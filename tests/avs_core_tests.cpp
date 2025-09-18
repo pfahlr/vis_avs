@@ -193,6 +193,19 @@ TEST(PresetParser, ParsesBinaryColorModifier) {
   EXPECT_EQ(scripted->pixelScript(), "red=red; green=green; blue=blue;");
 }
 
+TEST(PresetParser, ParsesNestedRenderLists) {
+  auto preset = avs::parsePreset(std::filesystem::path(SOURCE_DIR) /
+                                 "tests/data/nested_list.avs");
+  EXPECT_TRUE(preset.warnings.empty());
+  ASSERT_EQ(preset.chain.size(), 1u);
+  auto* composite = dynamic_cast<avs::CompositeEffect*>(preset.chain[0].get());
+  ASSERT_NE(composite, nullptr);
+  ASSERT_EQ(composite->childCount(), 1u);
+  EXPECT_NE(dynamic_cast<avs::ScriptedEffect*>(composite->children()[0].get()), nullptr);
+  ASSERT_EQ(preset.comments.size(), 1u);
+  EXPECT_EQ(preset.comments[0], "Nested list comment");
+}
+
 TEST(FileWatcher, DetectsModification) {
   auto tmp = std::filesystem::temp_directory_path() / "watch.txt";
   {

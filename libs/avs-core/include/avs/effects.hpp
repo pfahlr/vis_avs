@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -24,6 +25,22 @@ class Effect {
     (void)h;
   }
   virtual void process(const Framebuffer& in, Framebuffer& out) = 0;
+};
+
+class CompositeEffect : public Effect {
+ public:
+  void addEffect(std::unique_ptr<Effect> effect);
+  void init(int w, int h) override;
+  void process(const Framebuffer& in, Framebuffer& out) override;
+
+  size_t childCount() const { return children_.size(); }
+  const std::vector<std::unique_ptr<Effect>>& children() const { return children_; }
+
+ private:
+  std::vector<std::unique_ptr<Effect>> children_;
+  Framebuffer buffers_[2];
+  int width_ = 0;
+  int height_ = 0;
 };
 
 class BlurEffect : public Effect {

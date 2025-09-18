@@ -14,6 +14,7 @@ add_library(avs-core STATIC
   src/effects/tunnel.cpp
   src/effects/radial_blur.cpp
   src/effects/additive_blend.cpp
+  src/effects/composite.cpp
   src/effects/scripted.cpp
   src/preset.cpp
 )

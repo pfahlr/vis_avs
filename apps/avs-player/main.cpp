@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cmath>
@@ -7,6 +8,7 @@
 #include <fstream>
 #include <iomanip>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -66,6 +68,14 @@ std::string hashFrame(const std::vector<std::uint8_t>& data) {
   return oss.str();
 }
 
+void printUsage() {
+  std::fprintf(
+      stderr,
+      "Usage: avs-player [--headless --wav <file> --preset <file> --frames <n> --out <dir>]\n"
+      "                 [--sample-rate <hz>] [--channels <count>] [--demo-script]\n"
+      "                 [--presets <directory>] [--help]\n");
+}
+
 class OfflineAudio {
  public:
   explicit OfflineAudio(const WavData& wav)
@@ -122,6 +132,9 @@ class OfflineAudio {
     state.bands = bands_;
     state.timeSeconds =
         static_cast<double>(w) / (static_cast<double>(wav_.channels) * wav_.sampleRate);
+    state.sampleRate = static_cast<int>(wav_.sampleRate);
+    state.inputSampleRate = static_cast<int>(wav_.sampleRate);
+    state.channels = static_cast<int>(wav_.channels);
     return state;
   }
 
@@ -195,6 +208,9 @@ int main(int argc, char** argv) {
   int frames = 0;
   bool demoScript = false;
   std::filesystem::path presetDir;
+  bool showHelp = false;
+  std::optional<int> requestedSampleRate;
+  std::optional<int> requestedChannels;
 
   for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
@@ -212,7 +228,32 @@ int main(int argc, char** argv) {
       demoScript = true;
     } else if (arg == "--presets" && i + 1 < argc) {
       presetDir = argv[++i];
+    } else if (arg == "--sample-rate" && i + 1 < argc) {
+      int value = std::stoi(argv[++i]);
+      if (value <= 0) {
+        std::fprintf(stderr, "--sample-rate must be positive\n");
+        return 1;
+      }
+      requestedSampleRate = value;
+    } else if (arg == "--channels" && i + 1 < argc) {
+      int value = std::stoi(argv[++i]);
+      if (value <= 0) {
+        std::fprintf(stderr, "--channels must be positive\n");
+        return 1;
+      }
+      requestedChannels = value;
+    } else if (arg == "--help") {
+      showHelp = true;
+    } else {
+      std::fprintf(stderr, "Unknown argument: %s\n", arg.c_str());
+      printUsage();
+      return 1;
     }
+  }
+
+  if (showHelp) {
+    printUsage();
+    return 0;
   }
 
   if (!headless && !wavPath.empty()) {
@@ -230,7 +271,15 @@ int main(int argc, char** argv) {
   }
 
   avs::Window window(1920, 1080, "AVS Player");
-  avs::AudioInput audio;
+  avs::AudioInputConfig audioConfig;
+  if (requestedSampleRate) {
+    audioConfig.requestedSampleRate = requestedSampleRate;
+  }
+  if (requestedChannels) {
+    audioConfig.engineChannels = std::max(1, *requestedChannels);
+    audioConfig.requestedChannels = requestedChannels;
+  }
+  avs::AudioInput audio(audioConfig);
   if (!audio.ok()) {
     std::fprintf(stderr, "audio init failed\n");
     return 1;

@@ -1,6 +1,7 @@
+find_package(PkgConfig REQUIRED)
+
 find_package(SDL2 2.28 QUIET)
 if(NOT TARGET SDL2::SDL2)
-  find_package(PkgConfig REQUIRED)
   pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2>=2.28)
   add_library(SDL2::SDL2 ALIAS PkgConfig::SDL2)
 endif()
@@ -15,6 +16,8 @@ if(NOT PortAudio_FOUND)
     GIT_TAG v19.7.0)
   FetchContent_MakeAvailable(portaudio)
 endif()
+
+pkg_check_modules(SAMPLERATE REQUIRED IMPORTED_TARGET samplerate)
 
 add_library(avs-platform STATIC
   src/platform.cpp
@@ -31,8 +34,10 @@ target_include_directories(avs-platform PUBLIC include
 target_compile_options(avs-platform PRIVATE -Wall -Wextra -Werror)
 
 if(PortAudio_FOUND)
-  target_link_libraries(avs-platform PUBLIC SDL2::SDL2 OpenGL::GL PortAudio::PortAudio)
+  target_link_libraries(avs-platform PUBLIC SDL2::SDL2 OpenGL::GL PortAudio::PortAudio
+                                            PkgConfig::SAMPLERATE)
 else()
-  target_link_libraries(avs-platform PUBLIC SDL2::SDL2 OpenGL::GL portaudio)
+  target_link_libraries(avs-platform PUBLIC SDL2::SDL2 OpenGL::GL portaudio
+                                            PkgConfig::SAMPLERATE)
 endif()
 

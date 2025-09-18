@@ -226,3 +226,45 @@ TEST(PortAudioCallback, NullInputRaisesUnderflowFlag) {
     EXPECT_FLOAT_EQ(ring[(writeIndex + i) & mask], 0.0f);
   }
 }
+
+TEST(PortAudioNegotiation, FallsBackToDefaultRate) {
+  avs::portaudio_detail::StreamNegotiationRequest request;
+  request.engineSampleRate = 48000;
+  request.engineChannels = 2;
+  request.requestedSampleRate = 44100;
+  request.requestedChannels = 2;
+
+  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 2};
+  int queryCount = 0;
+  auto result =
+      avs::portaudio_detail::negotiateStream(request, device, [&](int channels, double rate) {
+        ++queryCount;
+        EXPECT_EQ(channels, 2);
+        return rate != 44100.0;
+      });
+
+  EXPECT_TRUE(result.supported);
+  EXPECT_TRUE(result.usedFallbackRate);
+  EXPECT_DOUBLE_EQ(result.sampleRate, 48000.0);
+  EXPECT_EQ(queryCount, 2);
+}
+
+TEST(PortAudioNegotiation, KeepsRequestedFormatWhenSupported) {
+  avs::portaudio_detail::StreamNegotiationRequest request;
+  request.engineSampleRate = 48000;
+  request.engineChannels = 2;
+  request.requestedSampleRate = 48000;
+  request.requestedChannels = 2;
+
+  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 4};
+  auto result =
+      avs::portaudio_detail::negotiateStream(request, device, [&](int channels, double rate) {
+        EXPECT_EQ(channels, 2);
+        return rate == 48000.0;
+      });
+
+  EXPECT_TRUE(result.supported);
+  EXPECT_FALSE(result.usedFallbackRate);
+  EXPECT_DOUBLE_EQ(result.sampleRate, 48000.0);
+  EXPECT_EQ(result.channelCount, 2);
+}

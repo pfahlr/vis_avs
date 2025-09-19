@@ -194,8 +194,7 @@ TEST(PresetParser, ParsesBinaryColorModifier) {
 }
 
 TEST(PresetParser, ParsesNestedRenderLists) {
-  auto preset = avs::parsePreset(std::filesystem::path(SOURCE_DIR) /
-                                 "tests/data/nested_list.avs");
+  auto preset = avs::parsePreset(std::filesystem::path(SOURCE_DIR) / "tests/data/nested_list.avs");
   EXPECT_TRUE(preset.warnings.empty());
   ASSERT_EQ(preset.chain.size(), 1u);
   auto* composite = dynamic_cast<avs::CompositeEffect*>(preset.chain[0].get());
@@ -280,4 +279,25 @@ TEST(PortAudioNegotiation, KeepsRequestedFormatWhenSupported) {
   EXPECT_FALSE(result.usedFallbackRate);
   EXPECT_DOUBLE_EQ(result.sampleRate, 48000.0);
   EXPECT_EQ(result.channelCount, 2);
+}
+
+TEST(PortAudioNegotiation, ClampsRequestedChannelsToDeviceCapabilities) {
+  avs::portaudio_detail::StreamNegotiationRequest request;
+  request.engineSampleRate = 48000;
+  request.engineChannels = 2;
+  request.requestedChannels = 4;
+
+  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 2};
+  int queryCount = 0;
+  auto result =
+      avs::portaudio_detail::negotiateStream(request, device, [&](int channels, double rate) {
+        ++queryCount;
+        EXPECT_EQ(rate, 48000.0);
+        return channels == 2;
+      });
+
+  EXPECT_TRUE(result.supported);
+  EXPECT_EQ(result.channelCount, 2);
+  EXPECT_FALSE(result.usedFallbackRate);
+  EXPECT_EQ(queryCount, 1);
 }

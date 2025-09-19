@@ -2,6 +2,7 @@
 
 #include <array>
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace avs {
@@ -21,6 +22,7 @@ struct AudioInputConfig {
   int engineChannels = 2;
   std::optional<int> requestedSampleRate;
   std::optional<int> requestedChannels;
+  std::optional<std::string> requestedDevice;
 };
 
 class AudioInput {

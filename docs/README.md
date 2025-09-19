@@ -36,6 +36,22 @@ Use `--sample-rate` and `--channels` to ask the device for a particular format;
 the player will fall back to the device defaults if the request is not
 available and resample to the engine's 48 kHz internal representation.
 
+Enumerate capture devices (and their numeric identifiers) via:
+
+```bash
+./apps/avs-player/avs-player --list-input-devices
+```
+
+Pick a device either by index or by matching part of its name:
+
+```bash
+./apps/avs-player/avs-player --input-device 2
+./apps/avs-player/avs-player --input-device "USB"
+```
+
+If the chosen endpoint cannot capture audio, the player reports a descriptive
+error instead of silently falling back to the default input.
+
 To drive rendering from a WAV file, run the player in headless mode. Supplying
 `--wav` without `--headless` will terminate with an error.
 

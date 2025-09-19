@@ -1,3 +1,5 @@
+#include <portaudio.h>
+
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -72,8 +74,43 @@ void printUsage() {
   std::fprintf(
       stderr,
       "Usage: avs-player [--headless --wav <file> --preset <file> --frames <n> --out <dir>]\n"
-      "                 [--sample-rate <hz>] [--channels <count>] [--demo-script]\n"
-      "                 [--presets <directory>] [--help]\n");
+      "                 [--sample-rate <hz>] [--channels <count>] [--input-device <id>]\n"
+      "                 [--list-input-devices] [--demo-script] [--presets <directory>] [--help]\n");
+}
+
+int listPortAudioInputDevices() {
+  PaError err = Pa_Initialize();
+  if (err != paNoError) {
+    std::fprintf(stderr, "Failed to initialize PortAudio: %s\n", Pa_GetErrorText(err));
+    return 1;
+  }
+
+  PaDeviceIndex count = Pa_GetDeviceCount();
+  if (count < 0) {
+    std::fprintf(stderr, "Failed to enumerate PortAudio devices: %s\n", Pa_GetErrorText(count));
+    Pa_Terminate();
+    return 1;
+  }
+
+  PaDeviceIndex defaultDevice = Pa_GetDefaultInputDevice();
+  std::printf("Available PortAudio input devices:\n");
+  for (PaDeviceIndex i = 0; i < count; ++i) {
+    const PaDeviceInfo* info = Pa_GetDeviceInfo(i);
+    if (!info) {
+      continue;
+    }
+    bool isDefault = (i == defaultDevice);
+    std::printf("  %d: %s%s\n", static_cast<int>(i), info->name, isDefault ? " (default)" : "");
+    if (info->maxInputChannels > 0) {
+      std::printf("     inputs: %d, default sample rate: %.0f Hz\n", info->maxInputChannels,
+                  info->defaultSampleRate);
+    } else {
+      std::printf("     inputs: %d (cannot capture audio)\n", info->maxInputChannels);
+    }
+  }
+
+  Pa_Terminate();
+  return 0;
 }
 
 class OfflineAudio {
@@ -211,6 +248,8 @@ int main(int argc, char** argv) {
   bool showHelp = false;
   std::optional<int> requestedSampleRate;
   std::optional<int> requestedChannels;
+  std::optional<std::string> requestedInputDevice;
+  bool listInputDevices = false;
 
   for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
@@ -242,6 +281,13 @@ int main(int argc, char** argv) {
         return 1;
       }
       requestedChannels = value;
+    } else if (arg == "--input-device" && i + 1 < argc) {
+      requestedInputDevice = argv[++i];
+    } else if (arg == "--input-device") {
+      std::fprintf(stderr, "--input-device requires an identifier\n");
+      return 1;
+    } else if (arg == "--list-input-devices") {
+      listInputDevices = true;
     } else if (arg == "--help") {
       showHelp = true;
     } else {
@@ -254,6 +300,10 @@ int main(int argc, char** argv) {
   if (showHelp) {
     printUsage();
     return 0;
+  }
+
+  if (listInputDevices) {
+    return listPortAudioInputDevices();
   }
 
   if (!headless && !wavPath.empty()) {
@@ -278,6 +328,9 @@ int main(int argc, char** argv) {
   if (requestedChannels) {
     audioConfig.engineChannels = std::max(1, *requestedChannels);
     audioConfig.requestedChannels = requestedChannels;
+  }
+  if (requestedInputDevice) {
+    audioConfig.requestedDevice = requestedInputDevice;
   }
   avs::AudioInput audio(audioConfig);
   if (!audio.ok()) {

@@ -132,11 +132,18 @@ class AdditiveBlendEffect : public Effect {
 
 class ScriptedEffect : public Effect {
  public:
-  ScriptedEffect(std::string frameScript, std::string pixelScript);
+  enum class Mode { kSuperscope, kColorModifier };
+
+  ScriptedEffect(std::string frameScript,
+                 std::string pixelScript,
+                 Mode mode = Mode::kSuperscope,
+                 bool colorModRecompute = false);
   ScriptedEffect(std::string initScript,
                  std::string frameScript,
                  std::string beatScript,
-                 std::string pixelScript);
+                 std::string pixelScript,
+                 Mode mode = Mode::kSuperscope,
+                 bool colorModRecompute = false);
   ~ScriptedEffect() override;
   void init(int w, int h) override;
   void process(const Framebuffer& in, Framebuffer& out) override;
@@ -169,12 +176,20 @@ class ScriptedEffect : public Effect {
   bool dirty_ = true;
   bool initRan_ = false;
   bool pendingBeat_ = false;
+  bool isBeatFrame_ = false;
   float lastRms_ = 0.0f;
+  Mode mode_ = Mode::kSuperscope;
+  bool colorModRecompute_ = false;
+  bool colorLutDirty_ = true;
+  std::array<std::uint8_t, 256 * 3> colorLut_{};
   EEL_F *time_ = nullptr, *frame_ = nullptr, *bass_ = nullptr, *mid_ = nullptr, *treb_ = nullptr,
         *rms_ = nullptr, *beat_ = nullptr;
+  EEL_F *bVar_ = nullptr, *n_ = nullptr, *i_ = nullptr, *v_ = nullptr, *wVar_ = nullptr,
+        *hVar_ = nullptr, *skip_ = nullptr, *linesize_ = nullptr, *drawmode_ = nullptr;
   EEL_F *x_ = nullptr, *y_ = nullptr, *r_ = nullptr, *g_ = nullptr, *b_ = nullptr;
   int w_ = 0;
   int h_ = 0;
+  std::array<float, 576> waveform_{};
 };
 
 }  // namespace avs

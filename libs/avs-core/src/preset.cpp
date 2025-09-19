@@ -105,7 +105,12 @@ bool parseColorModifier(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& eff
     return false;
   }
   r.pos = chunkEnd;
-  effect = std::make_unique<ScriptedEffect>(scripts[3], scripts[1], scripts[2], scripts[0]);
+  effect = std::make_unique<ScriptedEffect>(scripts[3],
+                                            scripts[1],
+                                            scripts[2],
+                                            scripts[0],
+                                            ScriptedEffect::Mode::kColorModifier,
+                                            recompute != 0);
   return true;
 }
 
@@ -266,10 +271,92 @@ ParsedPreset parseTextPreset(const std::string& text) {
     } else if (type == "convolution") {
       result.chain.push_back(std::make_unique<ConvolutionEffect>());
     } else if (type == "scripted") {
-      std::string script;
-      std::getline(iss, script);
-      script = trim(script);
-      result.chain.push_back(std::make_unique<ScriptedEffect>("", script, "", ""));
+      std::string rest;
+      std::getline(iss, rest);
+      rest = trim(rest);
+      std::string initScript;
+      std::string frameScript;
+      std::string beatScript;
+      std::string pixelScript;
+      ScriptedEffect::Mode mode = ScriptedEffect::Mode::kSuperscope;
+      bool recompute = false;
+      if (rest.find('=') == std::string::npos) {
+        pixelScript = rest;
+      } else {
+        size_t pos = 0;
+        while (pos < rest.size()) {
+          while (pos < rest.size() &&
+                 std::isspace(static_cast<unsigned char>(rest[pos]))) {
+            ++pos;
+          }
+          if (pos >= rest.size()) break;
+          size_t eq = rest.find('=', pos);
+          if (eq == std::string::npos) {
+            result.unknown.push_back(rest.substr(pos));
+            break;
+          }
+          std::string key = trim(rest.substr(pos, eq - pos));
+          pos = eq + 1;
+          if (pos >= rest.size()) break;
+          std::string value;
+          if (rest[pos] == '"') {
+            ++pos;
+            size_t end = rest.find('"', pos);
+            if (end == std::string::npos) {
+              value = rest.substr(pos);
+              pos = rest.size();
+            } else {
+              value = rest.substr(pos, end - pos);
+              pos = end + 1;
+            }
+          } else {
+            size_t end = rest.find(' ', pos);
+            if (end == std::string::npos) {
+              value = rest.substr(pos);
+              pos = rest.size();
+            } else {
+              value = rest.substr(pos, end - pos);
+              pos = end + 1;
+            }
+          }
+          std::string keyLower;
+          keyLower.resize(key.size());
+          std::transform(key.begin(), key.end(), keyLower.begin(), [](unsigned char c) {
+            return static_cast<char>(std::tolower(c));
+          });
+          if (keyLower == "init") {
+            initScript = value;
+          } else if (keyLower == "frame") {
+            frameScript = value;
+          } else if (keyLower == "beat") {
+            beatScript = value;
+          } else if (keyLower == "pixel" || keyLower == "point") {
+            pixelScript = value;
+          } else if (keyLower == "mode") {
+            std::string valueLower = value;
+            std::transform(valueLower.begin(), valueLower.end(), valueLower.begin(), [](unsigned char c) {
+              return static_cast<char>(std::tolower(c));
+            });
+            if (valueLower == "color_mod" || valueLower == "colormod") {
+              mode = ScriptedEffect::Mode::kColorModifier;
+            } else if (valueLower == "superscope") {
+              mode = ScriptedEffect::Mode::kSuperscope;
+            } else {
+              result.unknown.push_back("scripted:mode=" + value);
+            }
+          } else if (keyLower == "recompute") {
+            std::string valueLower = value;
+            std::transform(valueLower.begin(), valueLower.end(), valueLower.begin(), [](unsigned char c) {
+              return static_cast<char>(std::tolower(c));
+            });
+            recompute = (valueLower == "1" || valueLower == "true");
+          } else {
+            result.unknown.push_back("scripted:" + key);
+          }
+        }
+      }
+      result.chain.push_back(
+          std::make_unique<ScriptedEffect>(initScript, frameScript, beatScript, pixelScript, mode, recompute));
     } else {
       result.warnings.push_back("unsupported effect: " + type);
       result.chain.push_back(std::make_unique<PassThroughEffect>());

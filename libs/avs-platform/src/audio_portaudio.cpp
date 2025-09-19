@@ -5,9 +5,13 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cctype>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <exception>
+#include <optional>
+#include <string>
 
 #include "avs/audio_portaudio_internal.hpp"
 #include "avs/fft.hpp"
@@ -100,18 +104,107 @@ struct AudioInput::Impl {
     }
 
     PaStreamParameters params{};
-    params.device = Pa_GetDefaultInputDevice();
-    if (params.device == paNoDevice) {
-      return;
-    }
-
-    const PaDeviceInfo* info = Pa_GetDeviceInfo(params.device);
-    if (!info) {
-      return;
-    }
-
     params.sampleFormat = paFloat32;
     params.hostApiSpecificStreamInfo = nullptr;
+
+    const PaDeviceInfo* info = nullptr;
+
+    auto toLower = [](std::string value) {
+      std::transform(value.begin(), value.end(), value.begin(),
+                     [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+      return value;
+    };
+
+    if (config.requestedDevice && !config.requestedDevice->empty()) {
+      const std::string& identifier = *config.requestedDevice;
+      PaDeviceIndex deviceCount = Pa_GetDeviceCount();
+      if (deviceCount < 0) {
+        std::fprintf(stderr, "Failed to enumerate PortAudio devices: %s\n",
+                     Pa_GetErrorText(deviceCount));
+        return;
+      }
+      if (deviceCount == 0) {
+        std::fprintf(stderr,
+                     "Requested audio input device \"%s\" cannot be satisfied because no capture "
+                     "devices are available.\n",
+                     identifier.c_str());
+        return;
+      }
+
+      std::optional<PaDeviceIndex> resolved;
+      bool parsedAsIndex = false;
+      try {
+        size_t consumed = 0;
+        int idx = std::stoi(identifier, &consumed);
+        if (consumed == identifier.size()) {
+          parsedAsIndex = true;
+          if (idx >= 0 && idx < deviceCount) {
+            resolved = static_cast<PaDeviceIndex>(idx);
+          } else {
+            std::fprintf(stderr, "Requested audio input device index %d is out of range (0-%d).\n",
+                         idx, deviceCount - 1);
+            return;
+          }
+        }
+      } catch (const std::exception&) {
+        parsedAsIndex = false;
+      }
+
+      if (!parsedAsIndex) {
+        std::string needle = toLower(identifier);
+        for (PaDeviceIndex i = 0; i < deviceCount; ++i) {
+          if (const PaDeviceInfo* candidate = Pa_GetDeviceInfo(i)) {
+            std::string name = candidate->name ? candidate->name : "";
+            if (toLower(name).find(needle) != std::string::npos) {
+              resolved = i;
+              break;
+            }
+          }
+        }
+        if (!resolved) {
+          std::fprintf(
+              stderr,
+              "Requested audio input device \"%s\" was not found. Use --list-input-devices "
+              "to inspect available capture endpoints.\n",
+              identifier.c_str());
+          return;
+        }
+      }
+
+      params.device = *resolved;
+      info = Pa_GetDeviceInfo(params.device);
+      if (!info) {
+        std::fprintf(stderr, "PortAudio did not provide information for input device %d.\n",
+                     static_cast<int>(params.device));
+        return;
+      }
+      if (info->maxInputChannels <= 0) {
+        std::fprintf(stderr,
+                     "Requested audio input device \"%s\" cannot capture audio (no input channels "
+                     "reported).\n",
+                     identifier.c_str());
+        return;
+      }
+    } else {
+      params.device = Pa_GetDefaultInputDevice();
+      if (params.device == paNoDevice) {
+        std::fprintf(stderr, "No default PortAudio input device is available.\n");
+        return;
+      }
+      info = Pa_GetDeviceInfo(params.device);
+      if (!info) {
+        std::fprintf(stderr,
+                     "PortAudio did not provide information for the default input device.\n");
+        return;
+      }
+      if (info->maxInputChannels <= 0) {
+        std::fprintf(stderr,
+                     "Default PortAudio input device cannot capture audio (no input channels "
+                     "reported).\n");
+        return;
+      }
+    }
+
     params.suggestedLatency = info->defaultLowInputLatency;
 
     portaudio_detail::StreamNegotiationRequest request;

@@ -15,6 +15,7 @@ class Engine {
 
   void resize(int w, int h);
   void setAudio(const AudioState& a);
+  void setMouseState(const MouseState& mouse);
   void step(float dt);
   const Framebuffer& frame() const;
   void setChain(std::vector<std::unique_ptr<Effect>> chain);
@@ -28,6 +29,7 @@ class Engine {
   int cur_ = 0;
   std::vector<std::unique_ptr<Effect>> chain_;
   AudioState audio_{};
+  MouseState mouse_{};
   float time_ = 0.0f;
   int frame_ = 0;
 };

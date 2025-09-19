@@ -11,6 +11,9 @@
 
 namespace avs {
 
+static_assert(EelVm::kLegacyVisSamples == AudioState::kLegacyVisSamples,
+              "Legacy vis sample count mismatch");
+
 struct Framebuffer {
   int w = 0;
   int h = 0;
@@ -140,7 +143,7 @@ class ScriptedEffect : public Effect {
   ~ScriptedEffect() override;
   void init(int w, int h) override;
   void process(const Framebuffer& in, Framebuffer& out) override;
-  void update(float time, int frame, const AudioState& audio);
+  void update(float time, int frame, const AudioState& audio, const MouseState& mouse);
   void setScripts(std::string frameScript, std::string pixelScript);
   void setScripts(std::string initScript,
                   std::string frameScript,
@@ -175,6 +178,9 @@ class ScriptedEffect : public Effect {
   EEL_F *x_ = nullptr, *y_ = nullptr, *r_ = nullptr, *g_ = nullptr, *b_ = nullptr;
   int w_ = 0;
   int h_ = 0;
+  std::array<std::uint8_t, EelVm::kLegacyVisSamples * 2> legacyOsc_{};
+  std::array<std::uint8_t, EelVm::kLegacyVisSamples * 2> legacySpec_{};
+  int legacyChannels_ = 0;
 };
 
 }  // namespace avs

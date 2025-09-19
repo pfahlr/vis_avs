@@ -30,6 +30,8 @@ void Engine::resize(int w, int h) {
 
 void Engine::setAudio(const AudioState& a) { audio_ = a; }
 
+void Engine::setMouseState(const MouseState& mouse) { mouse_ = mouse; }
+
 void Engine::setChain(std::vector<std::unique_ptr<Effect>> chain) {
   chain_ = std::move(chain);
   for (auto& e : chain_) {
@@ -54,7 +56,7 @@ void Engine::step(float dt) {
   int out = 1;
   for (auto& e : chain_) {
     if (auto* se = dynamic_cast<ScriptedEffect*>(e.get())) {
-      se->update(time_, frame_, audio_);
+      se->update(time_, frame_, audio_, mouse_);
     }
     e->process(fb_[in], fb_[out]);
     std::swap(in, out);

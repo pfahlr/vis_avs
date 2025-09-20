@@ -389,6 +389,55 @@ struct AudioInput::Impl {
     fft.compute(mono.data(), spectrum);
     state.spectrum = spectrum;
 
+    AudioState::LegacyBuffer specLegacy{};
+    specLegacy.fill(0.0f);
+    const size_t legacyCount = AudioState::kLegacyVisSamples;
+    const size_t spectrumSize = spectrum.size();
+    if (legacyCount > 0 && spectrumSize > 0) {
+      const double scale = static_cast<double>(spectrumSize) / static_cast<double>(legacyCount);
+      for (size_t i = 0; i < legacyCount; ++i) {
+        size_t begin = static_cast<size_t>(std::floor(static_cast<double>(i) * scale));
+        size_t end = static_cast<size_t>(std::floor(static_cast<double>(i + 1) * scale));
+        if (end <= begin) end = std::min(begin + 1, spectrumSize);
+        double sum = 0.0;
+        size_t count = 0;
+        for (size_t j = begin; j < end && j < spectrumSize; ++j) {
+          sum += spectrum[j];
+          ++count;
+        }
+        float value = 0.0f;
+        if (count > 0) {
+          value = static_cast<float>(sum / static_cast<double>(count));
+        } else if (begin < spectrumSize) {
+          value = spectrum[begin];
+        }
+        specLegacy[i] = value;
+      }
+    }
+    state.spectrumLegacy[0] = specLegacy;
+    state.spectrumLegacy[1] = specLegacy;
+
+    for (auto& scope : state.oscilloscope) {
+      scope.fill(0.0f);
+    }
+    const size_t legacySamples = AudioState::kLegacyVisSamples;
+    const size_t channelCount = static_cast<size_t>(channels);
+    if (legacySamples > 0 && channelCount > 0) {
+      const size_t sampleStart = kFftSize > legacySamples ? static_cast<size_t>(kFftSize) - legacySamples : 0;
+      for (int ch = 0; ch < std::min<int>(channels, 2); ++ch) {
+        auto& dest = state.oscilloscope[static_cast<size_t>(ch)];
+        for (size_t i = 0; i < legacySamples; ++i) {
+          size_t sampleIndex = sampleStart + i;
+          if (sampleIndex >= static_cast<size_t>(kFftSize)) break;
+          size_t idx = (start + sampleIndex * channelCount + static_cast<size_t>(ch)) & mask;
+          dest[i] = ring[idx];
+        }
+      }
+      if (channels == 1) {
+        state.oscilloscope[1] = state.oscilloscope[0];
+      }
+    }
+
     std::array<float, 3> newBands{0.f, 0.f, 0.f};
     std::array<int, 3> counts{0, 0, 0};
     const double binHz = static_cast<double>(sampleRate) / kFftSize;

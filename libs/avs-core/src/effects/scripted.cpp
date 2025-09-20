@@ -1,9 +1,7 @@
 #include <algorithm>
 #include <cmath>
-
 #include <array>
 #include <cstdint>
-
 #include "avs/effects.hpp"
 
 namespace {
@@ -202,11 +200,24 @@ void ScriptedEffect::init(int w, int h) {
   lastRms_ = 0.0f;
   initRan_ = false;
   pendingBeat_ = false;
+  std::fill(legacyOsc_.begin(), legacyOsc_.end(), 0);
+  std::fill(legacySpec_.begin(), legacySpec_.end(), 0);
+  legacyChannels_ = 0;
+  EelVm::LegacySources sources{};
+  sources.oscBase = legacyOsc_.data();
+  sources.specBase = legacySpec_.data();
+  sources.sampleCount = AudioState::kLegacyVisSamples;
+  sources.channels = legacyChannels_;
+  vm_.setLegacySources(sources);
   colorLutDirty_ = true;
   waveform_.fill(0.0f);
+
 }
 
-void ScriptedEffect::update(float time, int frame, const AudioState& audio) {
+void ScriptedEffect::update(float time,
+                            int frame,
+                            const AudioState& audio,
+                            const MouseState& mouse) {
   if (time_) *time_ = time;
   if (frame_) *frame_ = frame;
   if (bass_) *bass_ = audio.bands[0];
@@ -239,6 +250,39 @@ void ScriptedEffect::update(float time, int frame, const AudioState& audio) {
   } else {
     waveform_.fill(0.0f);
   }
+
+  legacyChannels_ = std::clamp(audio.channels, 0, 2);
+  const size_t sampleCount = AudioState::kLegacyVisSamples;
+  for (int ch = 0; ch < 2; ++ch) {
+    std::uint8_t* oscDst = legacyOsc_.data() + static_cast<size_t>(ch) * sampleCount;
+    std::uint8_t* specDst = legacySpec_.data() + static_cast<size_t>(ch) * sampleCount;
+    std::fill(oscDst, oscDst + sampleCount, 0);
+    std::fill(specDst, specDst + sampleCount, 0);
+    if (ch < legacyChannels_) {
+      for (size_t i = 0; i < sampleCount; ++i) {
+        float oscVal = audio.oscilloscope[ch][i];
+        float specVal = audio.spectrumLegacy[ch][i];
+        oscVal = std::clamp(oscVal, -1.0f, 1.0f);
+        specVal = std::clamp(specVal, 0.0f, 1.0f);
+        oscDst[i] = static_cast<std::uint8_t>(std::lround(oscVal * 127.5f + 127.5f));
+        specDst[i] = static_cast<std::uint8_t>(std::lround(specVal * 255.0f));
+      }
+    }
+  }
+  if (legacyChannels_ <= 1) {
+    std::copy_n(legacyOsc_.data(), sampleCount, legacyOsc_.data() + sampleCount);
+    std::copy_n(legacySpec_.data(), sampleCount, legacySpec_.data() + sampleCount);
+  }
+
+  EelVm::LegacySources sources{};
+  sources.oscBase = legacyOsc_.data();
+  sources.specBase = legacySpec_.data();
+  sources.sampleCount = sampleCount;
+  sources.channels = legacyChannels_;
+  sources.audioTimeSeconds = audio.timeSeconds;
+  sources.engineTimeSeconds = time;
+  sources.mouse = mouse;
+  vm_.setLegacySources(sources);
 }
 
 void ScriptedEffect::compile() {

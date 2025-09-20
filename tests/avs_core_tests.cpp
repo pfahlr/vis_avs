@@ -4,13 +4,18 @@
 #include <chrono>
 #include <cmath>
 #include <cstdint>
+#include <cctype>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
+#include <map>
+#include <sstream>
 #include <thread>
 
 #include "avs/audio_portaudio_internal.hpp"
 #include "avs/effects.hpp"
 #include "avs/fs.hpp"
+#include "avs/engine.hpp"
 #include "avs/preset.hpp"
 
 using namespace avs;
@@ -75,6 +80,66 @@ static std::uint32_t checksum(const Framebuffer& fb) {
   }
   return sum;
 }
+
+namespace {
+
+std::string trimCopy(const std::string& s) {
+  size_t begin = 0;
+  while (begin < s.size() && std::isspace(static_cast<unsigned char>(s[begin]))) {
+    ++begin;
+  }
+  size_t end = s.size();
+  while (end > begin && std::isspace(static_cast<unsigned char>(s[end - 1]))) {
+    --end;
+  }
+  return s.substr(begin, end - begin);
+}
+
+std::string hashFramebufferFNV(const Framebuffer& fb) {
+  constexpr std::uint64_t kOffset = 1469598103934665603ull;
+  constexpr std::uint64_t kPrime = 1099511628211ull;
+  std::uint64_t hash = kOffset;
+  for (std::uint8_t byte : fb.rgba) {
+    hash ^= byte;
+    hash *= kPrime;
+  }
+  std::ostringstream oss;
+  oss << std::hex << std::setfill('0') << std::setw(16) << hash;
+  return oss.str();
+}
+
+std::map<std::pair<int, int>, std::string> loadGoldenHashes(const std::filesystem::path& path) {
+  std::ifstream file(path);
+  std::map<std::pair<int, int>, std::string> result;
+  if (!file) {
+    return result;
+  }
+  std::string line;
+  while (std::getline(file, line)) {
+    line = trimCopy(line);
+    if (line.empty() || line[0] == '#') continue;
+    std::istringstream iss(line);
+    std::string sizeToken;
+    std::string hash;
+    if (!(iss >> sizeToken >> hash)) continue;
+    size_t sep = sizeToken.find('x');
+    if (sep == std::string::npos) continue;
+    int w = std::stoi(sizeToken.substr(0, sep));
+    int h = std::stoi(sizeToken.substr(sep + 1));
+    result[{w, h}] = hash;
+  }
+  return result;
+}
+
+std::string renderPresetHash(std::vector<std::unique_ptr<Effect>> chain, int w, int h) {
+  avs::Engine engine(w, h);
+  engine.setChain(std::move(chain));
+  engine.setAudio(avs::AudioState{});
+  engine.step(0.0f);
+  return hashFramebufferFNV(engine.frame());
+}
+
+}  // namespace
 
 TEST(MotionBlurEffect, AveragesWithHistory) {
   Framebuffer in;
@@ -206,6 +271,40 @@ TEST(PresetParser, ParsesNestedRenderLists) {
   EXPECT_NE(dynamic_cast<avs::ScriptedEffect*>(composite->children()[0].get()), nullptr);
   ASSERT_EQ(preset.comments.size(), 1u);
   EXPECT_EQ(preset.comments[0], "Nested list comment");
+}
+
+TEST(ScriptedEffect, SuperscopeLegacyHashes) {
+  namespace fs = std::filesystem;
+  fs::path sourceDir{SOURCE_DIR};
+  auto golden = loadGoldenHashes(sourceDir / "tests/golden/superscope_hashes.txt");
+  ASSERT_FALSE(golden.empty());
+  fs::path presetPath = sourceDir / "tests/data/superscope_classic.avs";
+  for (const auto& dims : {std::pair<int, int>{32, 24}, std::pair<int, int>{64, 48}}) {
+    auto parsed = avs::parsePreset(presetPath);
+    EXPECT_TRUE(parsed.warnings.empty());
+    ASSERT_FALSE(parsed.chain.empty());
+    auto it = golden.find(dims);
+    ASSERT_NE(it, golden.end());
+    auto hash = renderPresetHash(std::move(parsed.chain), dims.first, dims.second);
+    EXPECT_EQ(hash, it->second);
+  }
+}
+
+TEST(ScriptedEffect, ColorModifierLegacyHashes) {
+  namespace fs = std::filesystem;
+  fs::path sourceDir{SOURCE_DIR};
+  auto golden = loadGoldenHashes(sourceDir / "tests/golden/color_mod_hashes.txt");
+  ASSERT_FALSE(golden.empty());
+  fs::path presetPath = sourceDir / "tests/data/color_mod_classic.avs";
+  for (const auto& dims : {std::pair<int, int>{16, 12}, std::pair<int, int>{48, 36}}) {
+    auto parsed = avs::parsePreset(presetPath);
+    EXPECT_TRUE(parsed.warnings.empty());
+    ASSERT_FALSE(parsed.chain.empty());
+    auto it = golden.find(dims);
+    ASSERT_NE(it, golden.end());
+    auto hash = renderPresetHash(std::move(parsed.chain), dims.first, dims.second);
+    EXPECT_EQ(hash, it->second);
+  }
 }
 
 TEST(FileWatcher, DetectsModification) {

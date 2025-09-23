@@ -21,6 +21,19 @@ jobs:
           sudo apt-get install -y jq
           sudo snap install yq
 
+      - name: Ensure labels exist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          LABELS=("warnings" "sse" "avs-core" "portaudio" "opengl" "presets" "cli" "gui" "parser" "compatibility" "bugfix" "audio" "resampling" "reliability" "scripting" "eel")
+          for L in "${LABELS[@]}"; do
+            if ! gh label list --json name -q '.[] | select(.name=="'$L'")' | grep -q .; then
+              echo "Creating label: $L"
+              gh label create "$L" --color "ededed" || true
+            fi
+          done
+
       - name: Create/Update issues from YAML
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

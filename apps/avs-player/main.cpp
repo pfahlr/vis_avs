@@ -404,20 +404,23 @@ int main(int argc, char** argv) {
         std::fprintf(stderr, "%s\n", w.c_str());
       }
     }
-    bool success = !parsed.chain.empty();
-    if (!success) {
+    if (parsed.chain.empty()) {
       std::fprintf(stderr, "failed to parse preset: %s\n", currentPreset.string().c_str());
-    } else {
-      engine.setChain(std::move(parsed.chain));
+      return false;
     }
+    engine.setChain(std::move(parsed.chain));
     watcher = std::make_unique<avs::FileWatcher>(currentPreset);
-    return success;
+    return true;
   };
 
   bool chainConfigured = false;
   if (!presetPath.empty()) {
     currentPreset = presetPath;
     chainConfigured = loadPreset();
+    if (!chainConfigured) {
+      std::fprintf(stderr, "Failed to load preset specified via --preset.\n");
+      return 1;
+    }
   }
 
   if (!chainConfigured && !presetDir.empty()) {

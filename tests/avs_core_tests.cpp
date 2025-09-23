@@ -275,6 +275,15 @@ TEST(PresetParser, ParsesNestedRenderLists) {
   EXPECT_EQ(preset.comments[0], "Nested list comment");
 }
 
+TEST(PresetParser, ReadsFirstEffectAfterExtendedHeader) {
+  namespace fs = std::filesystem;
+  auto preset = avs::parsePreset(fs::path(SOURCE_DIR) / "tests/data/extended_header.avs");
+  EXPECT_TRUE(preset.warnings.empty());
+  ASSERT_EQ(preset.comments.size(), 1u);
+  EXPECT_EQ(preset.comments[0], "Hello!");
+  EXPECT_TRUE(preset.unknown.empty());
+}
+
 TEST(PresetParser, HandlesExtendedRenderListHeader) {
   namespace fs = std::filesystem;
   auto preset = avs::parsePreset(fs::path(SOURCE_DIR) / "tests/data/extended_color_mod.avs");

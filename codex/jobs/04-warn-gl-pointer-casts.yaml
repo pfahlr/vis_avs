@@ -1,6 +1,6 @@
 id: warn-gl-pointer-casts
 title: Fix OpenGL vertex attribute pointer casts
-status: READY
+status: IN-REVIEW
 labels: [warnings, opengl, platform]
 depends_on: []
 goal: >

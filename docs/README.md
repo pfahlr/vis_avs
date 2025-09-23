@@ -28,15 +28,17 @@ ctest
 Run the stub player after building:
 
 ```bash
-./apps/avs-player/avs-player [--sample-rate 48000] [--channels 2]
+./apps/avs-player/avs-player [--sample-rate 48000|default] [--channels 2|default]
 ```
 
 The runtime can request specific capture parameters when talking to PortAudio.
 Use `--sample-rate` and `--channels` to ask the device for a particular format;
-the player will fall back to the device defaults if the request is not
-available and resample to the engine's 48 kHz internal representation. Library
-consumers can achieve the same behaviour by setting
-`AudioInputConfig::requestedSampleRate` and `AudioInputConfig::requestedChannels`.
+pass `default` to either flag to explicitly request the device defaults. The
+player falls back to the hardware defaults when the request is not available
+and resamples to the engine's 48 kHz internal representation. Library consumers
+can achieve the same behaviour by adjusting `AudioInputConfig::requestedSampleRate`,
+`AudioInputConfig::requestedChannels`, and the new `useDeviceDefaultSampleRate`
+and `useDeviceDefaultChannels` toggles.
 
 Enumerate capture devices (and their numeric identifiers) via:
 

@@ -383,7 +383,7 @@ TEST(PortAudioNegotiation, FallsBackToDefaultRate) {
   request.requestedSampleRate = 44100;
   request.requestedChannels = 2;
 
-  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 2};
+  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 2, 2};
   int queryCount = 0;
   auto result =
       avs::portaudio_detail::negotiateStream(request, device, [&](int channels, double rate) {
@@ -405,7 +405,7 @@ TEST(PortAudioNegotiation, KeepsRequestedFormatWhenSupported) {
   request.requestedSampleRate = 48000;
   request.requestedChannels = 2;
 
-  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 4};
+  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 4, 4};
   auto result =
       avs::portaudio_detail::negotiateStream(request, device, [&](int channels, double rate) {
         EXPECT_EQ(channels, 2);
@@ -424,7 +424,7 @@ TEST(PortAudioNegotiation, ClampsRequestedChannelsToDeviceCapabilities) {
   request.engineChannels = 2;
   request.requestedChannels = 4;
 
-  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 2};
+  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 2, 2};
   int queryCount = 0;
   auto result =
       avs::portaudio_detail::negotiateStream(request, device, [&](int channels, double rate) {
@@ -437,6 +437,64 @@ TEST(PortAudioNegotiation, ClampsRequestedChannelsToDeviceCapabilities) {
   EXPECT_EQ(result.channelCount, 2);
   EXPECT_FALSE(result.usedFallbackRate);
   EXPECT_EQ(queryCount, 1);
+}
+
+TEST(PortAudioNegotiation, UsesDeviceDefaultSampleRateWhenRequested) {
+  avs::portaudio_detail::StreamNegotiationRequest request;
+  request.engineSampleRate = 48000;
+  request.engineChannels = 2;
+  request.useDeviceDefaultSampleRate = true;
+
+  avs::portaudio_detail::StreamNegotiationDeviceInfo device{44100.0, 2, 1};
+  int queryCount = 0;
+  auto result =
+      avs::portaudio_detail::negotiateStream(request, device, [&](int channels, double rate) {
+        ++queryCount;
+        EXPECT_EQ(channels, 2);
+        return std::fabs(rate - 44100.0) < 1e-6;
+      });
+
+  EXPECT_TRUE(result.supported);
+  EXPECT_FALSE(result.usedFallbackRate);
+  EXPECT_DOUBLE_EQ(result.sampleRate, 44100.0);
+  EXPECT_EQ(result.channelCount, 2);
+  EXPECT_EQ(queryCount, 1);
+}
+
+TEST(PortAudioNegotiation, PrefersEngineRateWhenDeviceDefaultDisabled) {
+  avs::portaudio_detail::StreamNegotiationRequest request;
+  request.engineSampleRate = 48000;
+  request.engineChannels = 2;
+  request.useDeviceDefaultSampleRate = false;
+
+  avs::portaudio_detail::StreamNegotiationDeviceInfo device{44100.0, 2, 2};
+  auto result =
+      avs::portaudio_detail::negotiateStream(request, device, [&](int channels, double rate) {
+        EXPECT_EQ(channels, 2);
+        return std::fabs(rate - 48000.0) < 1e-6;
+      });
+
+  EXPECT_TRUE(result.supported);
+  EXPECT_FALSE(result.usedFallbackRate);
+  EXPECT_DOUBLE_EQ(result.sampleRate, 48000.0);
+}
+
+TEST(PortAudioNegotiation, UsesDeviceDefaultChannelsWhenRequested) {
+  avs::portaudio_detail::StreamNegotiationRequest request;
+  request.engineSampleRate = 48000;
+  request.engineChannels = 2;
+  request.useDeviceDefaultChannels = true;
+
+  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 2, 1};
+  auto result =
+      avs::portaudio_detail::negotiateStream(request, device, [&](int channels, double rate) {
+        EXPECT_EQ(rate, 48000.0);
+        return channels == 1;
+      });
+
+  EXPECT_TRUE(result.supported);
+  EXPECT_EQ(result.channelCount, 1);
+  EXPECT_FALSE(result.usedFallbackRate);
 }
 
 TEST(PortAudioDeviceSelection, ParsesNumericIdentifier) {

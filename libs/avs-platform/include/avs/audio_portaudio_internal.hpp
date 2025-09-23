@@ -21,15 +21,18 @@ CallbackResult processCallbackInput(const float* input, size_t samples, size_t w
 bool callbackIndicatesUnderflow(const void* input, PaStreamCallbackFlags statusFlags);
 
 struct StreamNegotiationRequest {
-  int engineSampleRate;
-  int engineChannels;
+  int engineSampleRate = 0;
+  int engineChannels = 0;
   std::optional<int> requestedSampleRate;
   std::optional<int> requestedChannels;
+  bool useDeviceDefaultSampleRate = true;
+  bool useDeviceDefaultChannels = false;
 };
 
 struct StreamNegotiationDeviceInfo {
-  double defaultSampleRate;
-  int maxInputChannels;
+  double defaultSampleRate = 0.0;
+  int maxInputChannels = 0;
+  int defaultInputChannels = 0;
 };
 
 struct StreamNegotiationResult {

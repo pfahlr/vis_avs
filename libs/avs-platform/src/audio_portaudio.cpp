@@ -41,43 +41,46 @@ StreamNegotiationResult negotiateStream(const StreamNegotiationRequest& request,
     return result;
   }
 
-  int desiredChannels = request.requestedChannels.has_value()
-                            ? std::max(1, *request.requestedChannels)
-                            : std::max(1, request.engineChannels);
+  int desiredChannels = std::max(1, request.engineChannels);
+  if (request.useDeviceDefaultChannels && device.defaultInputChannels > 0) {
+    desiredChannels = device.defaultInputChannels;
+  }
+  if (request.requestedChannels.has_value()) {
+    desiredChannels = std::max(1, *request.requestedChannels);
+  }
   desiredChannels = std::min(desiredChannels, device.maxInputChannels);
   result.channelCount = desiredChannels;
 
   const double engineRate = static_cast<double>(std::max(1, request.engineSampleRate));
-  const double defaultRate = device.defaultSampleRate > 0.0 ? device.defaultSampleRate : engineRate;
+  const double deviceRate = device.defaultSampleRate > 0.0 ? device.defaultSampleRate : engineRate;
 
-  double candidateRate = defaultRate;
-  bool candidateIsRequested = false;
+  double candidateRate = deviceRate;
   if (request.requestedSampleRate.has_value()) {
-    candidateRate = static_cast<double>(*request.requestedSampleRate);
-    candidateIsRequested = true;
-    if (candidateRate <= 0.0) {
-      candidateRate = defaultRate;
-      candidateIsRequested = false;
-    }
+    candidateRate = static_cast<double>(std::max(1, *request.requestedSampleRate));
+  } else if (!request.useDeviceDefaultSampleRate) {
+    candidateRate = engineRate;
   }
 
   auto supported = isSupported(result.channelCount, candidateRate);
-  if (!supported && candidateIsRequested) {
-    double fallback = defaultRate > 0.0 ? defaultRate : engineRate;
-    if (fallback != candidateRate) {
-      candidateRate = fallback;
-      result.usedFallbackRate = true;
-      supported = isSupported(result.channelCount, candidateRate);
+  auto tryFallbackRate = [&](double newRate) {
+    if (supported) {
+      return;
     }
-  }
+    if (std::fabs(candidateRate - newRate) < 1e-9) {
+      return;
+    }
+    if (newRate <= 0.0) {
+      return;
+    }
+    if (isSupported(result.channelCount, newRate)) {
+      candidateRate = newRate;
+      supported = true;
+      result.usedFallbackRate = true;
+    }
+  };
 
-  if (!supported && candidateRate != engineRate) {
-    candidateRate = engineRate;
-    if (candidateRate > 0.0) {
-      result.usedFallbackRate = true;
-      supported = isSupported(result.channelCount, candidateRate);
-    }
-  }
+  tryFallbackRate(deviceRate);
+  tryFallbackRate(engineRate);
 
   result.sampleRate = candidateRate;
   result.supported = supported;
@@ -270,8 +273,11 @@ struct AudioInput::Impl {
     request.engineChannels = engineChannels;
     request.requestedSampleRate = config.requestedSampleRate;
     request.requestedChannels = config.requestedChannels;
+    request.useDeviceDefaultSampleRate = config.useDeviceDefaultSampleRate;
+    request.useDeviceDefaultChannels = config.useDeviceDefaultChannels;
 
     portaudio_detail::StreamNegotiationDeviceInfo deviceInfo{info->defaultSampleRate,
+                                                             info->maxInputChannels,
                                                              info->maxInputChannels};
 
     auto negotiation =

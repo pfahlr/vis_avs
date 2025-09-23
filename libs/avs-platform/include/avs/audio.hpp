@@ -25,6 +25,8 @@ struct AudioState {
 struct AudioInputConfig {
   int engineSampleRate = 48000;
   int engineChannels = 2;
+  bool useDeviceDefaultSampleRate = true;
+  bool useDeviceDefaultChannels = false;
   std::optional<int> requestedSampleRate;
   std::optional<int> requestedChannels;
   std::optional<std::string> requestedDeviceIdentifier;

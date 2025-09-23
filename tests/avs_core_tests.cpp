@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <portaudio.h>
 
 #include <array>
 #include <cctype>
@@ -340,6 +341,13 @@ TEST(PortAudioCallback, NullInputRaisesUnderflowFlag) {
   for (size_t i = 0; i < samples; ++i) {
     EXPECT_FLOAT_EQ(ring[(writeIndex + i) & mask], 0.0f);
   }
+}
+
+TEST(PortAudioCallback, FlagsReportUnderflowEvents) {
+  int dummy = 0;
+  EXPECT_FALSE(avs::portaudio_detail::callbackIndicatesUnderflow(&dummy, paNoFlag));
+  EXPECT_TRUE(avs::portaudio_detail::callbackIndicatesUnderflow(nullptr, paNoFlag));
+  EXPECT_TRUE(avs::portaudio_detail::callbackIndicatesUnderflow(&dummy, paInputUnderflow));
 }
 
 TEST(PortAudioNegotiation, FallsBackToDefaultRate) {

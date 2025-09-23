@@ -1,5 +1,7 @@
 #pragma once
 
+#include <portaudio.h>
+
 #include <cstddef>
 #include <functional>
 #include <optional>
@@ -15,6 +17,8 @@ struct CallbackResult {
 
 CallbackResult processCallbackInput(const float* input, size_t samples, size_t writeIndex,
                                     size_t mask, std::vector<float>& ring);
+
+bool callbackIndicatesUnderflow(const void* input, PaStreamCallbackFlags statusFlags);
 
 struct StreamNegotiationRequest {
   int engineSampleRate;

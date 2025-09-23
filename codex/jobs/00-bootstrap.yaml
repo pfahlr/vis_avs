@@ -1,0 +1,16 @@
+id: bootstrap-codex
+title: Bootstrap Codex session
+status: READY
+labels: [meta]
+depends_on: []
+goal: >
+  Verify Codex can read YAML jobs, open a PR, and update job status.
+steps:
+  - Edit this file to set status to IN-REVIEW.
+  - Open a no-op PR touching only this file.
+acceptance_criteria:
+  - PR opens from branch codex/bootstrap-codex and CI passes.
+test_hook:
+  - "None (metadata only)."
+files_touched:
+  - codex/jobs/00-bootstrap.yaml

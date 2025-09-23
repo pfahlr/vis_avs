@@ -1,0 +1,18 @@
+id: presets-gui-preset-cli
+title: Honor --preset in GUI mode
+status: READY
+labels: [presets, cli, gui]
+depends_on: []
+goal: >
+  Ensure interactive avs-player loads the user-specified preset instead of the fallback chain.
+steps:
+  - After CLI parse, if presetPath is non-empty, assign to currentPreset and call loadPreset().
+  - Initialize file watcher normally and report parse errors clearly.
+  - Manual check: ./avs-player --preset tests/data/simple.avs renders that preset.
+acceptance_criteria:
+  - GUI mode loads and runs user-specified preset; not the demo defaults.
+test_hook:
+  - "Integration: launch with --preset and assert effect chain != fallback (via logs or query)."
+files_touched:
+  - apps/avs-player/main.cpp
+

@@ -1,3 +1,6 @@
+#include <portaudio.h>
+
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cmath>
@@ -7,6 +10,7 @@
 #include <fstream>
 #include <iomanip>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -66,6 +70,49 @@ std::string hashFrame(const std::vector<std::uint8_t>& data) {
   return oss.str();
 }
 
+void printUsage() {
+  std::fprintf(
+      stderr,
+      "Usage: avs-player [--headless --wav <file> --preset <file> --frames <n> --out <dir>]\n"
+      "                 [--sample-rate <hz>] [--channels <count>] [--input-device <id>]\n"
+      "                 [--list-input-devices] [--demo-script] [--presets <directory>] [--help]\n");
+}
+
+int listPortAudioInputDevices() {
+  PaError err = Pa_Initialize();
+  if (err != paNoError) {
+    std::fprintf(stderr, "Failed to initialize PortAudio: %s\n", Pa_GetErrorText(err));
+    return 1;
+  }
+
+  PaDeviceIndex count = Pa_GetDeviceCount();
+  if (count < 0) {
+    std::fprintf(stderr, "Failed to enumerate PortAudio devices: %s\n", Pa_GetErrorText(count));
+    Pa_Terminate();
+    return 1;
+  }
+
+  PaDeviceIndex defaultDevice = Pa_GetDefaultInputDevice();
+  std::printf("Available PortAudio input devices:\n");
+  for (PaDeviceIndex i = 0; i < count; ++i) {
+    const PaDeviceInfo* info = Pa_GetDeviceInfo(i);
+    if (!info) {
+      continue;
+    }
+    bool isDefault = (i == defaultDevice);
+    std::printf("  %d: %s%s\n", static_cast<int>(i), info->name, isDefault ? " (default)" : "");
+    if (info->maxInputChannels > 0) {
+      std::printf("     inputs: %d, default sample rate: %.0f Hz\n", info->maxInputChannels,
+                  info->defaultSampleRate);
+    } else {
+      std::printf("     inputs: %d (cannot capture audio)\n", info->maxInputChannels);
+    }
+  }
+
+  Pa_Terminate();
+  return 0;
+}
+
 class OfflineAudio {
  public:
   explicit OfflineAudio(const WavData& wav)
@@ -98,6 +145,61 @@ class OfflineAudio {
     fft_.compute(mono_.data(), spectrum_);
     state.spectrum = spectrum_;
 
+    avs::AudioState::LegacyBuffer specLegacy{};
+    specLegacy.fill(0.0f);
+    const size_t legacyCount = avs::AudioState::kLegacyVisSamples;
+    const size_t spectrumSize = spectrum_.size();
+    if (legacyCount > 0 && spectrumSize > 0) {
+      const double scale = static_cast<double>(spectrumSize) / static_cast<double>(legacyCount);
+      for (size_t i = 0; i < legacyCount; ++i) {
+        size_t begin = static_cast<size_t>(std::floor(static_cast<double>(i) * scale));
+        size_t end = static_cast<size_t>(std::floor(static_cast<double>(i + 1) * scale));
+        if (end <= begin) end = std::min(begin + 1, spectrumSize);
+        double sum = 0.0;
+        size_t count = 0;
+        for (size_t j = begin; j < end && j < spectrumSize; ++j) {
+          sum += spectrum_[j];
+          ++count;
+        }
+        float value = 0.0f;
+        if (count > 0) {
+          value = static_cast<float>(sum / static_cast<double>(count));
+        } else if (begin < spectrumSize) {
+          value = spectrum_[begin];
+        }
+        specLegacy[i] = value;
+      }
+    }
+    state.spectrumLegacy[0] = specLegacy;
+    state.spectrumLegacy[1] = specLegacy;
+
+    for (auto& scope : state.oscilloscope) {
+      scope.fill(0.0f);
+    }
+    const size_t legacySamples = avs::AudioState::kLegacyVisSamples;
+    const size_t channelCount = static_cast<size_t>(wav_.channels);
+    if (legacySamples > 0 && channelCount > 0) {
+      const size_t sampleStart =
+          kFftSize > legacySamples ? static_cast<size_t>(kFftSize) - legacySamples : 0;
+      for (unsigned int ch = 0; ch < std::min<unsigned int>(wav_.channels, 2); ++ch) {
+        auto& dest = state.oscilloscope[static_cast<size_t>(ch)];
+        for (size_t i = 0; i < legacySamples; ++i) {
+          size_t sampleIndex = sampleStart + i;
+          if (sampleIndex >= static_cast<size_t>(kFftSize)) break;
+          long idx = start + static_cast<long>(sampleIndex) * static_cast<long>(wav_.channels) +
+                     static_cast<long>(ch);
+          float sample = 0.0f;
+          if (idx >= 0 && idx < static_cast<long>(wav_.samples.size())) {
+            sample = wav_.samples[static_cast<size_t>(idx)];
+          }
+          dest[i] = sample;
+        }
+      }
+      if (wav_.channels == 1) {
+        state.oscilloscope[1] = state.oscilloscope[0];
+      }
+    }
+
     std::array<float, 3> newBands{0.f, 0.f, 0.f};
     std::array<int, 3> counts{0, 0, 0};
     const double binHz = static_cast<double>(wav_.sampleRate) / kFftSize;
@@ -122,6 +224,9 @@ class OfflineAudio {
     state.bands = bands_;
     state.timeSeconds =
         static_cast<double>(w) / (static_cast<double>(wav_.channels) * wav_.sampleRate);
+    state.sampleRate = static_cast<int>(wav_.sampleRate);
+    state.inputSampleRate = static_cast<int>(wav_.sampleRate);
+    state.channels = static_cast<int>(wav_.channels);
     return state;
   }
 
@@ -195,6 +300,11 @@ int main(int argc, char** argv) {
   int frames = 0;
   bool demoScript = false;
   std::filesystem::path presetDir;
+  bool showHelp = false;
+  std::optional<int> requestedSampleRate;
+  std::optional<int> requestedChannels;
+  std::optional<std::string> requestedInputDevice;
+  bool listInputDevices = false;
 
   for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
@@ -212,7 +322,48 @@ int main(int argc, char** argv) {
       demoScript = true;
     } else if (arg == "--presets" && i + 1 < argc) {
       presetDir = argv[++i];
+    } else if (arg == "--sample-rate" && i + 1 < argc) {
+      int value = std::stoi(argv[++i]);
+      if (value <= 0) {
+        std::fprintf(stderr, "--sample-rate must be positive\n");
+        return 1;
+      }
+      requestedSampleRate = value;
+    } else if (arg == "--channels" && i + 1 < argc) {
+      int value = std::stoi(argv[++i]);
+      if (value <= 0) {
+        std::fprintf(stderr, "--channels must be positive\n");
+        return 1;
+      }
+      requestedChannels = value;
+    } else if (arg == "--input-device" && i + 1 < argc) {
+      requestedInputDevice = argv[++i];
+    } else if (arg == "--input-device") {
+      std::fprintf(stderr, "--input-device requires an identifier\n");
+      return 1;
+    } else if (arg == "--list-input-devices") {
+      listInputDevices = true;
+    } else if (arg == "--help") {
+      showHelp = true;
+    } else {
+      std::fprintf(stderr, "Unknown argument: %s\n", arg.c_str());
+      printUsage();
+      return 1;
     }
+  }
+
+  if (showHelp) {
+    printUsage();
+    return 0;
+  }
+
+  if (listInputDevices) {
+    return listPortAudioInputDevices();
+  }
+
+  if (!headless && !wavPath.empty()) {
+    std::fprintf(stderr, "--wav requires --headless\n");
+    return 1;
   }
 
   if (headless) {
@@ -225,38 +376,62 @@ int main(int argc, char** argv) {
   }
 
   avs::Window window(1920, 1080, "AVS Player");
-  avs::AudioInput audio;
+  avs::AudioInputConfig audioConfig;
+  if (requestedSampleRate) {
+    audioConfig.requestedSampleRate = requestedSampleRate;
+  }
+  if (requestedChannels) {
+    audioConfig.engineChannels = std::max(1, *requestedChannels);
+    audioConfig.requestedChannels = requestedChannels;
+  }
+  if (requestedInputDevice) {
+    audioConfig.requestedDeviceIdentifier = requestedInputDevice;
+  }
+  avs::AudioInput audio(audioConfig);
   if (!audio.ok()) {
     std::fprintf(stderr, "audio init failed\n");
     return 1;
   }
 
   avs::Engine engine(1920, 1080);
-  std::vector<std::unique_ptr<avs::Effect>> chain;
-
   std::filesystem::path currentPreset;
   std::unique_ptr<avs::FileWatcher> watcher;
-  auto loadPreset = [&]() {
-    if (currentPreset.empty()) return;
+  auto loadPreset = [&]() -> bool {
+    if (currentPreset.empty()) return false;
     auto parsed = avs::parsePreset(currentPreset);
     if (!parsed.warnings.empty()) {
       for (const auto& w : parsed.warnings) {
         std::fprintf(stderr, "%s\n", w.c_str());
       }
     }
-    engine.setChain(std::move(parsed.chain));
+    bool success = !parsed.chain.empty();
+    if (!success) {
+      std::fprintf(stderr, "failed to parse preset: %s\n", currentPreset.string().c_str());
+    } else {
+      engine.setChain(std::move(parsed.chain));
+    }
     watcher = std::make_unique<avs::FileWatcher>(currentPreset);
+    return success;
   };
 
-  if (!presetDir.empty()) {
+  bool chainConfigured = false;
+  if (!presetPath.empty()) {
+    currentPreset = presetPath;
+    chainConfigured = loadPreset();
+  }
+
+  if (!chainConfigured && !presetDir.empty()) {
     for (auto& e : std::filesystem::directory_iterator(presetDir)) {
       if (e.is_regular_file() && e.path().extension() == ".avs") {
         currentPreset = e.path();
-        break;
+        chainConfigured = loadPreset();
+        if (chainConfigured) break;
       }
     }
-    loadPreset();
-  } else if (demoScript) {
+  }
+
+  std::vector<std::unique_ptr<avs::Effect>> chain;
+  if (!chainConfigured && demoScript) {
     std::string frameScript;
     std::string pixelScript =
         "red = clamp(sin(x*0.01 + time)*bass,0,1);"
@@ -264,11 +439,19 @@ int main(int argc, char** argv) {
         "blue = clamp(sin((x+y)*0.01 + time)*treb,0,1);";
     chain.push_back(std::make_unique<avs::ScriptedEffect>(frameScript, pixelScript));
     engine.setChain(std::move(chain));
-  } else {
+    chainConfigured = true;
+  }
+
+  if (!chainConfigured) {
     chain.push_back(std::make_unique<avs::BlurEffect>());
     chain.push_back(std::make_unique<avs::ColorMapEffect>());
     chain.push_back(std::make_unique<avs::ConvolutionEffect>());
     engine.setChain(std::move(chain));
+    chainConfigured = true;
+  }
+
+  if (!currentPreset.empty() && !watcher) {
+    watcher = std::make_unique<avs::FileWatcher>(currentPreset);
   }
 
   auto last = std::chrono::steady_clock::now();

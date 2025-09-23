@@ -1,0 +1,21 @@
+id: audio-resampling-negotiation
+title: Negotiate or resample live audio capture
+status: READY
+labels: [audio, portaudio, resampling, cli]
+depends_on: []
+goal: >
+  Support non-48 kHz devices via PortAudio format negotiation and transparent resampling.
+steps:
+  - Add CLI flags --sample-rate and --channels; extend AudioInputConfig with "requested" or "device default".
+  - Query Pa_IsFormatSupported and fall back to device defaults if needed; record actual rate.
+  - Insert a resampler (e.g., libsamplerate) when engine rate differs from device rate.
+  - Update README/--help; add tests for 44.1 kHz and 48 kHz flows.
+acceptance_criteria:
+  - Interactive and headless both operate correctly at 44.1 kHz and 48 kHz; FFT non-zero.
+test_hook:
+  - "Integration: run with WAVs/devices at 44.1k/48k and verify stable band/RMS logs."
+files_touched:
+  - apps/avs-player/main.cpp
+  - libs/avs-platform/include/avs/audio.hpp
+  - libs/avs-platform/src/audio_portaudio.cpp
+  - docs/README.md

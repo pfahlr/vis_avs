@@ -1,8 +1,7 @@
 name: CI
 
 on:
-  push:
-  pull_request:
+ workflow_dispatch:
 
 jobs:
   build:
@@ -14,7 +13,7 @@ jobs:
           sudo apt-get update && sudo apt-get install -y \
             cmake g++ clang-format git pkg-config \
             libsdl2-dev mesa-common-dev libglu1-mesa-dev \
-            portaudio19-dev libportaudio2 libgtest-dev \
+            portaudio19-dev libportaudio2 libgtest-dev libsamplerate0-dev \
             libjack-dev libasound2-dev
       - name: Configure
         run: cmake -S . -B build

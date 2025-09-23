@@ -1,0 +1,27 @@
+id: presets-binary-parser
+title: Full Nullsoft binary preset parser compatibility
+status: READY
+labels: [presets, parser, compatibility]
+depends_on:
+  - presets-extended-header-fix
+goal: >
+  Replace line parser with a compatible binary loader: detect signature, support LIST_ID containers,
+  implement Color Modifier (ID 45) and comments as no-ops, and expand coverage to legacy effect IDs.
+steps:
+  - Detect "Nullsoft AVS Preset 0.2\x1A" header and parse file-level render list.
+  - Implement LIST_ID (0xFFFFFFFE) nested chains via a composite effect; treat ID 21 as comment/no-op.
+  - Implement effect 45 (Color Modifier) with scripting fields (init/frame/beat/pixel).
+  - Map additional legacy effect IDs to concrete effect classes; preserve unknown fields for round-tripping.
+  - Add regression fixtures (exported from legacy AVS) and tests for chain composition.
+acceptance_criteria:
+  - Complex presets (e.g., Helix) load without unsupported-spam; nested lists materialize correctly.
+  - Color Modifier scripts execute with expected parameters populated.
+test_hook:
+  - "ctest with golden preset fixtures comparing parsed effect types or rendered hashes."
+files_touched:
+  - libs/avs-core/src/preset.cpp
+  - libs/avs-core/include/avs/effects.hpp
+  - libs/avs-core/src/effects/*
+  - tests/data/*
+  - tests/avs_core_tests.cpp
+

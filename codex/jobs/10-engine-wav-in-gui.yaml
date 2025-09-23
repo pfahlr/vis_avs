@@ -1,0 +1,19 @@
+id: engine-wav-in-gui
+title: Respect --wav in interactive mode
+status: READY
+labels: [audio, cli, gui]
+depends_on: []
+goal: >
+  Make --wav usable in GUI (drive engine from file) or fail fast with a clear message.
+steps:
+  - If --wav is provided without --headless, either instantiate OfflineAudio to feed engine.setAudio()
+    or print a fatal error explaining headless requirement (choose one approach and document it).
+  - Ensure shared FFT/band computation matches headless behavior.
+  - Update CLI help/docs and add a test.
+acceptance_criteria:
+  - Providing --wav in GUI leads to either working offline playback or an immediate, explicit error.
+test_hook:
+  - "Run avs-player --wav file.wav and assert non-zero FFT (if supported path) or specific exit code/message."
+files_touched:
+  - apps/avs-player/main.cpp
+  - docs/README.md

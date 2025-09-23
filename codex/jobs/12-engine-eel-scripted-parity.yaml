@@ -1,0 +1,23 @@
+id: engine-eel-scripted-parity
+title: Restore AVS EEL built-ins & ScriptedEffect semantics
+status: READY
+labels: [scripting, eel, presets]
+depends_on:
+  - presets-binary-parser
+goal: >
+  Recreate AVS EEL built-ins and align ScriptedEffect with legacy Superscope/Color Modifier behavior.
+steps:
+  - Register getosc, getspec, gettime, getkbmouse, setmousepos, megabuf/gmegabuf via NSEEL_VM_SetCustomFuncThis.
+  - Plumb audio/time/mouse data from Engine/AudioState into callbacks, preserving thread-safety.
+  - Extend ScriptedEffect to honor variables (n,i,v,w,h,skip,drawmode,linesize), normalized coords, and LUT behavior.
+  - Add regression presets (Superscope/ColorMod) with golden hashes across resolutions.
+acceptance_criteria:
+  - Scripts produce visuals matching legacy outputs within tolerance; color mods transform input frames (not clear-to-black).
+test_hook:
+  - "ctest: golden hash tests for Superscope/ColorMod presets at multiple resolutions."
+files_touched:
+  - libs/avs-core/src/eel.cpp
+  - libs/avs-core/src/effects/scripted_effect.cpp
+  - libs/avs-core/include/avs/effects.hpp
+  - tests/data/*
+  - tests/avs_core_tests.cpp

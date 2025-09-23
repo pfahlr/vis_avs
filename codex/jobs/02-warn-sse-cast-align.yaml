@@ -1,0 +1,27 @@
+id: warn-sse-cast-align
+title: Fix SSE cast-align warnings
+status: READY
+labels: [warnings, sse, avs-core]
+depends_on: []
+goal: >
+  Remove -Wcast-align diagnostics by using unaligned intrinsics or memcpy instead of
+  reinterpreting byte buffers as vector pointers.
+steps:
+  - Replace reinterpret_cast<__m128i*> patterns with _mm_loadu_si128/_mm_storeu_si128
+    or memcpy to aligned temporaries.
+  - In radial_blur.cpp, replace reinterpret_cast<const int*>(center) with a safe
+    uint32_t load (memcpy) before broadcasting.
+  - Build avs-core with -Wcast-align treated as error.
+acceptance_criteria:
+  - No -Wcast-align warnings in avs-core targets under -Werror.
+test_hook:
+  - "CI: add -Werror -Wcast-align; run ctest."
+files_touched:
+  - libs/avs-core/src/effects/motion_blur.cpp
+  - libs/avs-core/src/effects/color_transform.cpp
+  - libs/avs-core/src/effects/glow.cpp
+  - libs/avs-core/src/effects/additive_blend.cpp
+  - libs/avs-core/src/effects/mirror.cpp
+  - libs/avs-core/src/effects/radial_blur.cpp
+  - libs/avs-core/src/effects/zoom_rotate.cpp
+

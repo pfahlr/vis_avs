@@ -1,0 +1,66 @@
+name: Seed Codex Jobs
+
+on:
+  push:
+    paths:
+      - 'codex/jobs/*.yaml'
+  workflow_dispatch: {}
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install jq & yq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
+          sudo snap install yq
+
+      - name: Create/Update issues from YAML
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for f in codex/jobs/*.yaml; do
+            ID=$(yq '.id' "$f")
+            TITLE=$(yq '.title' "$f")
+            STATUS=$(yq '.status' "$f")
+            LABELS=$(yq -r '.labels | join(",")' "$f")
+            DEPENDS=$(yq -r '.depends_on // [] | join(", ")' "$f")
+
+            GOAL=$(yq -r '.goal' "$f")
+            BODY="## Goal\n${GOAL}\n\n"
+
+            BODY+="## Steps\n"
+            while IFS= read -r s; do BODY+="- ${s}\n"; done < <(yq -r '.steps[]' "$f")
+
+            BODY+="\n## Acceptance Criteria\n"
+            while IFS= read -r a; do BODY+="- ${a}\n"; done < <(yq -r '.acceptance_criteria[]' "$f")
+
+            if yq -e '.test_hook' "$f" >/dev/null 2>&1; then
+              BODY+="\n## Test Hook\n"
+              while IFS= read -r t; do BODY+="- ${t}\n"; done < <(yq -r '.test_hook[]? // .test_hook' "$f")
+            fi
+
+            if [ -n "$DEPENDS" ]; then
+              BODY+="\n## Depends On\n- ${DEPENDS}\n"
+            fi
+
+            TITLE_FULL="[Codex:${ID}] ${TITLE}"
+
+            # Try to find existing issue by exact title
+            ISSUE_NUMBER=$(gh issue list --search "in:title ${TITLE_FULL}" --state all --json number,title \
+              | jq -r --arg t "$TITLE_FULL" '.[] | select(.title==$t) | .number' | head -n1)
+
+            if [ -n "$ISSUE_NUMBER" ]; then
+              gh issue edit "$ISSUE_NUMBER" --title "$TITLE_FULL" --body "$BODY" $( [ -n "$LABELS" ] && echo --add-label "$LABELS" )
+            else
+              gh issue create --title "$TITLE_FULL" --body "$BODY" $( [ -n "$LABELS" ] && echo --label "$LABELS" )
+            fi
+          done

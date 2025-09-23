@@ -1,0 +1,19 @@
+id: presets-extended-header-fix
+title: Fix extended render-list header skipping
+status: READY
+labels: [presets, bugfix, parser]
+depends_on: []
+goal: >
+  Correct the off-by-8 skip in extended render-list headers by parsing fields explicitly.
+steps:
+  - Replace extendedSize+4 skipping with explicit deserialization of the eight 32-bit fields.
+  - Add fixture with extended header and validate the first effect ID is read correctly.
+  - Document the legacy "size includes +4" quirk in code comments.
+acceptance_criteria:
+  - First effect in nested render lists is parsed correctly; no misalignment of payloads.
+test_hook:
+  - "New tests/data/extended_header.avs passes parse and render sanity checks."
+files_touched:
+  - libs/avs-core/src/preset.cpp
+  - tests/data/extended_header.avs
+  - tests/avs_core_tests.cpp

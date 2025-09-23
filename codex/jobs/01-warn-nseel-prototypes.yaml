@@ -1,0 +1,22 @@
+id: warn-nseel-prototypes
+title: Export NS-EEL parser prototypes
+status: READY
+labels: [warnings, ns-eel, build]
+depends_on: []
+goal: >
+  Eliminate -Wimplicit-function-declaration in C builds by ensuring nseellex/nseelerror
+  prototypes are visible to the generated parser and C consumers.
+steps:
+  - Create libs/third_party/ns-eel/nseel_lexer_decls.h declaring nseellex/nseelerror with
+    conditional signatures (#ifdef NSEEL_SUPER_MINIMAL_LEXER) and extern "C" guards.
+  - Replace ad-hoc prototypes in ns-eel-int.h with #include "nseel_lexer_decls.h".
+  - Include the header from y.tab.c right after the existing include block.
+  - Rebuild ns-eel static lib with -Werror.
+acceptance_criteria:
+  - Build passes with -Werror=implicit-function-declaration and no duplicate-prototype warnings.
+test_hook:
+  - "Configure C and C++ builds with -Werror; run ctest."
+files_touched:
+  - libs/third_party/ns-eel/y.tab.c
+  - libs/third_party/ns-eel/ns-eel-int.h
+  - libs/third_party/ns-eel/nseel_lexer_decls.h

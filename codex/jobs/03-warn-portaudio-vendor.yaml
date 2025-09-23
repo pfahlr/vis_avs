@@ -1,0 +1,19 @@
+id: warn-portaudio-vendor
+title: Patch vendored PortAudio warnings (JACK/ALSA)
+status: READY
+labels: [warnings, portaudio, platform]
+depends_on: []
+goal: >
+  Stop deprecation and truncation warnings emitted by vendored PortAudio on JACK/ALSA paths.
+steps:
+  - Update JACK code to jack_port_get_latency_range() and compute in/out latency from the range.
+  - Remove ALSA snd_pcm_sw_params_set_xfer_align() probing and increase the snprintf buffer size.
+  - Add a CMake PATCH_COMMAND or follow-up execute_process to apply the patch during FetchContent.
+  - Rebuild static + shared PortAudio targets with -Werror.
+acceptance_criteria:
+  - Zero warnings from PortAudio compilation under -Werror.
+test_hook:
+  - "Build avs-platform with -Werror; confirm no JACK/ALSA deprecations or truncations."
+files_touched:
+  - libs/avs-platform/CMakeLists.txt
+  - libs/avs-platform/patches/portaudio-warnings.patch

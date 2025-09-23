@@ -1,0 +1,19 @@
+id: engine-pa-underflow-surfacing
+title: Detect and surface PortAudio input underflow
+status: READY
+labels: [audio, portaudio, reliability]
+depends_on: []
+goal: >
+  Stop silently zero-filling when capture underflows; surface errors to the main loop.
+steps:
+  - In paCallback, inspect PaStreamCallbackFlags; if paInputUnderflow or input==nullptr, set an atomic flag/counter.
+  - In poll()/health-check, on persistent underflow, stop stream, set ok=false, and log a clear error.
+  - Add a small unit test for the helper that processes callback data.
+acceptance_criteria:
+  - UI reports an error instead of endless "rms 0.000" when capture fails.
+test_hook:
+  - "Unit test simulating null input sets underflow flag and triggers error path."
+files_touched:
+  - libs/avs-platform/src/audio_portaudio.cpp
+  - tests/audio_underflow_tests.cpp
+

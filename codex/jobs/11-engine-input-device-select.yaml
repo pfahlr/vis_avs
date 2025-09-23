@@ -1,0 +1,22 @@
+id: engine-input-device-select
+title: Allow selecting PortAudio input device
+status: READY
+labels: [audio, portaudio, cli]
+depends_on: []
+goal: >
+  Let users choose the capture endpoint (mic vs monitor) and discover devices via CLI.
+steps:
+  - Extend AudioInputConfig with optional device id/name.
+  - Add CLI: --list-input-devices, --input-device <id-or-substring>.
+  - Validate selection, fall back to default input when unset, and error clearly if invalid.
+  - Document workflow and add a small regression around the negotiation helper.
+acceptance_criteria:
+  - Users can enumerate and select capture devices; error messages are clear when selection fails.
+test_hook:
+  - "CLI: --list-input-devices shows entries; --input-device switches source (validated in logs/metrics)."
+files_touched:
+  - apps/avs-player/main.cpp
+  - libs/avs-platform/include/avs/audio.hpp
+  - libs/avs-platform/src/audio_portaudio.cpp
+  - docs/README.md
+

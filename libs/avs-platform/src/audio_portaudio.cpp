@@ -27,6 +27,12 @@ CallbackResult processCallbackInput(const float* input, size_t samples, size_t w
   return result;
 }
 
+bool callbackIndicatesUnderflow(const void* input, PaStreamCallbackFlags statusFlags) {
+  const bool bufferMissing = (input == nullptr);
+  const bool portaudioFlagged = (statusFlags & paInputUnderflow) != 0;
+  return bufferMissing || portaudioFlagged;
+}
+
 StreamNegotiationResult negotiateStream(const StreamNegotiationRequest& request,
                                         const StreamNegotiationDeviceInfo& device,
                                         const FormatSupportQuery& isSupported) {
@@ -293,7 +299,7 @@ struct AudioInput::Impl {
     auto* self = static_cast<Impl*>(userData);
     const float* in = static_cast<const float*>(input);
     size_t w = self->writeIndex.load(std::memory_order_relaxed);
-    const bool underflowFlagged = (statusFlags & paInputUnderflow) != 0;
+    const bool underflowFlagged = portaudio_detail::callbackIndicatesUnderflow(in, statusFlags);
 
     portaudio_detail::CallbackResult result{w, in == nullptr};
     if (self->useResampler) {
@@ -423,7 +429,8 @@ struct AudioInput::Impl {
     const size_t legacySamples = AudioState::kLegacyVisSamples;
     const size_t channelCount = static_cast<size_t>(channels);
     if (legacySamples > 0 && channelCount > 0) {
-      const size_t sampleStart = kFftSize > legacySamples ? static_cast<size_t>(kFftSize) - legacySamples : 0;
+      const size_t sampleStart =
+          kFftSize > legacySamples ? static_cast<size_t>(kFftSize) - legacySamples : 0;
       for (int ch = 0; ch < std::min<int>(channels, 2); ++ch) {
         auto& dest = state.oscilloscope[static_cast<size_t>(ch)];
         for (size_t i = 0; i < legacySamples; ++i) {
@@ -473,9 +480,12 @@ struct AudioInput::Impl {
     underflowReported = true;
     stopStream();
     ok = false;
+    const auto underflows = inputUnderflowCount.load(std::memory_order_acquire);
     std::fprintf(stderr,
-                 "PortAudio input underflow detected; capture has been stopped. Please verify your "
-                 "audio configuration.\n");
+                 "PortAudio repeatedly reported input underflow (observed %u events). Capture has "
+                 "been stopped to avoid feeding silent audio. Please verify your capture device "
+                 "configuration.\n",
+                 static_cast<unsigned>(underflows));
   }
 
   void reportResampleFailure() {

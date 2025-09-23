@@ -1,10 +1,11 @@
 #include <gtest/gtest.h>
+#include <portaudio.h>
 
 #include <array>
+#include <cctype>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
-#include <cctype>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -14,8 +15,8 @@
 
 #include "avs/audio_portaudio_internal.hpp"
 #include "avs/effects.hpp"
-#include "avs/fs.hpp"
 #include "avs/engine.hpp"
+#include "avs/fs.hpp"
 #include "avs/preset.hpp"
 
 using namespace avs;
@@ -341,6 +342,13 @@ TEST(PortAudioCallback, NullInputRaisesUnderflowFlag) {
   }
 }
 
+TEST(PortAudioCallback, FlagsReportUnderflowEvents) {
+  int dummy = 0;
+  EXPECT_FALSE(avs::portaudio_detail::callbackIndicatesUnderflow(&dummy, paNoFlag));
+  EXPECT_TRUE(avs::portaudio_detail::callbackIndicatesUnderflow(nullptr, paNoFlag));
+  EXPECT_TRUE(avs::portaudio_detail::callbackIndicatesUnderflow(&dummy, paInputUnderflow));
+}
+
 TEST(PortAudioNegotiation, FallsBackToDefaultRate) {
   avs::portaudio_detail::StreamNegotiationRequest request;
   request.engineSampleRate = 48000;
@@ -406,13 +414,8 @@ TEST(PortAudioNegotiation, ClampsRequestedChannelsToDeviceCapabilities) {
 
 namespace {
 
-double legacyGetVis(const std::uint8_t* base,
-                    size_t sampleCount,
-                    int channels,
-                    double band,
-                    double bandw,
-                    int ch,
-                    int xorv) {
+double legacyGetVis(const std::uint8_t* base, size_t sampleCount, int channels, double band,
+                    double bandw, int ch, int xorv) {
   if (!base || sampleCount == 0) {
     return 0.0;
   }
@@ -464,9 +467,7 @@ double legacyGetVis(const std::uint8_t* base,
 void configureVm(avs::EelVm& vm,
                  const std::array<std::uint8_t, avs::EelVm::kLegacyVisSamples * 2>& osc,
                  const std::array<std::uint8_t, avs::EelVm::kLegacyVisSamples * 2>& spec,
-                 double audioTime,
-                 double engineTime,
-                 const avs::MouseState& mouse) {
+                 double audioTime, double engineTime, const avs::MouseState& mouse) {
   avs::EelVm::LegacySources sources{};
   sources.oscBase = osc.data();
   sources.specBase = spec.data();
@@ -525,7 +526,8 @@ TEST(EelVmBuiltins, GetSpecMatchesLegacy) {
   EEL_F* result = vm.regVar("result");
   auto code = vm.compile("result = getspec(0.3, 0.05, 0);\n");
   vm.execute(code);
-  double expected = 0.5 * legacyGetVis(spec.data(), avs::EelVm::kLegacyVisSamples, 2, 0.3, 0.05, 0, 0);
+  double expected =
+      0.5 * legacyGetVis(spec.data(), avs::EelVm::kLegacyVisSamples, 2, 0.3, 0.05, 0, 0);
   EXPECT_NEAR(*result, expected, 1e-6);
   vm.freeCode(code);
 }
@@ -561,7 +563,8 @@ TEST(EelVmBuiltins, GetKbMouseReflectsState) {
   EEL_F* mr = vm.regVar("mr");
   EEL_F* mm = vm.regVar("mm");
   auto code = vm.compile(
-      "mx = getkbmouse(1); my = getkbmouse(2); ml = getkbmouse(3); mr = getkbmouse(4); mm = getkbmouse(5);\n");
+      "mx = getkbmouse(1); my = getkbmouse(2); ml = getkbmouse(3); mr = getkbmouse(4); mm = "
+      "getkbmouse(5);\n");
   vm.execute(code);
   EXPECT_NEAR(*mx, 0.5, 1e-9);
   EXPECT_NEAR(*my, -0.75, 1e-9);

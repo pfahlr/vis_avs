@@ -78,6 +78,87 @@ StreamNegotiationResult negotiateStream(const StreamNegotiationRequest& request,
   return result;
 }
 
+DeviceSelectionResult resolveInputDeviceIdentifier(const std::optional<std::string>& identifier,
+                                                   int deviceCount,
+                                                   const std::vector<DeviceSummary>& devices) {
+  DeviceSelectionResult result;
+  if (!identifier.has_value() || identifier->empty()) {
+    return result;
+  }
+
+  if (deviceCount <= 0) {
+    result.error = "Requested audio input device \"" + *identifier +
+                   "\" cannot be satisfied because no capture devices are available.";
+    return result;
+  }
+
+  auto toLower = [](std::string value) {
+    std::transform(value.begin(), value.end(), value.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return value;
+  };
+
+  const std::string& requested = *identifier;
+  bool parsedAsIndex = false;
+  int requestedIndex = -1;
+  try {
+    size_t consumed = 0;
+    requestedIndex = std::stoi(requested, &consumed);
+    parsedAsIndex = consumed == requested.size();
+  } catch (const std::exception&) {
+    parsedAsIndex = false;
+  }
+
+  auto findSummaryByIndex = [&](int index) -> const DeviceSummary* {
+    for (const auto& device : devices) {
+      if (device.index == index) {
+        return &device;
+      }
+    }
+    return nullptr;
+  };
+
+  auto ensureCaptureCapable = [&](const DeviceSummary* summary) -> bool {
+    if (summary && summary->maxInputChannels <= 0) {
+      result.error = "Requested audio input device \"" + requested +
+                     "\" cannot capture audio (no input channels reported).";
+      return false;
+    }
+    return true;
+  };
+
+  if (parsedAsIndex) {
+    if (requestedIndex < 0 || requestedIndex >= deviceCount) {
+      result.error = "Requested audio input device index " + std::to_string(requestedIndex) +
+                     " is out of range (0-" + std::to_string(deviceCount - 1) + ").";
+      return result;
+    }
+    const DeviceSummary* summary = findSummaryByIndex(requestedIndex);
+    if (!ensureCaptureCapable(summary)) {
+      return result;
+    }
+    result.index = requestedIndex;
+    return result;
+  }
+
+  std::string needle = toLower(requested);
+  for (const auto& device : devices) {
+    std::string lowered = toLower(device.name);
+    if (lowered.find(needle) != std::string::npos) {
+      if (!ensureCaptureCapable(&device)) {
+        return result;
+      }
+      result.index = device.index;
+      return result;
+    }
+  }
+
+  result.error = "Requested audio input device \"" + requested +
+                 "\" was not found. Use --list-input-devices to inspect available capture "
+                 "endpoints.";
+  return result;
+}
+
 }  // namespace avs::portaudio_detail
 
 namespace avs {
@@ -109,69 +190,40 @@ struct AudioInput::Impl {
 
     const PaDeviceInfo* info = nullptr;
 
-    auto toLower = [](std::string value) {
-      std::transform(value.begin(), value.end(), value.begin(),
-                     [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-      return value;
-    };
-
-    if (config.requestedDevice && !config.requestedDevice->empty()) {
-      const std::string& identifier = *config.requestedDevice;
+    if (config.requestedDeviceIdentifier && !config.requestedDeviceIdentifier->empty()) {
+      const std::string& identifier = *config.requestedDeviceIdentifier;
       PaDeviceIndex deviceCount = Pa_GetDeviceCount();
       if (deviceCount < 0) {
         std::fprintf(stderr, "Failed to enumerate PortAudio devices: %s\n",
                      Pa_GetErrorText(deviceCount));
         return;
       }
-      if (deviceCount == 0) {
-        std::fprintf(stderr,
-                     "Requested audio input device \"%s\" cannot be satisfied because no capture "
-                     "devices are available.\n",
+
+      std::vector<portaudio_detail::DeviceSummary> devices;
+      devices.reserve(deviceCount > 0 ? static_cast<size_t>(deviceCount) : 0);
+      for (PaDeviceIndex i = 0; i < deviceCount; ++i) {
+        if (const PaDeviceInfo* candidate = Pa_GetDeviceInfo(i)) {
+          portaudio_detail::DeviceSummary summary;
+          summary.index = static_cast<int>(i);
+          summary.name = candidate->name ? candidate->name : "";
+          summary.maxInputChannels = candidate->maxInputChannels;
+          devices.push_back(std::move(summary));
+        }
+      }
+
+      auto selection = portaudio_detail::resolveInputDeviceIdentifier(
+          config.requestedDeviceIdentifier, static_cast<int>(deviceCount), devices);
+      if (!selection.error.empty()) {
+        std::fprintf(stderr, "%s\n", selection.error.c_str());
+        return;
+      }
+      if (!selection.index.has_value()) {
+        std::fprintf(stderr, "Requested audio input device \"%s\" could not be resolved.\n",
                      identifier.c_str());
         return;
       }
 
-      std::optional<PaDeviceIndex> resolved;
-      bool parsedAsIndex = false;
-      try {
-        size_t consumed = 0;
-        int idx = std::stoi(identifier, &consumed);
-        if (consumed == identifier.size()) {
-          parsedAsIndex = true;
-          if (idx >= 0 && idx < deviceCount) {
-            resolved = static_cast<PaDeviceIndex>(idx);
-          } else {
-            std::fprintf(stderr, "Requested audio input device index %d is out of range (0-%d).\n",
-                         idx, deviceCount - 1);
-            return;
-          }
-        }
-      } catch (const std::exception&) {
-        parsedAsIndex = false;
-      }
-
-      if (!parsedAsIndex) {
-        std::string needle = toLower(identifier);
-        for (PaDeviceIndex i = 0; i < deviceCount; ++i) {
-          if (const PaDeviceInfo* candidate = Pa_GetDeviceInfo(i)) {
-            std::string name = candidate->name ? candidate->name : "";
-            if (toLower(name).find(needle) != std::string::npos) {
-              resolved = i;
-              break;
-            }
-          }
-        }
-        if (!resolved) {
-          std::fprintf(
-              stderr,
-              "Requested audio input device \"%s\" was not found. Use --list-input-devices "
-              "to inspect available capture endpoints.\n",
-              identifier.c_str());
-          return;
-        }
-      }
-
-      params.device = *resolved;
+      params.device = static_cast<PaDeviceIndex>(*selection.index);
       info = Pa_GetDeviceInfo(params.device);
       if (!info) {
         std::fprintf(stderr, "PortAudio did not provide information for input device %d.\n",
@@ -423,7 +475,8 @@ struct AudioInput::Impl {
     const size_t legacySamples = AudioState::kLegacyVisSamples;
     const size_t channelCount = static_cast<size_t>(channels);
     if (legacySamples > 0 && channelCount > 0) {
-      const size_t sampleStart = kFftSize > legacySamples ? static_cast<size_t>(kFftSize) - legacySamples : 0;
+      const size_t sampleStart =
+          kFftSize > legacySamples ? static_cast<size_t>(kFftSize) - legacySamples : 0;
       for (int ch = 0; ch < std::min<int>(channels, 2); ++ch) {
         auto& dest = state.oscilloscope[static_cast<size_t>(ch)];
         for (size_t i = 0; i < legacySamples; ++i) {

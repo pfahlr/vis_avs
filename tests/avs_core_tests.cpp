@@ -1,21 +1,22 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <cctype>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
-#include <cctype>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <map>
+#include <optional>
 #include <sstream>
 #include <thread>
 
 #include "avs/audio_portaudio_internal.hpp"
 #include "avs/effects.hpp"
-#include "avs/fs.hpp"
 #include "avs/engine.hpp"
+#include "avs/fs.hpp"
 #include "avs/preset.hpp"
 
 using namespace avs;
@@ -404,15 +405,51 @@ TEST(PortAudioNegotiation, ClampsRequestedChannelsToDeviceCapabilities) {
   EXPECT_EQ(queryCount, 1);
 }
 
+TEST(PortAudioDeviceSelection, ParsesNumericIdentifier) {
+  std::vector<avs::portaudio_detail::DeviceSummary> devices = {
+      {0, "Built-in Mic", 2},
+      {2, "USB Microphone", 1},
+  };
+
+  auto result = avs::portaudio_detail::resolveInputDeviceIdentifier(std::optional<std::string>{"2"},
+                                                                    3, devices);
+
+  ASSERT_TRUE(result.index.has_value());
+  EXPECT_EQ(*result.index, 2);
+  EXPECT_TRUE(result.error.empty());
+}
+
+TEST(PortAudioDeviceSelection, MatchesSubstringCaseInsensitive) {
+  std::vector<avs::portaudio_detail::DeviceSummary> devices = {
+      {0, "Analog Capture", 2},
+      {1, "USB Podcast Interface", 2},
+  };
+
+  auto result = avs::portaudio_detail::resolveInputDeviceIdentifier(
+      std::optional<std::string>{"podcast"}, 2, devices);
+
+  ASSERT_TRUE(result.index.has_value());
+  EXPECT_EQ(*result.index, 1);
+  EXPECT_TRUE(result.error.empty());
+}
+
+TEST(PortAudioDeviceSelection, RejectsCapturelessDevice) {
+  std::vector<avs::portaudio_detail::DeviceSummary> devices = {
+      {4, "Loopback", 0},
+  };
+
+  auto result = avs::portaudio_detail::resolveInputDeviceIdentifier(std::optional<std::string>{"4"},
+                                                                    5, devices);
+
+  EXPECT_FALSE(result.index.has_value());
+  EXPECT_FALSE(result.error.empty());
+  EXPECT_NE(result.error.find("cannot capture audio"), std::string::npos);
+}
+
 namespace {
 
-double legacyGetVis(const std::uint8_t* base,
-                    size_t sampleCount,
-                    int channels,
-                    double band,
-                    double bandw,
-                    int ch,
-                    int xorv) {
+double legacyGetVis(const std::uint8_t* base, size_t sampleCount, int channels, double band,
+                    double bandw, int ch, int xorv) {
   if (!base || sampleCount == 0) {
     return 0.0;
   }
@@ -464,9 +501,7 @@ double legacyGetVis(const std::uint8_t* base,
 void configureVm(avs::EelVm& vm,
                  const std::array<std::uint8_t, avs::EelVm::kLegacyVisSamples * 2>& osc,
                  const std::array<std::uint8_t, avs::EelVm::kLegacyVisSamples * 2>& spec,
-                 double audioTime,
-                 double engineTime,
-                 const avs::MouseState& mouse) {
+                 double audioTime, double engineTime, const avs::MouseState& mouse) {
   avs::EelVm::LegacySources sources{};
   sources.oscBase = osc.data();
   sources.specBase = spec.data();
@@ -525,7 +560,8 @@ TEST(EelVmBuiltins, GetSpecMatchesLegacy) {
   EEL_F* result = vm.regVar("result");
   auto code = vm.compile("result = getspec(0.3, 0.05, 0);\n");
   vm.execute(code);
-  double expected = 0.5 * legacyGetVis(spec.data(), avs::EelVm::kLegacyVisSamples, 2, 0.3, 0.05, 0, 0);
+  double expected =
+      0.5 * legacyGetVis(spec.data(), avs::EelVm::kLegacyVisSamples, 2, 0.3, 0.05, 0, 0);
   EXPECT_NEAR(*result, expected, 1e-6);
   vm.freeCode(code);
 }
@@ -561,7 +597,8 @@ TEST(EelVmBuiltins, GetKbMouseReflectsState) {
   EEL_F* mr = vm.regVar("mr");
   EEL_F* mm = vm.regVar("mm");
   auto code = vm.compile(
-      "mx = getkbmouse(1); my = getkbmouse(2); ml = getkbmouse(3); mr = getkbmouse(4); mm = getkbmouse(5);\n");
+      "mx = getkbmouse(1); my = getkbmouse(2); ml = getkbmouse(3); mr = getkbmouse(4); mm = "
+      "getkbmouse(5);\n");
   vm.execute(code);
   EXPECT_NEAR(*mx, 0.5, 1e-9);
   EXPECT_NEAR(*my, -0.75, 1e-9);

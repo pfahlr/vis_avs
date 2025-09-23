@@ -179,7 +179,8 @@ class OfflineAudio {
     const size_t legacySamples = avs::AudioState::kLegacyVisSamples;
     const size_t channelCount = static_cast<size_t>(wav_.channels);
     if (legacySamples > 0 && channelCount > 0) {
-      const size_t sampleStart = kFftSize > legacySamples ? static_cast<size_t>(kFftSize) - legacySamples : 0;
+      const size_t sampleStart =
+          kFftSize > legacySamples ? static_cast<size_t>(kFftSize) - legacySamples : 0;
       for (unsigned int ch = 0; ch < std::min<unsigned int>(wav_.channels, 2); ++ch) {
         auto& dest = state.oscilloscope[static_cast<size_t>(ch)];
         for (size_t i = 0; i < legacySamples; ++i) {
@@ -384,7 +385,7 @@ int main(int argc, char** argv) {
     audioConfig.requestedChannels = requestedChannels;
   }
   if (requestedInputDevice) {
-    audioConfig.requestedDevice = requestedInputDevice;
+    audioConfig.requestedDeviceIdentifier = requestedInputDevice;
   }
   avs::AudioInput audio(audioConfig);
   if (!audio.ok()) {

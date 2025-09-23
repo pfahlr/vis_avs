@@ -34,7 +34,9 @@ Run the stub player after building:
 The runtime can request specific capture parameters when talking to PortAudio.
 Use `--sample-rate` and `--channels` to ask the device for a particular format;
 the player will fall back to the device defaults if the request is not
-available and resample to the engine's 48 kHz internal representation.
+available and resample to the engine's 48 kHz internal representation. Library
+consumers can achieve the same behaviour by setting
+`AudioInputConfig::requestedSampleRate` and `AudioInputConfig::requestedChannels`.
 
 Enumerate capture devices (and their numeric identifiers) via:
 
@@ -51,6 +53,11 @@ Pick a device either by index or by matching part of its name:
 
 If the chosen endpoint cannot capture audio, the player reports a descriptive
 error instead of silently falling back to the default input.
+
+Embedding applications can mirror this behaviour through
+`AudioInputConfig::requestedDeviceIdentifier`. Set the optional string to a
+PortAudio device index or to a substring of the desired device name before
+constructing `avs::AudioInput`.
 
 To drive rendering from a WAV file, run the player in headless mode. Supplying
 `--wav` without `--headless` will terminate with an error.

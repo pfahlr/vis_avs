@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <functional>
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace avs::portaudio_detail {
@@ -39,5 +40,20 @@ using FormatSupportQuery = std::function<bool(int, double)>;
 StreamNegotiationResult negotiateStream(const StreamNegotiationRequest& request,
                                         const StreamNegotiationDeviceInfo& device,
                                         const FormatSupportQuery& isSupported);
+
+struct DeviceSummary {
+  int index = -1;
+  std::string name;
+  int maxInputChannels = 0;
+};
+
+struct DeviceSelectionResult {
+  std::optional<int> index;
+  std::string error;
+};
+
+DeviceSelectionResult resolveInputDeviceIdentifier(const std::optional<std::string>& identifier,
+                                                   int deviceCount,
+                                                   const std::vector<DeviceSummary>& devices);
 
 }  // namespace avs::portaudio_detail

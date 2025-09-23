@@ -13,7 +13,9 @@ if(NOT PortAudio_FOUND)
   FetchContent_Declare(
     portaudio
     GIT_REPOSITORY https://github.com/PortAudio/portaudio.git
-    GIT_TAG v19.7.0)
+    GIT_TAG v19.7.0
+    PATCH_COMMAND ${CMAKE_COMMAND} -E chdir <SOURCE_DIR>
+      patch -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/patches/portaudio-warnings.patch)
   FetchContent_MakeAvailable(portaudio)
 endif()
 

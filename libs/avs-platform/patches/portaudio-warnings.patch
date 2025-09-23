@@ -1,0 +1,115 @@
+diff --git a/src/hostapi/alsa/pa_linux_alsa.c b/src/hostapi/alsa/pa_linux_alsa.c
+index a66f90d..53ae385 100644
+--- a/src/hostapi/alsa/pa_linux_alsa.c
++++ b/src/hostapi/alsa/pa_linux_alsa.c
+@@ -180,7 +180,6 @@ _PA_DEFINE_FUNC(snd_pcm_sw_params_set_stop_threshold);
+ _PA_DEFINE_FUNC(snd_pcm_sw_params_get_boundary);
+ _PA_DEFINE_FUNC(snd_pcm_sw_params_set_silence_threshold);
+ _PA_DEFINE_FUNC(snd_pcm_sw_params_set_silence_size);
+-_PA_DEFINE_FUNC(snd_pcm_sw_params_set_xfer_align);
+ _PA_DEFINE_FUNC(snd_pcm_sw_params_set_tstamp_mode);
+ #define alsa_snd_pcm_sw_params_alloca(ptr) __alsa_snd_alloca(ptr, snd_pcm_sw_params)
+ 
+@@ -462,7 +461,6 @@ static int PaAlsa_LoadLibrary()
+     _PA_LOAD_FUNC(snd_pcm_sw_params_get_boundary);
+     _PA_LOAD_FUNC(snd_pcm_sw_params_set_silence_threshold);
+     _PA_LOAD_FUNC(snd_pcm_sw_params_set_silence_size);
+-    _PA_LOAD_FUNC(snd_pcm_sw_params_set_xfer_align);
+     _PA_LOAD_FUNC(snd_pcm_sw_params_set_tstamp_mode);
+ 
+     _PA_LOAD_FUNC(snd_pcm_info);
+@@ -1280,7 +1278,7 @@ static PaError BuildDeviceList( PaAlsaHostApiRepresentation *alsaApi )
+         char *cardName;
+         int devIdx = -1;
+         snd_ctl_t *ctl;
+-        char buf[50];
++        char buf[80];
+ 
+         snprintf( alsaCardName, sizeof (alsaCardName), "hw:%d", cardIdx );
+ 
+@@ -2126,7 +2124,6 @@ static PaError PaAlsaStreamComponent_FinishConfigure( PaAlsaStreamComponent *sel
+     }
+ 
+     ENSURE_( alsa_snd_pcm_sw_params_set_avail_min( self->pcm, swParams, self->framesPerPeriod ), paUnanticipatedHostError );
+-    ENSURE_( alsa_snd_pcm_sw_params_set_xfer_align( self->pcm, swParams, 1 ), paUnanticipatedHostError );
+     ENSURE_( alsa_snd_pcm_sw_params_set_tstamp_mode( self->pcm, swParams, SND_PCM_TSTAMP_ENABLE ), paUnanticipatedHostError );
+ 
+     /* Set the parameters! */
+diff --git a/src/hostapi/jack/pa_jack.c b/src/hostapi/jack/pa_jack.c
+index 124c0f8..c325fcf 100644
+--- a/src/hostapi/jack/pa_jack.c
++++ b/src/hostapi/jack/pa_jack.c
+@@ -635,9 +635,11 @@ static PaError BuildDeviceList( PaJackHostApiRepresentation *jackApi )
+         curDevInfo->defaultHighInputLatency = 0.;
+         if( clientPorts )
+         {
++            jack_latency_range_t latencyRange;
+             jack_port_t *p = jack_port_by_name( jackApi->jack_client, clientPorts[0] );
+-            curDevInfo->defaultLowInputLatency = curDevInfo->defaultHighInputLatency =
+-                jack_port_get_latency( p ) / globalSampleRate;
++            jack_port_get_latency_range( p, JackPlaybackLatency, &latencyRange );
++            curDevInfo->defaultLowInputLatency = latencyRange.min / globalSampleRate;
++            curDevInfo->defaultHighInputLatency = latencyRange.max / globalSampleRate;
+ 
+             for( i = 0; clientPorts[i] != NULL; i++)
+             {
+@@ -656,9 +658,11 @@ static PaError BuildDeviceList( PaJackHostApiRepresentation *jackApi )
+         curDevInfo->defaultHighOutputLatency = 0.;
+         if( clientPorts )
+         {
++            jack_latency_range_t latencyRange;
+             jack_port_t *p = jack_port_by_name( jackApi->jack_client, clientPorts[0] );
+-            curDevInfo->defaultLowOutputLatency = curDevInfo->defaultHighOutputLatency =
+-                jack_port_get_latency( p ) / globalSampleRate;
++            jack_port_get_latency_range( p, JackCaptureLatency, &latencyRange );
++            curDevInfo->defaultLowOutputLatency = latencyRange.min / globalSampleRate;
++            curDevInfo->defaultHighOutputLatency = latencyRange.max / globalSampleRate;
+ 
+             for( i = 0; clientPorts[i] != NULL; i++)
+             {
+@@ -1354,13 +1358,21 @@ static PaError OpenStream( struct PaUtilHostApiRepresentation *hostApi,
+     bpInitialized = 1;
+ 
+     if( stream->num_incoming_connections > 0 )
+-        stream->streamRepresentation.streamInfo.inputLatency = (jack_port_get_latency( stream->remote_output_ports[0] )
++    {
++        jack_latency_range_t latencyRange;
++        jack_port_get_latency_range( stream->remote_output_ports[0], JackPlaybackLatency, &latencyRange );
++        stream->streamRepresentation.streamInfo.inputLatency = (latencyRange.max
+                 - jack_get_buffer_size( jackHostApi->jack_client )  /* One buffer is not counted as latency */
+             + PaUtil_GetBufferProcessorInputLatencyFrames( &stream->bufferProcessor )) / sampleRate;
++    }
+     if( stream->num_outgoing_connections > 0 )
+-        stream->streamRepresentation.streamInfo.outputLatency = (jack_port_get_latency( stream->remote_input_ports[0] )
++    {
++        jack_latency_range_t latencyRange;
++        jack_port_get_latency_range( stream->remote_input_ports[0], JackCaptureLatency, &latencyRange );
++        stream->streamRepresentation.streamInfo.outputLatency = (latencyRange.max
+                 - jack_get_buffer_size( jackHostApi->jack_client )  /* One buffer is not counted as latency */
+             + PaUtil_GetBufferProcessorOutputLatencyFrames( &stream->bufferProcessor )) / sampleRate;
++    }
+ 
+     stream->streamRepresentation.streamInfo.sampleRate = jackSr;
+     stream->t0 = jack_frame_time( jackHostApi->jack_client );   /* A: Time should run from Pa_OpenStream */
+@@ -1420,11 +1432,17 @@ static PaError RealProcess( PaJackStream *stream, jack_nframes_t frames )
+ 
+     timeInfo.currentTime = (jack_frame_time( stream->jack_client ) - stream->t0) / sr;
+     if( stream->num_incoming_connections > 0 )
+-        timeInfo.inputBufferAdcTime = timeInfo.currentTime - jack_port_get_latency( stream->remote_output_ports[0] )
+-            / sr;
++    {
++        jack_latency_range_t latencyRange;
++        jack_port_get_latency_range( stream->remote_output_ports[0], JackPlaybackLatency, &latencyRange );
++        timeInfo.inputBufferAdcTime = timeInfo.currentTime - latencyRange.max / sr;
++    }
+     if( stream->num_outgoing_connections > 0 )
+-        timeInfo.outputBufferDacTime = timeInfo.currentTime + jack_port_get_latency( stream->remote_input_ports[0] )
+-            / sr;
++    {
++        jack_latency_range_t latencyRange;
++        jack_port_get_latency_range( stream->remote_input_ports[0], JackCaptureLatency, &latencyRange );
++        timeInfo.outputBufferDacTime = timeInfo.currentTime + latencyRange.max / sr;
++    }
+ 
+     PaUtil_BeginCpuLoadMeasurement( &stream->cpuLoadMeasurer );
+ 

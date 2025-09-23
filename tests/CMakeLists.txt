@@ -21,3 +21,23 @@ target_compile_options(deterministic_render_test PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(deterministic_render_test PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 add_test(NAME deterministic_render_test COMMAND deterministic_render_test)
 add_dependencies(deterministic_render_test avs-player)
+
+set(PHASE1_DATA_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/data/phase1")
+set(PHASE1_GOLDEN_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/golden/phase1")
+set(PHASE1_DATA_DEST "${CMAKE_BINARY_DIR}/tests/data/phase1")
+set(PHASE1_GOLDEN_DEST "${CMAKE_BINARY_DIR}/tests/golden/phase1")
+
+if(EXISTS "${PHASE1_DATA_SOURCE}" AND EXISTS "${PHASE1_GOLDEN_SOURCE}")
+  add_custom_command(
+    TARGET deterministic_render_test
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/tests/data"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/tests/golden"
+    COMMAND ${CMAKE_COMMAND} -E rm -rf "${PHASE1_DATA_DEST}"
+    COMMAND ${CMAKE_COMMAND} -E rm -rf "${PHASE1_GOLDEN_DEST}"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${PHASE1_DATA_SOURCE}" "${PHASE1_DATA_DEST}"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${PHASE1_GOLDEN_SOURCE}" "${PHASE1_GOLDEN_DEST}"
+    COMMENT "Copying deterministic render phase1 assets to build tree")
+else()
+  message(WARNING "Phase1 deterministic render assets are missing; deterministic_render_test may fail")
+endif()

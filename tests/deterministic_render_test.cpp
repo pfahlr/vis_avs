@@ -1,10 +1,13 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -57,32 +60,118 @@ bool writeSineWav(const std::filesystem::path& path, int sampleRate, int frames)
 
 }  // namespace
 
-TEST(DeterministicRender, MatchesGolden) {
+TEST(DeterministicRender, Phase1PresetsMatchGolden) {
   namespace fs = std::filesystem;
   fs::path buildDir{BUILD_DIR};
   fs::path sourceDir{SOURCE_DIR};
   fs::path player = buildDir / "apps/avs-player/avs-player";
   fs::path wav = sourceDir / "tests/data/test.wav";
-  fs::path preset = sourceDir / "tests/data/simple.avs";
-  fs::path out = buildDir / "deterministic_out";
-  fs::remove_all(out);
-  fs::create_directories(out);
+  fs::path phase1DataDir = sourceDir / "tests/data/phase1";
+  fs::path phase1GoldenDir = sourceDir / "tests/golden/phase1";
+  constexpr int kFrameCount = 10;
 
-  std::string cmd = player.string() + " --headless --wav " + wav.string() + " --preset " +
-                    preset.string() + " --frames 120 --out " + out.string();
-  int ret = std::system(cmd.c_str());
-  ASSERT_EQ(ret, 0);
+  ASSERT_TRUE(fs::exists(player)) << "Headless player missing at " << player;
+  ASSERT_TRUE(fs::exists(phase1DataDir)) << "Phase1 preset directory missing at " << phase1DataDir;
+  ASSERT_TRUE(fs::exists(phase1GoldenDir))
+      << "Phase1 golden directory missing at " << phase1GoldenDir;
 
-  std::ifstream got(out / "hashes.txt");
-  std::ifstream expected(sourceDir / "tests/golden/hashes.txt");
-  ASSERT_TRUE(got);
-  ASSERT_TRUE(expected);
-  std::string gLine, eLine;
-  while (std::getline(got, gLine) && std::getline(expected, eLine)) {
-    EXPECT_EQ(gLine, eLine);
+  auto quotePath = [](const fs::path& path) {
+    std::ostringstream quoted;
+    quoted << '"' << path.string() << '"';
+    return quoted.str();
+  };
+
+  auto readLines = [](const fs::path& file) {
+    std::ifstream in(file);
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(in, line)) {
+      lines.push_back(line);
+    }
+    return lines;
+  };
+
+  auto readBinary = [](const fs::path& file) {
+    std::ifstream in(file, std::ios::binary);
+    return std::vector<char>(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
+  };
+
+  auto listPngs = [](const fs::path& dir) {
+    std::vector<std::string> files;
+    for (const auto& entry : fs::directory_iterator(dir)) {
+      if (entry.is_regular_file() && entry.path().extension() == ".png") {
+        files.push_back(entry.path().filename().string());
+      }
+    }
+    std::sort(files.begin(), files.end());
+    return files;
+  };
+
+  std::vector<fs::path> presets;
+  for (const auto& entry : fs::directory_iterator(phase1DataDir)) {
+    if (entry.is_regular_file() && entry.path().extension() == ".avs") {
+      presets.push_back(entry.path());
+    }
   }
-  EXPECT_FALSE(std::getline(got, gLine));
-  EXPECT_FALSE(std::getline(expected, eLine));
+  std::sort(presets.begin(), presets.end());
+  ASSERT_FALSE(presets.empty()) << "No presets found in " << phase1DataDir;
+
+  fs::path runRoot = buildDir / "deterministic_phase1";
+  fs::remove_all(runRoot);
+  fs::create_directories(runRoot);
+
+  for (const auto& preset : presets) {
+    SCOPED_TRACE(preset.string());
+    const std::string presetName = preset.stem().string();
+    fs::path presetOut = runRoot / presetName;
+    fs::remove_all(presetOut);
+    fs::create_directories(presetOut);
+
+    std::string cmd = quotePath(player) + " --headless --wav " + quotePath(wav) + " --preset " +
+                      quotePath(preset) + " --frames " + std::to_string(kFrameCount) + " --out " +
+                      quotePath(presetOut);
+    int ret = std::system(cmd.c_str());
+    ASSERT_EQ(ret, 0) << "Failed to render preset " << preset;
+
+    fs::path outputHashes = presetOut / "hashes.txt";
+    ASSERT_TRUE(fs::exists(outputHashes)) << "Missing hashes.txt for preset " << preset;
+
+    fs::path goldenDir = phase1GoldenDir / presetName;
+    ASSERT_TRUE(fs::exists(goldenDir)) << "Missing golden directory for preset " << presetName;
+
+    fs::path goldenHashes = goldenDir / "hashes.txt";
+    ASSERT_TRUE(fs::exists(goldenHashes)) << "Missing golden hashes for preset " << presetName;
+
+    auto gotHashes = readLines(outputHashes);
+    auto expectedHashes = readLines(goldenHashes);
+    ASSERT_EQ(gotHashes.size(), expectedHashes.size())
+        << "Hash count mismatch for preset " << presetName;
+    for (size_t i = 0; i < expectedHashes.size(); ++i) {
+      EXPECT_EQ(gotHashes[i], expectedHashes[i]) << "Hash mismatch on frame " << i;
+    }
+
+    auto expectedPngs = listPngs(goldenDir);
+    auto gotPngs = listPngs(presetOut);
+    ASSERT_EQ(gotPngs.size(), expectedPngs.size())
+        << "PNG count mismatch for preset " << presetName;
+
+    for (size_t i = 0; i < expectedPngs.size(); ++i) {
+      fs::path gotFile = presetOut / gotPngs[i];
+      fs::path expectedFile = goldenDir / expectedPngs[i];
+      ASSERT_TRUE(fs::exists(expectedFile))
+          << "Missing golden frame " << expectedPngs[i] << " for preset " << presetName;
+      ASSERT_TRUE(fs::exists(gotFile))
+          << "Missing rendered frame " << gotPngs[i] << " for preset " << presetName;
+      auto gotBytes = readBinary(gotFile);
+      auto expectedBytes = readBinary(expectedFile);
+      ASSERT_FALSE(expectedBytes.empty())
+          << "Golden frame " << expectedPngs[i] << " for preset " << presetName << " is empty";
+      EXPECT_EQ(gotBytes, expectedBytes)
+          << "PNG mismatch for frame " << expectedPngs[i] << " in preset " << presetName;
+    }
+  }
+
+  fs::remove_all(runRoot);
 }
 
 TEST(DeterministicRender, WavRequiresHeadless) {

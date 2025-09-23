@@ -1,6 +1,7 @@
 #include <emmintrin.h>
 
 #include <algorithm>
+#include <cstring>
 
 #include "avs/cpu_features.hpp"
 #include "avs/effects.hpp"
@@ -24,12 +25,14 @@ void RadialBlurEffect::process(const Framebuffer& in, Framebuffer& out) {
   std::uint8_t* dst = out.rgba.data();
   size_t n = in.rgba.size();
   if (hasSse2()) {
-    __m128i c = _mm_set1_epi32(*reinterpret_cast<const int*>(center));
+    std::uint32_t centerValue = 0;
+    std::memcpy(&centerValue, center, sizeof(centerValue));
+    __m128i c = _mm_set1_epi32(static_cast<int>(centerValue));
     size_t i = 0;
     for (; i + 16 <= n; i += 16) {
-      __m128i v = _mm_loadu_si128(reinterpret_cast<const __m128i*>(src + i));
+      __m128i v = _mm_loadu_si128(reinterpret_cast<const __m128i_u*>(src + i));
       __m128i r = _mm_avg_epu8(v, c);
-      _mm_storeu_si128(reinterpret_cast<__m128i*>(dst + i), r);
+      _mm_storeu_si128(reinterpret_cast<__m128i_u*>(dst + i), r);
     }
     for (; i < n; ++i) {
       dst[i] = static_cast<std::uint8_t>((static_cast<int>(src[i]) + center[i % 4]) / 2);

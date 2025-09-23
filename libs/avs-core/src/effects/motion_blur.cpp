@@ -27,10 +27,10 @@ void MotionBlurEffect::process(const Framebuffer& in, Framebuffer& out) {
     size_t n = in.rgba.size();
     size_t i = 0;
     for (; i + 16 <= n; i += 16) {
-      __m128i va = _mm_loadu_si128(reinterpret_cast<const __m128i*>(a + i));
-      __m128i vp = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p + i));
+      __m128i va = _mm_loadu_si128(reinterpret_cast<const __m128i_u*>(a + i));
+      __m128i vp = _mm_loadu_si128(reinterpret_cast<const __m128i_u*>(p + i));
       __m128i v = _mm_avg_epu8(va, vp);
-      _mm_storeu_si128(reinterpret_cast<__m128i*>(o + i), v);
+      _mm_storeu_si128(reinterpret_cast<__m128i_u*>(o + i), v);
     }
     for (; i < n; ++i) {
       o[i] = static_cast<std::uint8_t>((static_cast<int>(a[i]) + p[i]) / 2);

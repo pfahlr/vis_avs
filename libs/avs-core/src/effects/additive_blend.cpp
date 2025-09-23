@@ -28,10 +28,10 @@ void AdditiveBlendEffect::process(const Framebuffer& in, Framebuffer& out) {
     size_t i = 0;
     __m128i add;
     for (; i + 16 <= n; i += 16) {
-      __m128i v = _mm_loadu_si128(reinterpret_cast<const __m128i*>(src + i));
-      add = _mm_loadu_si128(reinterpret_cast<const __m128i*>(b + i));
+      __m128i v = _mm_loadu_si128(reinterpret_cast<const __m128i_u*>(src + i));
+      add = _mm_loadu_si128(reinterpret_cast<const __m128i_u*>(b + i));
       v = _mm_adds_epu8(v, add);
-      _mm_storeu_si128(reinterpret_cast<__m128i*>(dst + i), v);
+      _mm_storeu_si128(reinterpret_cast<__m128i_u*>(dst + i), v);
     }
     for (; i < n; ++i) {
       int v = src[i] + b[i];

@@ -119,3 +119,118 @@ All dependencies listed here **must** be mirrored in `/.github/workflows/ci.yml`
 
 ---
 
+## Binary assets in Codex PRs (code-only PRs; binaries via ZIP artifact)
+
+**Goal:** Keep binary assets in the repository, but **do not include them in Codex-generated pull requests**. Instead, Codex must package any changed/added binaries into a ZIP and attach it to its message, while opening a **code-only** PR. I (the maintainer) will open a matching binary-assets PR separately.
+
+### What counts as “binary” (for this rule)
+
+Treat as binary any non-text file (e.g., `*.png *.jpg *.gif *.zip *.7z *.mp4 *.avi *.wav *.mp3 *.ttf *.otf *.dll *.so *.dylib *.wasm`) and any file that `git diff` reports as binary.
+
+### Codex workflow when changes include binaries
+
+1. **Stage code only.**
+
+   * Identify files staged for commit:
+     `git diff --name-only --cached`
+   * Identify new/modified binaries in the working copy:
+     `git ls-files -vmo --exclude-standard` (untracked) + `git diff --name-only` (modified), then detect binaries via `git diff --numstat -- <path>` returning `-` `-`, or `file --mime`.
+   * **Unstage binaries while leaving them in the working tree:**
+
+     ```
+     # for each binary path B
+     git restore --staged -- B
+     ```
+   * Do **not** delete or ignore these files. They must remain in the working copy exactly where they belong.
+
+2. **Create a ZIP artifact of binaries (repo-relative paths).**
+
+   * Create a temp folder: `./_codex_artifacts/`
+   * ZIP name: `_codex_artifacts/binaries-<branch>-<yyyymmdd-HHMMSS>.zip`
+   * The ZIP must contain each binary at its **final repo-relative path** (so extracting at repo root puts it in place).
+
+3. **Emit a manifest alongside the ZIP (inside the ZIP at repo root).**
+   File: `BINARY_ASSETS.manifest.json` with entries:
+
+   ```json
+   {
+     "schema": 1,
+     "branch": "<branch>",
+     "created_utc": "YYYY-MM-DDTHH:MM:SSZ",
+     "files": [
+       { "path": "tests/golden/phase1/fadeout_color.f120.png", "size": 123456, "sha256": "<hex>" },
+       { "path": "tests/golden/phase1/fadeout_color.hash.txt",  "size": 64,     "sha256": "<hex>" }
+     ]
+   }
+   ```
+
+   * Compute SHA256 on file **bytes** exactly as they should be committed.
+
+4. **Attach the ZIP to your assistant message** (not to the PR).
+
+   * Provide the SHA256 of the ZIP itself in the message.
+
+5. **Open a PR with code only.**
+
+   * Commit message: `tests: expand deterministic harness (binaries packaged separately)`
+   * PR title example: `tests: phase1 harness + wiring (binary assets attached out-of-band)`
+   * **PR body must include a “Binary assets” section** (template below) listing:
+
+     * the exact ZIP filename, size, and SHA256,
+     * a table of the excluded binary files (path, size, sha256) from the manifest,
+     * instructions that the maintainer will open a **companion PR** adding these binaries verbatim.
+
+6. **Never alter .gitignore or hooks to block binaries.**
+   We intentionally keep binaries allowed in the repository; this rule applies **only** to Codex-generated PRs.
+
+### PR body template (Codex must paste this)
+
+```
+## Binary assets (excluded from this PR by policy)
+
+To avoid Codex “create PR” failures on binary diffs, all binary changes for this branch
+are packaged as a separate ZIP artifact:
+
+ZIP: binaries-<branch>-<yyyymmdd-HHMMSS>.zip
+Size: <bytes>
+ZIP SHA256: <zip_sha256>
+
+I have attached the ZIP in chat. Maintainer will open a separate PR that adds these
+files verbatim.
+
+| Path | Size | SHA256 |
+|------|------:|-------:|
+| tests/golden/phase1/fadeout_color.f120.png | 123456 | <hex> |
+| tests/golden/phase1/fadeout_color.hash.txt | 64     | <hex> |
+
+After applying the companion PR, run:
+`ctest -R deterministic_render_test`
+```
+
+### Minimal helper commands Codex should run
+
+* List candidate binaries (added/modified):
+
+  ```
+  git diff --name-only --diff-filter=AM > /tmp/candidates.txt
+  while read -r p; do
+    if git diff --numstat -- "$p" | grep -q '^-'; then
+      echo "$p" >> /tmp/binaries.txt
+    fi
+  done < /tmp/candidates.txt
+  ```
+* Unstage them:
+
+  ```
+  xargs -a /tmp/binaries.txt -r git restore --staged --
+  ```
+* Build the ZIP at repo root (preserving paths):
+
+  ```
+  mkdir -p _codex_artifacts
+  zip -q -r "_codex_artifacts/binaries-<branch>-<stamp>.zip" @/tmp/binaries.txt
+  ```
+* Manifest (pseudo): compute size and sha256 for each path and write `BINARY_ASSETS.manifest.json` into the ZIP root.
+
+> Note: If tests require those binaries to pass in CI, mark them `GTEST_SKIP()` (or equivalent) when files are absent, and include a README note telling maintainers to apply the companion binary PR locally before running the full suite.
+

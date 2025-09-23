@@ -1,6 +1,6 @@
 id: warn-portaudio-vendor
 title: Patch vendored PortAudio warnings (JACK/ALSA)
-status: READY
+status: IN-REVIEW
 labels: [warnings, portaudio, platform]
 depends_on: []
 goal: >

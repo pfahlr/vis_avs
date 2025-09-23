@@ -102,12 +102,7 @@ typedef struct _compileContext compileContext;
 
 #define YYSTYPE opcodeRec *
 
-#ifdef NSEEL_SUPER_MINIMAL_LEXER
-int nseellex(opcodeRec **output, YYLTYPE *yylloc_param, compileContext *scctx);
-#else
-int nseellex(YYSTYPE *yylval_param, YYLTYPE *yylloc_param, void *yyscanner);
-#endif
-void nseelerror(YYLTYPE *pos, compileContext *ctx, const char *str);
+#include "nseel_lexer_decls.h"
 
 #define NSEEL_CLOSEFACTOR 0.00001
 

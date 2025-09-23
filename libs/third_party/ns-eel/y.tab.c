@@ -140,6 +140,7 @@
 
 #include "y.tab.h"
 #include "ns-eel-int.h"
+#include "nseel_lexer_decls.h"
   
 #define scanner context->scanner
 #define YY_(x) ("")

@@ -275,6 +275,23 @@ TEST(PresetParser, ParsesNestedRenderLists) {
   EXPECT_EQ(preset.comments[0], "Nested list comment");
 }
 
+TEST(PresetParser, HandlesExtendedRenderListHeader) {
+  namespace fs = std::filesystem;
+  auto preset = avs::parsePreset(fs::path(SOURCE_DIR) / "tests/data/extended_color_mod.avs");
+  EXPECT_TRUE(preset.warnings.empty());
+  ASSERT_FALSE(preset.chain.empty());
+  auto* scripted = dynamic_cast<avs::ScriptedEffect*>(preset.chain.front().get());
+  ASSERT_NE(scripted, nullptr);
+
+  avs::Engine engine(32, 24);
+  engine.setChain(std::move(preset.chain));
+  engine.setAudio(avs::AudioState{});
+  EXPECT_NO_THROW(engine.step(0.0f));
+  EXPECT_EQ(engine.frame().w, 32);
+  EXPECT_EQ(engine.frame().h, 24);
+  EXPECT_EQ(engine.frame().rgba.size(), static_cast<size_t>(32 * 24 * 4));
+}
+
 TEST(ScriptedEffect, SuperscopeLegacyHashes) {
   namespace fs = std::filesystem;
   fs::path sourceDir{SOURCE_DIR};

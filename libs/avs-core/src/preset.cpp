@@ -165,14 +165,32 @@ bool parseRenderListChunk(Reader& r,
     mode = (modeByte & ~0x80u) | ext;
   }
   std::uint32_t extendedSize = (mode >> 24) & 0xFFu;
-  size_t skip = extendedSize ? static_cast<size_t>(extendedSize) + 4u : 0u;
-  if (skip > 0) {
-    if (!ensureRemaining(r, chunkEnd, skip)) {
+  if (extendedSize > 0) {
+    // Legacy Winamp render lists store the extended byte count as "actual payload + 4".
+    // See r_list.cpp where set_extended_datasize(36) is accompanied by the comment
+    // "size of extended data + 4 cause we fucked up". We previously skipped
+    // extendedSize + 4, which marched eight bytes past the first effect header once
+    // the extended block was present. Consume the declared fields explicitly so we
+    // stay aligned with the payload that follows.
+    size_t declaredBytes = extendedSize >= 4u ? static_cast<size_t>(extendedSize - 4u) : 0u;
+    if (!ensureRemaining(r, chunkEnd, declaredBytes)) {
       result.warnings.push_back("truncated extended preset data");
       r.pos = chunkEnd;
       return false;
     }
-    r.pos += skip;
+    std::array<std::uint32_t, 8> extFields{};
+    size_t valuesToRead = std::min(extFields.size(), declaredBytes / sizeof(std::uint32_t));
+    for (size_t i = 0; i < valuesToRead; ++i) {
+      if (!readU32Bounded(r, chunkEnd, extFields[i])) {
+        result.warnings.push_back("incomplete extended preset data");
+        r.pos = chunkEnd;
+        return false;
+      }
+    }
+    size_t consumed = valuesToRead * sizeof(std::uint32_t);
+    if (declaredBytes > consumed) {
+      r.pos += declaredBytes - consumed;
+    }
   }
 
   while (ensureRemaining(r, chunkEnd, 8)) {

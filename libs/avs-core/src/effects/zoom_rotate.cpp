@@ -23,9 +23,9 @@ void ZoomRotateEffect::process(const Framebuffer& in, Framebuffer& out) {
   if (hasSse2()) {
     size_t i = 0;
     while (i + 4 <= pixels) {
-      __m128i v = _mm_loadu_si128(reinterpret_cast<const __m128i*>(src + (pixels - i - 4) * 4));
+      __m128i v = _mm_loadu_si128(reinterpret_cast<const __m128i_u*>(src + (pixels - i - 4) * 4));
       v = _mm_shuffle_epi32(v, _MM_SHUFFLE(0, 1, 2, 3));
-      _mm_storeu_si128(reinterpret_cast<__m128i*>(dst + i * 4), v);
+      _mm_storeu_si128(reinterpret_cast<__m128i_u*>(dst + i * 4), v);
       i += 4;
     }
     for (; i < pixels; ++i) {

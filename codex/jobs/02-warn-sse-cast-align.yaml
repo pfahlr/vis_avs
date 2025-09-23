@@ -1,6 +1,6 @@
 id: warn-sse-cast-align
 title: Fix SSE cast-align warnings
-status: READY
+status: IN-REVIEW
 labels: [warnings, sse, avs-core]
 depends_on: []
 goal: >

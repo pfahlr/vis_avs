@@ -27,9 +27,9 @@ void MirrorEffect::process(const Framebuffer& in, Framebuffer& out) {
       std::uint8_t* d = dst + static_cast<size_t>(y) * rowPixels * 4;
       size_t i = 0;
       while (i + 4 <= rowPixels) {
-        __m128i v = _mm_loadu_si128(reinterpret_cast<const __m128i*>(s + (rowPixels - i - 4) * 4));
+        __m128i v = _mm_loadu_si128(reinterpret_cast<const __m128i_u*>(s + (rowPixels - i - 4) * 4));
         v = _mm_shuffle_epi32(v, _MM_SHUFFLE(0, 1, 2, 3));
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(d + i * 4), v);
+        _mm_storeu_si128(reinterpret_cast<__m128i_u*>(d + i * 4), v);
         i += 4;
       }
       for (; i < rowPixels; ++i) {

@@ -52,8 +52,11 @@ Pick a device either by index or by matching part of its name:
 If the chosen endpoint cannot capture audio, the player reports a descriptive
 error instead of silently falling back to the default input.
 
-To drive rendering from a WAV file, run the player in headless mode. Supplying
-`--wav` without `--headless` will terminate with an error.
+To drive rendering from a WAV file, you can either run the player in headless
+mode for deterministic output, or preview interactively by omitting
+`--headless`. When running interactively from a WAV source, `--frames <n>` can
+be supplied to automatically exit after `n` frames (handy for tests or scripted
+captures).
 
 ```bash
 ./apps/avs-player/avs-player --headless --wav tests/data/test.wav \

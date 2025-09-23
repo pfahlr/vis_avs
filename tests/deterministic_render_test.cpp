@@ -85,7 +85,7 @@ TEST(DeterministicRender, MatchesGolden) {
   EXPECT_FALSE(std::getline(expected, eLine));
 }
 
-TEST(DeterministicRender, WavRequiresHeadless) {
+TEST(DeterministicRender, InteractiveWavPlaybackUsesOfflineAudio) {
   namespace fs = std::filesystem;
   fs::path buildDir{BUILD_DIR};
   fs::path sourceDir{SOURCE_DIR};
@@ -93,10 +93,17 @@ TEST(DeterministicRender, WavRequiresHeadless) {
   fs::path wav = sourceDir / "tests/data/test.wav";
   fs::path preset = sourceDir / "tests/data/simple.avs";
 
+#if defined(_WIN32)
+  _putenv("SDL_AUDIODRIVER=dummy");
+#else
+  setenv("SDL_VIDEODRIVER", "offscreen", 1);
+  setenv("SDL_AUDIODRIVER", "dummy", 1);
+#endif
+
   std::string cmd =
-      player.string() + " --wav " + wav.string() + " --preset " + preset.string() + " --frames 60";
+      player.string() + " --wav " + wav.string() + " --preset " + preset.string() + " --frames 10";
   int ret = std::system(cmd.c_str());
-  EXPECT_NE(ret, 0);
+  EXPECT_EQ(ret, 0);
 }
 
 TEST(DeterministicRender, HandlesGeneratedSampleRates) {

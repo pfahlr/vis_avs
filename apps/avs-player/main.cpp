@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <iomanip>
 #include <memory>
 #include <optional>
@@ -74,6 +75,7 @@ void printUsage() {
   std::fprintf(
       stderr,
       "Usage: avs-player [--headless --wav <file> --preset <file> --frames <n> --out <dir>]\n"
+      "                 [--wav <file>] [--preset <file>] [--frames <n>]\n"
       "                 [--sample-rate <hz>] [--channels <count>] [--input-device <id>]\n"
       "                 [--list-input-devices] [--demo-script] [--presets <directory>] [--help]\n");
 }
@@ -179,7 +181,8 @@ class OfflineAudio {
     const size_t legacySamples = avs::AudioState::kLegacyVisSamples;
     const size_t channelCount = static_cast<size_t>(wav_.channels);
     if (legacySamples > 0 && channelCount > 0) {
-      const size_t sampleStart = kFftSize > legacySamples ? static_cast<size_t>(kFftSize) - legacySamples : 0;
+      const size_t sampleStart =
+          kFftSize > legacySamples ? static_cast<size_t>(kFftSize) - legacySamples : 0;
       for (unsigned int ch = 0; ch < std::min<unsigned int>(wav_.channels, 2); ++ch) {
         auto& dest = state.oscilloscope[static_cast<size_t>(ch)];
         for (size_t i = 0; i < legacySamples; ++i) {
@@ -360,11 +363,6 @@ int main(int argc, char** argv) {
     return listPortAudioInputDevices();
   }
 
-  if (!headless && !wavPath.empty()) {
-    std::fprintf(stderr, "--wav requires --headless\n");
-    return 1;
-  }
-
   if (headless) {
     if (wavPath.empty() || presetPath.empty() || frames <= 0) {
       std::fprintf(stderr, "--headless requires --wav, --preset and --frames\n");
@@ -375,21 +373,41 @@ int main(int argc, char** argv) {
   }
 
   avs::Window window(1920, 1080, "AVS Player");
-  avs::AudioInputConfig audioConfig;
-  if (requestedSampleRate) {
-    audioConfig.requestedSampleRate = requestedSampleRate;
-  }
-  if (requestedChannels) {
-    audioConfig.engineChannels = std::max(1, *requestedChannels);
-    audioConfig.requestedChannels = requestedChannels;
-  }
-  if (requestedInputDevice) {
-    audioConfig.requestedDevice = requestedInputDevice;
-  }
-  avs::AudioInput audio(audioConfig);
-  if (!audio.ok()) {
-    std::fprintf(stderr, "audio init failed\n");
-    return 1;
+  std::unique_ptr<avs::AudioInput> audioInput;
+  std::unique_ptr<WavData> interactiveWav;
+  std::unique_ptr<OfflineAudio> offlineAudio;
+  std::function<avs::AudioState()> pollAudio;
+
+  if (wavPath.empty()) {
+    avs::AudioInputConfig audioConfig;
+    if (requestedSampleRate) {
+      audioConfig.requestedSampleRate = requestedSampleRate;
+    }
+    if (requestedChannels) {
+      audioConfig.engineChannels = std::max(1, *requestedChannels);
+      audioConfig.requestedChannels = requestedChannels;
+    }
+    if (requestedInputDevice) {
+      audioConfig.requestedDevice = requestedInputDevice;
+    }
+    audioInput = std::make_unique<avs::AudioInput>(audioConfig);
+    if (!audioInput->ok()) {
+      std::fprintf(stderr, "audio init failed\n");
+      return 1;
+    }
+    pollAudio = [audioPtr = audioInput.get()]() { return audioPtr->poll(); };
+  } else {
+    interactiveWav = std::make_unique<WavData>();
+    if (!loadWav(wavPath, *interactiveWav)) {
+      std::fprintf(stderr, "failed to load wav\n");
+      return 1;
+    }
+    if (interactiveWav->sampleRate == 0 || interactiveWav->channels == 0) {
+      std::fprintf(stderr, "invalid wav\n");
+      return 1;
+    }
+    offlineAudio = std::make_unique<OfflineAudio>(*interactiveWav);
+    pollAudio = [offline = offlineAudio.get()]() { return offline->poll(); };
   }
 
   avs::Engine engine(1920, 1080);
@@ -455,12 +473,14 @@ int main(int argc, char** argv) {
 
   auto last = std::chrono::steady_clock::now();
   float printAccum = 0.0f;
+  int interactiveFramesRemaining = frames;
+  const bool limitInteractiveFrames = !wavPath.empty() && interactiveFramesRemaining > 0;
   while (window.poll()) {
     auto now = std::chrono::steady_clock::now();
     float dt = std::chrono::duration<float>(now - last).count();
     last = now;
 
-    auto s = audio.poll();
+    auto s = pollAudio();
     engine.setAudio(s);
     printAccum += dt;
     if (printAccum > 0.5f) {
@@ -478,6 +498,13 @@ int main(int argc, char** argv) {
     engine.resize(w, h);
     engine.step(dt);
     window.blit(engine.frame().rgba.data(), w, h);
+
+    if (limitInteractiveFrames) {
+      --interactiveFramesRemaining;
+      if (interactiveFramesRemaining <= 0) {
+        break;
+      }
+    }
   }
   return 0;
 }

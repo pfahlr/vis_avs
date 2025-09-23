@@ -26,7 +26,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          LABELS=("warnings" "sse" "avs-core" "portaudio" "opengl" "presets" "cli" "gui" "parser" "compatibility" "bugfix" "audio" "resampling" "reliability" "scripting" "eel")
+          LABELS=("warnings" "sse" "avs-core" "portaudio" "opengl" "presets" "cli" "gui" "parser" "platform" "compatibility" "bugfix" "audio" "resampling" "reliability" "scripting" "eel" "ns-eel" )
           for L in "${LABELS[@]}"; do
             if ! gh label list --json name -q '.[] | select(.name=="'$L'")' | grep -q .; then
               echo "Creating label: $L"

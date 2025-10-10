@@ -12,8 +12,12 @@
 #include <string>
 #include <vector>
 
+#if AVS_ENABLE_EEL2
 #include "ns-eel-addfuncs.h"
 #include "ns-eel.h"
+#else
+#include <unordered_map>
+#endif
 
 namespace avs {
 
@@ -27,6 +31,8 @@ struct MouseState {
 
 /** \brief Lightweight RAII wrapper for an NS-EEL VM.
  */
+#if AVS_ENABLE_EEL2
+
 class EelVm {
  public:
   static constexpr size_t kLegacyVisSamples = 576;
@@ -88,5 +94,46 @@ class EelVm {
   std::array<std::vector<double>, kMegaBufBlocks> megaBlocks_{};
   EEL_F megaError_ = 0.0;
 };
+
+#else  // AVS_ENABLE_EEL2
+
+using EEL_F = double;
+using EEL_F_PTR = double*;
+using NSEEL_CODEHANDLE = void*;
+using NSEEL_VMCTX = void*;
+#ifndef NSEEL_CGEN_CALL
+#define NSEEL_CGEN_CALL
+#endif
+
+class EelVm {
+ public:
+  static constexpr size_t kLegacyVisSamples = 576;
+  static constexpr int kMegaBufBlocks = 1;
+  static constexpr int kMegaBufItemsPerBlock = 1;
+
+  struct LegacySources {
+    const std::uint8_t* oscBase = nullptr;
+    const std::uint8_t* specBase = nullptr;
+    size_t sampleCount = 0;
+    int channels = 0;
+    double audioTimeSeconds = 0.0;
+    double engineTimeSeconds = 0.0;
+    MouseState mouse{};
+  };
+
+  EelVm() = default;
+  ~EelVm() = default;
+
+  EEL_F* regVar(const char* name) { return &variables_[std::string(name)]; }
+  NSEEL_CODEHANDLE compile(const std::string&) { return nullptr; }
+  void execute(NSEEL_CODEHANDLE) {}
+  void freeCode(NSEEL_CODEHANDLE) {}
+  void setLegacySources(const LegacySources&) {}
+
+ private:
+  std::unordered_map<std::string, EEL_F> variables_;
+};
+
+#endif  // AVS_ENABLE_EEL2
 
 }  // namespace avs

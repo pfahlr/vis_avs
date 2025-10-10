@@ -1,0 +1,381 @@
+version: 1
+title: "AVS Base Effects: Linux Implementation Master Spec"
+scope:
+  summary: >
+    Implement the canonical AVS rendering pipeline and base components on Linux
+    with parity to AVS 2.81d semantics (buffers, blending, timing, and EEL-driven effects).
+  targets:
+    - lib: libavs.so
+    - frontends:
+        - headless_cli: avs-render (JSON preset in, frames/video out)
+        - live_view: SDL2/SDL3 window (optional)
+  non_goals:
+    - Full Winamp UI/editor parity
+    - Rare/third-party APEs beyond the listed “builtin-APE” subset
+
+platform:
+  os: Linux
+  audio:
+    capture_backends:
+      - pipewire_pulse   # preferred (monitor sources available)
+      - portaudio        # fallback; select WASAPI loopback on Windows when ported
+    sample_spec:
+      sample_rate: 44100
+      channels: 2
+      format: f32
+    block_size: 1024   # frames per analysis hop (tune for latency vs. stability)
+    beat_detection:
+      method: energy_envelope + adaptive_threshold
+      window_ms: 12
+      decay: 0.97
+      sensitivity: medium
+      outputs:
+        - beat_flag      # one-shot
+        - bpm_estimate
+        - peak_strength
+  graphics:
+    framebuffer:
+      color_format: RGBA8888
+      gamma: assume_sRGB
+      origin: top_left
+      storage: row_major
+      wrap_modes: [clamp, wrap]
+      extra_buffers:
+        - prev           # last frame
+        - temp           # scratch
+        - A              # user buffer A
+        - B              # user buffer B
+    timing:
+      timebase: audio_driven
+      fps_hint: 60
+      dt_source: audio_block_duration
+    threading:
+      model: double_buffered
+      worker_threads: "min(cores, 4)"
+  scripting:
+    engine: EEL2  # modern forks use EEL2; retain AVS variable semantics
+    precision: f32
+    builtin_vars:
+      frame: int
+      time: seconds_f
+      beat: {type: bool, desc: "latched for current frame"}
+      w: int
+      h: int
+      iw: float  # 1/w
+      ih: float  # 1/h
+      q1_q8: float[]  # general purpose user regs
+      t1_t8: float[]  # transient regs
+    coord_spaces:
+      - pixel_xy: [0..w-1, 0..h-1]
+      - norm_uv: [0..1, 0..1]
+      - centered_xy: [-1..1, -1..1]
+    safety:
+      max_instructions: 1_000_000
+      max_memory_kb: 256
+      forbid: [nan_propagation, denormals]
+      fast_math: true
+
+io_and_cli:
+  preset_io:
+    formats:
+      - avs_binary: read-only for compatibility
+      - avs_json: read/write (preferred; stable schema)
+  media_output:
+    - images: png, ppm
+    - video: y4m, ffmpeg_pipe (optional)
+  cli_flags:
+    - --in <preset.json|.avsbin>
+    - --audio-device "<source_name>"
+    - --list-audio-devices
+    - --frames N | --seconds S
+    - --out-dir ./out
+    - --out-video ./out/out.y4m
+    - --seed <int>  # for randomized presets
+    - --headless | --windowed
+    - --profile  # dump perf counters
+
+render_pipeline:
+  order_of_operations: |
+    For each frame:
+      1) Pull audio block; update beat detector and analysis buffers (FFT if needed).
+      2) Evaluate per-frame EEL for active effects top→bottom.
+      3) For draw-style effects (e.g., Superscope), run per-point/per-pixel loops.
+      4) For transforms, sample from input buffer(s) into output with defined wrap/blend.
+      5) Composite into current framebuffer using the effect’s blend mode.
+      6) Swap current→prev; maintain A/B buffers if used.
+  blending:
+    default: src_over
+    modes: [add, subtract, multiply, max, min, average, xor, replace]
+  sampling:
+    filter: nearest  # historically nearest; keep option for bilinear in specific effects
+  color_math:
+    channel_depth: 8bit
+    overflow: clamp
+  determinism:
+    random_source: xoshiro128**
+    seed_scopes: [preset, effect]
+
+effects:
+  # === RENDER COMPONENTS ===
+  - name: Superscope
+    category: render
+    codeable: true
+    description: Draws parametric curves/waveforms by evaluating EEL per point (per-frame init + per-point).
+    inputs: [audio_analysis(optional), prev]
+    outputs: [current]
+    controls:
+      draw_mode: [lines, dots]
+      n_points: 512
+      thickness: 1.0
+      color: {r: 255, g: 255, b: 255, a: 255}
+      eel_sections: {init: string, frame: string, point: string}
+    algorithm:
+      per_frame: set globals, compute audio features (peak, bass/mid/treb)
+      per_point: x,y from user expressions; color/alpha optional
+      raster: Bresenham/AA-line for lines; point plot for dots
+    perf:
+      vectorize: false
+      notes: Per-point EEL is hot; cache consts and hoist invariants
+    tests:
+      - name: circle_lines
+        preset: samples/superscope_circle.json
+        expect: golden/superscope_circle.png
+  - name: Scope
+    category: render
+    codeable: false
+    description: Classic oscilloscope waveform.
+    inputs: [audio_time_domain]
+    outputs: [current]
+    controls:
+      channel: [L, R, mix]
+      scale: 1.0
+      color: rgb
+      mode: [line, dots]
+    algorithm: map audio samples to x (time) vs y (amplitude), optional smoothing
+  - name: Triangles
+    category: render
+    codeable: true
+    description: Scriptable triangle primitives (aka “Triangles” component).
+    controls:
+      eel_sections: {init, frame, beat(optional)}
+      params: {edges: 3, filled: true}
+  - name: Shapes
+    category: render
+    codeable: false
+    description: N-gon/star shapes at positions, optional rotation and beat-pulse.
+    controls: {sides: int, radius: float, rotate_speed: float, color: rgb}
+  - name: Text
+    category: render
+    description: Bitmap text rendering (FreeType) with alignment and scale.
+    controls: {font: path, size_px: int, color: rgb, align: [left,center,right]}
+    impl:
+      lib: freetype2
+      cache: glyph_atlas_rgba8
+  - name: Picture
+    category: render
+    description: Static image sprite (Picture/PictureII semantics).
+    controls: {path: uri, fit: [none, contain, cover], alpha: 1.0}
+  - name: Starfield
+    category: render
+    description: Classic starfield particle projection, speed modulated by audio.
+    controls: {star_count: 1024, speed: 1.0, depth: 1.0}
+  - name: Dot Grid
+    category: render
+    description: Uniform grid of points modulated by audio bands.
+
+  # === TRANSFORM COMPONENTS (image-space) ===
+  - name: Movement
+    category: trans
+    codeable: true
+    description: Static mapping from (x,y) → (x',y') via EEL (per-pixel or analytic).
+    inputs: [prev]
+    outputs: [current]
+    controls:
+      eel_sections: {init, frame, pixel}
+      wrap: [clamp, wrap]
+      subpixel: false
+    algorithm: sample prev at computed coords, blend to current
+  - name: Dynamic Movement
+    category: trans
+    codeable: true
+    description: Time-varying coordinate warp using EEL with audio influence.
+    controls:
+      eel_sections: {init, frame, pixel}
+      extras: {zoom: float, rot: float}
+  - name: Dynamic Distance Modifier
+    category: trans
+    codeable: true
+    description: Radial distance-based warp (lens/zoom/ripple via EEL).
+  - name: Dynamic Shift
+    category: trans
+    codeable: true
+    description: Per-pixel color shift/offset driven by EEL.
+  - name: Convolution 3x3
+    category: trans
+    codeable: false
+    description: Generic 3x3 kernel (sharpen/edge/blur).
+    controls:
+      kernel: [[0,0,0],[0,1,0],[0,0,0]]
+      normalize: auto
+      clamp: true
+    perf:
+      impl: separable-fastpath for gaussian; otherwise naive 3x3
+  - name: Blur (Box)
+    category: trans
+    description: Box blur with configurable radius (sep. passes).
+  - name: Bump
+    category: trans
+    codeable: true
+    description: Bump mapping style normal trick on grayscale height.
+  - name: Interferences
+    category: trans
+    description: Sine/cos moiré field layered and animated.
+  - name: Fadeout
+    category: trans
+    description: Exponential decay towards black each frame.
+    controls: {amount: 0.04}
+  - name: Fast Brightness
+    category: trans
+    description: Per-channel multiply + clamp.
+  - name: Invert
+    category: trans
+    description: 255 - color per channel.
+  - name: Grain
+    category: trans
+    description: Additive noise (seeded; deterministic).
+  - name: Interleave
+    category: trans
+    description: Combine alternating scanlines/columns from A/B buffers.
+
+  # === MISC / CONTROL FLOW ===
+  - name: Clear Screen
+    category: misc
+    description: Clear to color (optionally on-beat only).
+  - name: Buffer Save/Restore
+    category: misc
+    description: Copy current/prev to A/B or restore from them.
+    controls:
+      op: [save_to_A, save_to_B, restore_from_A, restore_from_B, swap_AB]
+  - name: Effect List
+    category: misc
+    codeable: true
+    description: Nested subgraph; optional conditional enabling via EEL.
+  - name: Global Variables
+    category: misc
+    codeable: true
+    description: Shared q1..q8 registers and expressions.
+  - name: OnBeat
+    category: misc
+    description: Gate an inner list to run only when beat_flag is set.
+
+builtin_apes_on_linux:
+  note: >
+    These historically were third-party APEs but are shipped as builtins
+    in modern Linux forks; include them to satisfy many popular presets.
+  list:
+    - ConvolutionFilter
+    - Texer
+    - TexerII
+    - AVSTrans
+    - PictureII
+    - Normalise
+    - Colormap
+    - AddBorders
+    - Triangle
+    - GlobalVariables
+    - MultiFilter
+    - FramerateLimiter
+
+eel_api:
+  math: [sin, cos, tan, atan2, sqrt, pow, abs, min, max, rand, noise]
+  state:
+    read: [frame, time, beat, w, h, iw, ih, q1..q8, t1..t8]
+    write: [q1..q8, t1..t8]
+  audio_features:
+    time_domain: {array: samples[block], l_r_mix: true}
+    bands: {bass: float, mid: float, treb: float}
+    fft: optional  # keep for compatibility; most presets use bands
+  safety:
+    division_by_zero: clamp_eps
+    NaN: sanitize_to_zero
+    loop_guards: true
+
+compatibility_matrix:
+  target_version: "AVS 2.81d semantics"
+  pixel_math: "8-bit clamp; channel-wise"
+  wrap_defaults: "wrap for movement-like transforms; clamp otherwise"
+  superscope:
+    line_join: none
+    aa: optional
+  text:
+    font_metrics: "FreeType; minor glyph differences vs GDI acceptable"
+  performance:
+    sse2: enabled
+    neon: optional (arm64)
+  deterministic_mode:
+    description: "Enable fixed dt and seeded RNG for golden tests."
+    flags: ["--deterministic", "--seed N", "--fps 60"]
+
+golden_testing:
+  renderer:
+    output: png
+    size: [640, 480]
+  vectors:
+    - id: t_superscope_circle
+      preset: tests/presets/superscope_circle.json
+      frames: 120
+      expect: tests/golden/superscope_circle/frame_%04d.png
+    - id: t_dynamic_move_spinzoom
+      preset: tests/presets/dynmove_spinzoom.json
+      frames: 180
+      expect: tests/golden/dynmove_spinzoom/frame_%04d.png
+    - id: t_fadeout_chain
+      preset: tests/presets/fadeout_chain.json
+      frames: 90
+      expect: tests/golden/fadeout_chain/frame_%04d.png
+  tolerances:
+    per_pixel: exact  # AVS was integer; exactness expected at 8bpc
+    allowed_diffs: {count: 0}
+  logs:
+    metrics: [fps, cpu_ms, mem_mb]
+    dump: runs/metrics.jsonl
+
+dev_notes_linux:
+  device_routing:
+    pipewire:
+      recommend: "'Monitor of <sink>' as capture source"
+      tools: [pavucontrol, qpwgraph]
+    jack:
+      status: optional; provide jack ports when compiled with JACK
+  windowing:
+    sdl: sdl2_or_sdl3
+    vsync: off_by_default  # historical AVS didn’t block on retrace
+  packaging:
+    deps:
+      - fft: kissfft (or built-in)
+      - eel2: integrated (as in modern forks)
+      - freetype2: for Text
+      - stb_image: Picture
+    build:
+      - cmake
+      - ninja|make
+      - options:
+          -DAVS_WITH_PIPEWIRE=ON
+          -DAVS_WITH_SDL=ON
+          -DAVS_WITH_TESTS=ON
+  perf_tips:
+    - favor separable blur
+    - cache sin/cos tables for starfield/oscillators
+    - hoist EEL constants from point loop to frame section
+
+open_questions:
+  - Validate exact blend modes against reference DLL (2.81d)
+  - Confirm EEL intrinsic set (match grandchild fork + legacy)
+  - Decide on bilinear sampling toggle for Movement for compatibility vs. aesthetics
+
+references:
+  - wikipedia_avs_components: "Render / Trans / Misc categories; list of codeable components" 
+  - modern_linux_fork: "Grandchild fork readme: EEL2, Linux libavs.so, builtin APEs, JSON format"
+  - forum_effect_lists: "Winamp forum lists naming base effects like Dynamic Movement, Fadeout, Fast Brightness, Interferences, etc."
+  - nseel_compiler_note: "Direct3D port notes: original x87 JIT, modern replacements"
+

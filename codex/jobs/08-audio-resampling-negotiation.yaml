@@ -1,6 +1,6 @@
 id: audio-resampling-negotiation
 title: Negotiate or resample live audio capture
-status: READY
+status: IN-REVIEW
 labels: [audio, portaudio, resampling, cli]
 depends_on: []
 goal: >

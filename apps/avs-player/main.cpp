@@ -4,11 +4,15 @@
 #include <array>
 #include <chrono>
 #include <cmath>
+#include <cctype>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
+#include <cerrno>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -74,7 +78,7 @@ void printUsage() {
   std::fprintf(
       stderr,
       "Usage: avs-player [--headless --wav <file> --preset <file> --frames <n> --out <dir>]\n"
-      "                 [--sample-rate <hz>] [--channels <count>] [--input-device <id>]\n"
+      "                 [--sample-rate <hz|default>] [--channels <count|default>] [--input-device <id>]\n"
       "                 [--list-input-devices] [--demo-script] [--presets <directory>] [--help]\n");
 }
 
@@ -305,6 +309,26 @@ int main(int argc, char** argv) {
   std::optional<int> requestedChannels;
   std::optional<std::string> requestedInputDevice;
   bool listInputDevices = false;
+  bool useDeviceDefaultSampleRate = true;
+  bool useDeviceDefaultChannels = false;
+
+  auto normalizeToken = [](std::string value) {
+    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
+      return static_cast<char>(std::tolower(c));
+    });
+    return value;
+  };
+
+  auto parsePositiveInt = [](const std::string& text) -> std::optional<int> {
+    errno = 0;
+    char* end = nullptr;
+    long parsed = std::strtol(text.c_str(), &end, 10);
+    if (end == text.c_str() || *end != '\0' || errno == ERANGE ||
+        parsed <= 0 || parsed > std::numeric_limits<int>::max()) {
+      return std::nullopt;
+    }
+    return static_cast<int>(parsed);
+  };
 
   for (int i = 1; i < argc; ++i) {
     std::string arg = argv[i];
@@ -323,19 +347,35 @@ int main(int argc, char** argv) {
     } else if (arg == "--presets" && i + 1 < argc) {
       presetDir = argv[++i];
     } else if (arg == "--sample-rate" && i + 1 < argc) {
-      int value = std::stoi(argv[++i]);
-      if (value <= 0) {
-        std::fprintf(stderr, "--sample-rate must be positive\n");
-        return 1;
+      std::string token = argv[++i];
+      std::string lowered = normalizeToken(token);
+      if (lowered == "default" || lowered == "device-default" || lowered == "auto") {
+        requestedSampleRate.reset();
+        useDeviceDefaultSampleRate = true;
+      } else {
+        auto parsed = parsePositiveInt(token);
+        if (!parsed.has_value()) {
+          std::fprintf(stderr, "--sample-rate expects a positive integer or 'default'\n");
+          return 1;
+        }
+        requestedSampleRate = parsed;
+        useDeviceDefaultSampleRate = false;
       }
-      requestedSampleRate = value;
     } else if (arg == "--channels" && i + 1 < argc) {
-      int value = std::stoi(argv[++i]);
-      if (value <= 0) {
-        std::fprintf(stderr, "--channels must be positive\n");
-        return 1;
+      std::string token = argv[++i];
+      std::string lowered = normalizeToken(token);
+      if (lowered == "default" || lowered == "device-default" || lowered == "auto") {
+        requestedChannels.reset();
+        useDeviceDefaultChannels = true;
+      } else {
+        auto parsed = parsePositiveInt(token);
+        if (!parsed.has_value()) {
+          std::fprintf(stderr, "--channels expects a positive integer or 'default'\n");
+          return 1;
+        }
+        requestedChannels = parsed;
+        useDeviceDefaultChannels = false;
       }
-      requestedChannels = value;
     } else if (arg == "--input-device" && i + 1 < argc) {
       requestedInputDevice = argv[++i];
     } else if (arg == "--input-device") {
@@ -377,11 +417,15 @@ int main(int argc, char** argv) {
 
   avs::Window window(1920, 1080, "AVS Player");
   avs::AudioInputConfig audioConfig;
-  if (requestedSampleRate) {
+  audioConfig.useDeviceDefaultSampleRate = useDeviceDefaultSampleRate;
+  if (!useDeviceDefaultSampleRate && requestedSampleRate) {
     audioConfig.requestedSampleRate = requestedSampleRate;
   }
   if (requestedChannels) {
     audioConfig.engineChannels = std::max(1, *requestedChannels);
+  }
+  audioConfig.useDeviceDefaultChannels = useDeviceDefaultChannels;
+  if (!useDeviceDefaultChannels && requestedChannels) {
     audioConfig.requestedChannels = requestedChannels;
   }
   if (requestedInputDevice) {

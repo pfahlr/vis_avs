@@ -27,6 +27,13 @@ target_compile_definitions(deterministic_render_test PRIVATE BUILD_DIR="${CMAKE_
 add_test(NAME deterministic_render_test COMMAND deterministic_render_test)
 add_dependencies(deterministic_render_test avs-player)
 
+add_executable(core_effects_tests
+  core/test_effect_registry.cpp
+  core/test_pipeline.cpp)
+target_link_libraries(core_effects_tests PRIVATE avs-effects-core avs-core-runtime GTest::gtest_main)
+target_compile_options(core_effects_tests PRIVATE -Wall -Wextra -Werror)
+add_test(NAME core_effects_tests COMMAND core_effects_tests)
+
 set(PHASE1_DATA_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/data/phase1")
 set(PHASE1_GOLDEN_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/golden/phase1")
 set(PHASE1_DATA_DEST "${CMAKE_BINARY_DIR}/tests/data/phase1")

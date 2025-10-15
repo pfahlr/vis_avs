@@ -70,3 +70,40 @@ To drive rendering from a WAV file, run the player in headless mode. Supplying
 ```
 
 More documentation will be added as the project evolves.
+
+## Effects Core
+
+The modern effects core lives under `libs/avs/core` and exposes a small,
+deterministic pipeline. Effects are registered in an
+`avs::core::EffectRegistry` and assembled into an `avs::core::Pipeline`. The
+registry ships with a couple of utility effects (`clear`, `zoom`) from
+`avs::effects::registerCoreEffects`.
+
+```cpp
+#include "avs/core/EffectRegistry.hpp"
+#include "avs/core/Pipeline.hpp"
+#include "avs/core/RenderContext.hpp"
+#include "avs/effects/RegisterEffects.hpp"
+
+avs::core::EffectRegistry registry;
+avs::effects::registerCoreEffects(registry);
+
+avs::core::Pipeline pipeline(registry);
+avs::core::ParamBlock clearParams;
+clearParams.setInt("value", 16);
+pipeline.add("clear", clearParams);
+
+std::vector<std::uint8_t> pixels(640 * 480 * 4, 0);
+avs::core::RenderContext ctx;
+ctx.width = 640;
+ctx.height = 480;
+ctx.framebuffer = {pixels.data(), pixels.size()};
+ctx.frameIndex = 0;
+ctx.deltaSeconds = 1.0 / 60.0;
+
+pipeline.render(ctx);
+```
+
+Set the `AVS_SEED` environment variable (defaults to `0`) to guarantee
+deterministic random number generation across runs when effects rely on the
+provided `avs::core::DeterministicRng`.

@@ -69,6 +69,22 @@ To drive rendering from a WAV file, run the player in headless mode. Supplying
   --preset tests/data/simple.avs --frames 120 --out output_dir
 ```
 
+## Resource discovery
+
+Runtime assets live under the repository's `resources/` directory. CMake copies
+this tree next to the build outputs at `${CMAKE_BINARY_DIR}/resources` and, when
+`AVS_INSTALL_RESOURCES` is enabled (the default), installs it under
+`${CMAKE_INSTALL_PREFIX}/share/vis_avs/resources`.
+
+At runtime the engine resolves resources with the following priority:
+
+1. The directory referenced by the `AVS_RESOURCE_DIR` environment variable.
+2. The build-tree mirror (`${CMAKE_BINARY_DIR}/resources`).
+3. The install-tree payload (`${CMAKE_INSTALL_PREFIX}/share/vis_avs/resources`).
+
+Override `AVS_RESOURCE_DIR` to point the player or tests at an alternative
+payload, for example when packaging assets separately from the binaries.
+
 More documentation will be added as the project evolves.
 
 ## Effects Core

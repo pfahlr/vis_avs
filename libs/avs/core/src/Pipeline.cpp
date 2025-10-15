@@ -24,6 +24,7 @@ bool Pipeline::render(RenderContext& context) {
     }
     if (!node.effect->render(context)) {
       success = false;
+      break;
     }
   }
   return success;

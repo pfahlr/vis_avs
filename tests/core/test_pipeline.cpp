@@ -83,6 +83,25 @@ class NoOpEffect : public avs::core::IEffect {
   void setParams(const ParamBlock&) override {}
 };
 
+class FlagEffect : public avs::core::IEffect {
+ public:
+  FlagEffect(bool shouldSucceed, bool* executed)
+      : shouldSucceed_(shouldSucceed), executed_(executed) {}
+
+  bool render(RenderContext&) override {
+    if (executed_) {
+      *executed_ = true;
+    }
+    return shouldSucceed_;
+  }
+
+  void setParams(const ParamBlock&) override {}
+
+ private:
+  bool shouldSucceed_;
+  bool* executed_;
+};
+
 std::string hashFNV1a(const std::vector<std::uint8_t>& data) {
   constexpr std::uint64_t kOffset = 1469598103934665603ull;
   constexpr std::uint64_t kPrime = 1099511628211ull;
@@ -181,5 +200,30 @@ TEST(PipelineTest, DeterministicOutputWithFixedSeedAndAudio) {
   EXPECT_EQ(hashFNV1a(pixelsA), hashFNV1a(pixelsB));
 
   unsetenv("AVS_SEED");
+}
+
+TEST(PipelineTest, StopsProcessingWhenEffectFails) {
+  avs::core::EffectRegistry registry;
+  bool failingExecuted = false;
+  bool succeedingExecuted = false;
+
+  registry.registerFactory("fail", [&failingExecuted]() {
+    return std::make_unique<FlagEffect>(false, &failingExecuted);
+  });
+  registry.registerFactory("succeed", [&succeedingExecuted]() {
+    return std::make_unique<FlagEffect>(true, &succeedingExecuted);
+  });
+
+  avs::core::Pipeline pipeline(registry);
+  pipeline.add("fail", ParamBlock{});
+  pipeline.add("succeed", ParamBlock{});
+
+  std::vector<std::uint8_t> pixels(4u, 0u);
+  auto ctx = makeContext(pixels);
+  const bool result = pipeline.render(ctx);
+
+  EXPECT_FALSE(result);
+  EXPECT_TRUE(failingExecuted);
+  EXPECT_FALSE(succeedingExecuted);
 }
 

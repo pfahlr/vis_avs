@@ -58,7 +58,7 @@ struct AudioStreamSpec {
 
 struct AudioBlock {
   // Interleaved float32 samples, size = frames * channels
-  std::vector<float> interleaved;
+  std::span<const float> interleaved;
   int frames{0};
   AudioStreamSpec spec{};
 };

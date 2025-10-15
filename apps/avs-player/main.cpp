@@ -2,13 +2,13 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
+#include <cerrno>
 #include <chrono>
 #include <cmath>
-#include <cctype>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <cerrno>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -36,9 +36,23 @@ extern "C" {
 #include "avs/fft.hpp"
 #include "avs/fs.hpp"
 #include "avs/preset.hpp"
+#include "avs/runtime/ResourceManager.hpp"
 #include "avs/window.hpp"
 
 namespace {
+
+avs::runtime::ResourceManager& resourceManager() {
+  static avs::runtime::ResourceManager manager;
+  return manager;
+}
+
+void logResourceSearchPaths() {
+  const auto paths = resourceManager().search_paths();
+  std::printf("Resource search paths:\n");
+  for (const auto& path : paths) {
+    std::printf("  %s\n", path.string().c_str());
+  }
+}
 
 struct WavData {
   std::vector<float> samples;
@@ -78,7 +92,8 @@ void printUsage() {
   std::fprintf(
       stderr,
       "Usage: avs-player [--headless --wav <file> --preset <file> --frames <n> --out <dir>]\n"
-      "                 [--sample-rate <hz|default>] [--channels <count|default>] [--input-device <id>]\n"
+      "                 [--sample-rate <hz|default>] [--channels <count|default>] [--input-device "
+      "<id>]\n"
       "                 [--list-input-devices] [--demo-script] [--presets <directory>] [--help]\n");
 }
 
@@ -297,6 +312,7 @@ int runHeadless(const std::filesystem::path& wavPath, const std::filesystem::pat
 }  // namespace
 
 int main(int argc, char** argv) {
+  logResourceSearchPaths();
   bool headless = false;
   std::filesystem::path wavPath;
   std::filesystem::path presetPath;
@@ -313,9 +329,8 @@ int main(int argc, char** argv) {
   bool useDeviceDefaultChannels = false;
 
   auto normalizeToken = [](std::string value) {
-    std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
-      return static_cast<char>(std::tolower(c));
-    });
+    std::transform(value.begin(), value.end(), value.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return value;
   };
 
@@ -323,8 +338,8 @@ int main(int argc, char** argv) {
     errno = 0;
     char* end = nullptr;
     long parsed = std::strtol(text.c_str(), &end, 10);
-    if (end == text.c_str() || *end != '\0' || errno == ERANGE ||
-        parsed <= 0 || parsed > std::numeric_limits<int>::max()) {
+    if (end == text.c_str() || *end != '\0' || errno == ERANGE || parsed <= 0 ||
+        parsed > std::numeric_limits<int>::max()) {
       return std::nullopt;
     }
     return static_cast<int>(parsed);

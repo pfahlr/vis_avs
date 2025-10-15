@@ -34,6 +34,16 @@ target_link_libraries(core_effects_tests PRIVATE avs-effects-core avs-core-runti
 target_compile_options(core_effects_tests PRIVATE -Wall -Wextra -Werror)
 add_test(NAME core_effects_tests COMMAND core_effects_tests)
 
+add_executable(runtime_resource_tests
+  runtime/test_resources.cpp)
+target_link_libraries(runtime_resource_tests PRIVATE avs-runtime GTest::gtest_main)
+target_compile_options(runtime_resource_tests PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(runtime_resource_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+add_test(NAME runtime_resource_tests COMMAND runtime_resource_tests)
+if(TARGET avs-resources)
+  add_dependencies(runtime_resource_tests avs-resources)
+endif()
+
 set(PHASE1_DATA_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/data/phase1")
 set(PHASE1_GOLDEN_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/golden/phase1")
 set(PHASE1_DATA_DEST "${CMAKE_BINARY_DIR}/tests/data/phase1")

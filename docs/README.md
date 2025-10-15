@@ -25,19 +25,6 @@ cmake --build .
 ctest
 ```
 
-### Building the `avs-player` binary
-
-The interactive/headless CLI lives under `apps/avs-player` and is produced
-whenever the SDL/OpenGL platform layer is part of the build. The new default
-sets `-DAVS_BUILD_PLATFORM=ON`, so the standard configure and build commands
-above generate `build/apps/avs-player/avs-player` without any extra flags.
-
-If you previously disabled the platform layer (for example,
-`cmake .. -DAVS_BUILD_PLATFORM=OFF`), rerun configuration with
-`-DAVS_BUILD_PLATFORM=ON` to bring the binary back. Developers with a system
-PortAudio installation may optionally add `-DENABLE_PORTAUDIO=ON`; otherwise
-the default `OFF` setting will fetch a suitable copy automatically.
-
 Run the stub player after building:
 
 ```bash

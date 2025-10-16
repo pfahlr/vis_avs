@@ -90,7 +90,8 @@ bool Convolution3x3::render(avs::core::RenderContext& context) {
           value = std::clamp(value, 0.0f, 255.0f);
         }
         const int rounded = static_cast<int>(std::round(value));
-        dstPx[channel] = clampByte(rounded);
+        dstPx[channel] = clampOutput_ ? clampByte(rounded)
+                                      : static_cast<std::uint8_t>(rounded);
       }
       if (preserveAlpha_) {
         dstPx[3] = scratch_[(static_cast<std::size_t>(y) * width + static_cast<std::size_t>(x)) * 4u + 3];
@@ -99,7 +100,9 @@ bool Convolution3x3::render(avs::core::RenderContext& context) {
         if (clampOutput_) {
           alphaValue = std::clamp(alphaValue, 0.0f, 255.0f);
         }
-        dstPx[3] = clampByte(static_cast<int>(std::round(alphaValue)));
+        const int roundedAlpha = static_cast<int>(std::round(alphaValue));
+        dstPx[3] = clampOutput_ ? clampByte(roundedAlpha)
+                                : static_cast<std::uint8_t>(roundedAlpha);
       }
     }
   }

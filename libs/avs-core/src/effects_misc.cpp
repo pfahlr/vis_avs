@@ -64,8 +64,7 @@ class EffectListConfigParser {
     if (peek() == '[') {
       get();
       if (!parseArray(out)) return false;
-      skipWhitespace();
-      return consume(']') && skipTrailing();
+      return skipTrailing();
     }
     EffectListEffect::ConfigNode node;
     if (!parseObject(node)) return false;

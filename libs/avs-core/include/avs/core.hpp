@@ -15,6 +15,10 @@
 
 namespace avs {
 
+namespace runtime {
+class Framebuffers;
+}
+
 // ---------- Math / Utility ----------
 
 struct Vec2i {
@@ -98,7 +102,7 @@ struct FrameBufferView {
 struct FrameBuffers {
   FrameBufferView current;
   FrameBufferView previous; // last frame
-  // Optional named registers A..E may be managed by the engine; effects access via API.
+  runtime::Framebuffers* registers{nullptr};
 };
 
 // ---------- Randomness / Determinism ----------

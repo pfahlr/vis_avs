@@ -1,9 +1,11 @@
 add_library(avs-runtime STATIC
-  src/ResourceManager.cpp)
+  src/ResourceManager.cpp
+  src/script/eel_runtime.cpp)
 
 target_include_directories(avs-runtime
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 target_compile_options(avs-runtime PRIVATE -Wall -Wextra -Werror)
@@ -15,6 +17,8 @@ target_compile_definitions(avs-runtime
 
 target_compile_features(avs-runtime PUBLIC cxx_std_20)
 
+target_link_libraries(avs-runtime PUBLIC ns-eel)
+
 install(TARGETS avs-runtime
   EXPORT ${AVS_EXPORT_NAME}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -23,3 +27,7 @@ install(TARGETS avs-runtime
 
 install(DIRECTORY include/
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/script/eel_runtime.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/avs/runtime/script)

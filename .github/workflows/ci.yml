@@ -48,11 +48,12 @@ jobs:
       # Optional: fix trust store if your runner image is missing CA certs
       - name: Ensure CA trust for git (defensive)
         run: |
-          apt-get update
-          apt-get install -y ca-certificates
-          git config --global http.sslcainfo /etc/ssl/certs/ca-certificates.crt
-          unset CURL_CA_BUNDLE SSL_CERT_FILE
-
+          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
+            apt-get update
+            apt-get install -y ca-certificates
+            git config --global http.sslcainfo /etc/ssl/certs/ca-certificates.crt
+            unset CURL_CA_BUNDLE SSL_CERT_FILE
+          fi
       - name: Checkout PortAudio (shallow)
         uses: actions/checkout@v4
         with:
@@ -124,12 +125,17 @@ jobs:
 
       - name: Configure
         run: |
-          cmake -S . -B build -G Ninja \
+          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
+            cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DFETCHCONTENT_SOURCE_DIR_PORTAUDIO="${{ github.workspace }}/external/portaudio" \
             -DFETCHCONTENT_FULLY_DISCONNECTED=ON
             -DCMAKE_INSTALL_PREFIX="${PWD}/install"
-
+          else
+            cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="${PWD}/install"
+          fi
       - name: Build
         run: cmake --build build
 

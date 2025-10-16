@@ -10,6 +10,12 @@
 #include "avs/effects/Swizzle.hpp"
 #include "avs/effects/TransformAffine.hpp"
 #include "avs/effects/Zoom.hpp"
+#include "effects/filters/effect_blur_box.h"
+#include "effects/filters/effect_color_map.h"
+#include "effects/filters/effect_conv3x3.h"
+#include "effects/filters/effect_fast_brightness.h"
+#include "effects/filters/effect_grain.h"
+#include "effects/filters/effect_interferences.h"
 #include "effects/effect_scripted.h"
 #include "effects/dynamic/dyn_distance.h"
 #include "effects/dynamic/dyn_movement.h"
@@ -120,8 +126,24 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("render / timescope", []() { return std::make_unique<Effect_RenderTimescope>(); });
   registry.registerFactory("Trans / Blitter Feedback", []() { return std::make_unique<Effect_TransBlitterFeedback>(); });
   registry.registerFactory("trans / blitter feedback", []() { return std::make_unique<Effect_TransBlitterFeedback>(); });
-  registry.registerFactory("Trans / Blur", []() { return std::make_unique<Effect_TransBlur>(); });
-  registry.registerFactory("trans / blur", []() { return std::make_unique<Effect_TransBlur>(); });
+  registry.registerFactory("filter_blur_box", []() { return std::make_unique<filters::BlurBox>(); });
+  registry.registerFactory("Trans / Blur", []() { return std::make_unique<filters::BlurBox>(); });
+  registry.registerFactory("trans / blur", []() { return std::make_unique<filters::BlurBox>(); });
+  registry.registerFactory("filter_grain", []() { return std::make_unique<filters::Grain>(); });
+  registry.registerFactory("Trans / Grain", []() { return std::make_unique<filters::Grain>(); });
+  registry.registerFactory("trans / grain", []() { return std::make_unique<filters::Grain>(); });
+  registry.registerFactory("filter_interferences", []() { return std::make_unique<filters::Interferences>(); });
+  registry.registerFactory("Trans / Interferences", []() { return std::make_unique<filters::Interferences>(); });
+  registry.registerFactory("trans / interferences", []() { return std::make_unique<filters::Interferences>(); });
+  registry.registerFactory("filter_fast_brightness", []() { return std::make_unique<filters::FastBrightness>(); });
+  registry.registerFactory("Trans / Fast Brightness", []() { return std::make_unique<filters::FastBrightness>(); });
+  registry.registerFactory("trans / fast brightness", []() { return std::make_unique<filters::FastBrightness>(); });
+  registry.registerFactory("filter_color_map", []() { return std::make_unique<filters::ColorMap>(); });
+  registry.registerFactory("Filter / Color Map", []() { return std::make_unique<filters::ColorMap>(); });
+  registry.registerFactory("filter / color map", []() { return std::make_unique<filters::ColorMap>(); });
+  registry.registerFactory("filter_conv3x3", []() { return std::make_unique<filters::Convolution3x3>(); });
+  registry.registerFactory("Filter / Convolution", []() { return std::make_unique<filters::Convolution3x3>(); });
+  registry.registerFactory("filter / convolution", []() { return std::make_unique<filters::Convolution3x3>(); });
   registry.registerFactory("Trans / Brightness", []() { return std::make_unique<Effect_TransBrightness>(); });
   registry.registerFactory("trans / brightness", []() { return std::make_unique<Effect_TransBrightness>(); });
   registry.registerFactory("Trans / Color Clip", []() { return std::make_unique<Effect_TransColorClip>(); });

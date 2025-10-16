@@ -56,6 +56,12 @@ add_library(avs-effects-core
   src/effects/gating.cpp
   src/effects/transform_affine.cpp
   src/AudioOverlays.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_blur_box.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_color_map.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_conv3x3.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_fast_brightness.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_grain.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_interferences.cpp
   src/effects/primitive_dots.cpp
   src/effects/primitive_lines.cpp
   src/effects/primitive_rrect.cpp

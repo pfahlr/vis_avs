@@ -155,11 +155,14 @@ stubs:
     status: stub
     source: vis_avs/r_blit.cpp (R_BlitterFB)
   - name: Trans / Blur
-    status: stub
-    source: vis_avs/r_blur.cpp (R_Blur)
+    status: implemented
+    source: src/effects/filters/effect_blur_box.cpp
   - name: Trans / Brightness
     status: stub
     source: vis_avs/r_bright.cpp (R_Brightness)
+  - name: Trans / Fast Brightness
+    status: implemented
+    source: src/effects/filters/effect_fast_brightness.cpp
   - name: Trans / Color Clip
     status: stub
     source: vis_avs/r_colorreplace.cpp (R_ContrastEnhance)
@@ -169,6 +172,12 @@ stubs:
   - name: Trans / Colorfade
     status: stub
     source: vis_avs/r_colorfade.cpp (R_ColorFade)
+  - name: Trans / Grain
+    status: implemented
+    source: src/effects/filters/effect_grain.cpp
+  - name: Trans / Interferences
+    status: implemented
+    source: src/effects/filters/effect_interferences.cpp
   - name: Trans / Mosaic
     status: stub
     source: vis_avs/r_mosaic.cpp (R_Mosaic)

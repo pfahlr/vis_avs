@@ -6,6 +6,7 @@ add_library(avs-effects-core
   src/Swizzle.cpp
   src/Zoom.cpp
   src/micro_preset_parser.cpp
+  src/AudioOverlays.cpp
   src/effects/blend_ops.cpp)
 
 target_link_libraries(avs-effects-core PUBLIC avs-core-runtime)
@@ -13,6 +14,7 @@ target_link_libraries(avs-effects-core PUBLIC avs-core-runtime)
 target_include_directories(avs-effects-core
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 target_compile_options(avs-effects-core PRIVATE -Wall -Wextra -Werror)

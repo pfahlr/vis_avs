@@ -8,6 +8,7 @@
 #include <iterator>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace avs {
@@ -26,7 +27,14 @@ class PassThroughEffect : public Effect {
   void process(const Framebuffer& in, Framebuffer& out) override { out = in; }
 };
 
-constexpr const char kMagic[] = "Nullsoft AVS Preset 0.2\x1a";
+constexpr std::string_view kMagicPrefix = "Nullsoft AVS Preset ";
+constexpr char kMagicTerminator = '\x1a';
+constexpr std::array<std::string_view, 2> kKnownMagicVersions = {"0.2", "0.1"};
+
+bool isKnownMagicVersion(std::string_view version) {
+  return std::find(kKnownMagicVersions.begin(), kKnownMagicVersions.end(), version) !=
+         kKnownMagicVersions.end();
+}
 constexpr std::uint32_t kListId = 0xFFFFFFFEu;
 
 struct Reader {
@@ -256,9 +264,21 @@ bool parseRenderListChunk(Reader& r,
   return true;
 }
 
-ParsedPreset parseBinaryPreset(const std::vector<char>& data) {
+bool parseBinaryMagicHeader(const std::vector<char>& data, size_t& headerLen, std::string& version) {
+  if (data.size() <= kMagicPrefix.size()) return false;
+  if (!std::equal(kMagicPrefix.begin(), kMagicPrefix.end(), data.begin())) return false;
+  auto versionBegin = data.begin();
+  std::advance(versionBegin, static_cast<std::vector<char>::difference_type>(kMagicPrefix.size()));
+  auto terminator = std::find(versionBegin, data.end(), kMagicTerminator);
+  if (terminator == data.end()) return false;
+  version.assign(versionBegin, terminator);
+  headerLen = static_cast<size_t>(std::distance(data.begin(), terminator)) + 1;
+  return true;
+}
+
+ParsedPreset parseBinaryPreset(const std::vector<char>& data, size_t headerLen) {
   ParsedPreset result;
-  Reader r{data, sizeof(kMagic) - 1};
+  Reader r{data, headerLen};
   parseRenderListChunk(r, data.size(), result, result.chain);
   return result;
 }
@@ -394,9 +414,14 @@ ParsedPreset parsePreset(const std::filesystem::path& file) {
     return result;
   }
   std::vector<char> buffer((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
-  if (buffer.size() >= sizeof(kMagic) - 1 &&
-      std::equal(kMagic, kMagic + sizeof(kMagic) - 1, buffer.begin())) {
-    return parseBinaryPreset(buffer);
+  size_t headerLen = 0;
+  std::string version;
+  if (parseBinaryMagicHeader(buffer, headerLen, version)) {
+    auto preset = parseBinaryPreset(buffer, headerLen);
+    if (!isKnownMagicVersion(version)) {
+      preset.warnings.push_back("unknown preset version: " + version);
+    }
+    return preset;
   }
   return parseTextPreset(std::string(buffer.begin(), buffer.end()));
 }

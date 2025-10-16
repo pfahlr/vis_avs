@@ -1,0 +1,3 @@
+# Toggle sticky gating via beats
+CLEAR value=0
+TRANSFORM_AFFINE anchor=center onbeat stick onlysticky log_rows=1 test

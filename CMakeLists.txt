@@ -15,6 +15,7 @@ option(AVS_BUILD_PLAYER "Build the avs-player application" ON)
 option(AVS_BUILD_TOOLS "Build auxiliary tooling" ON)
 option(AVS_ENABLE_SDL3 "Enable the experimental SDL3 backend" OFF)
 option(AVS_INSTALL_RESOURCES "Install resources payload" ON)
+option(AVS_BUILD_AUDIO "Build PortAudio-backed runtime audio" ON)
 
 set(AVS_EXPORT_NAME vis_avsTargets)
 

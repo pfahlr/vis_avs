@@ -49,6 +49,7 @@ RenderContext makeContext(std::vector<std::uint8_t>& pixels, int width, int heig
   ctx.height = height;
   ctx.framebuffer = {pixels.data(), pixels.size()};
   ctx.audioSpectrum = {nullptr, 0};
+  ctx.audioBeat = false;
   return ctx;
 }
 

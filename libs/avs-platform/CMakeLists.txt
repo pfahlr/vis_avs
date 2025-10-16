@@ -71,11 +71,13 @@ add_library(avs-platform STATIC
   src/fs_posix.cpp
   ../third_party/kissfft/kiss_fft.c
   ../third_party/kissfft/kiss_fftr.c
+  ${CMAKE_SOURCE_DIR}/src/audio/analyzer.cpp
 )
 
 target_include_directories(avs-platform
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/kissfft)

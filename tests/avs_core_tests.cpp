@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
+#if AVS_BUILD_AUDIO
 #include <portaudio.h>
+#endif
 
 #include <algorithm>
 #include <array>
@@ -17,8 +19,11 @@
 #include <thread>
 #include <vector>
 
+#if AVS_BUILD_AUDIO
 #include "avs/audio_portaudio_internal.hpp"
+#endif
 #include "avs/effects.hpp"
+#include "avs/effects_render.hpp"
 #include "avs/engine.hpp"
 #include "avs/fs.hpp"
 #include "avs/preset.hpp"
@@ -142,6 +147,52 @@ std::string renderPresetHash(std::vector<std::unique_ptr<Effect>> chain, int w, 
   engine.setAudio(avs::AudioState{});
   engine.step(0.0f);
   return hashFramebufferFNV(engine.frame());
+}
+
+}  // namespace
+
+namespace {
+
+struct FrameView {
+  std::vector<std::uint8_t> data;
+  FrameBufferView view;
+};
+
+FrameView makeFrameView(int width, int height) {
+  FrameView fv;
+  fv.data.assign(static_cast<std::size_t>(width) * height * 4u, 0);
+  fv.view.data = fv.data.data();
+  fv.view.width = width;
+  fv.view.height = height;
+  fv.view.stride = width * 4;
+  return fv;
+}
+
+struct RenderFixture {
+  TimingInfo timing{};
+  AudioFeatures audio{};
+  FrameBuffers buffers{};
+  RNG rng{};
+  ProcessContext ctx;
+
+  RenderFixture(FrameBufferView& current, FrameBufferView& previous)
+      : buffers{current, previous}, ctx{timing, audio, buffers, &rng, nullptr} {
+    timing.deterministic = true;
+    timing.fps_hint = 60;
+  }
+};
+
+std::string hashBytes(const std::vector<std::uint8_t>& data) {
+  constexpr std::uint64_t kOffset = 1469598103934665603ull;
+  constexpr std::uint64_t kPrime = 1099511628211ull;
+  std::uint64_t hash = kOffset;
+  for (std::uint8_t byte : data) {
+    hash ^= byte;
+    hash *= kPrime;
+  }
+  std::ostringstream oss;
+  oss << std::hex << std::setfill('0') << std::setw(16) << hash;
+  return oss.str();
 }
 
 }  // namespace
@@ -372,6 +423,7 @@ TEST(ScriptedEffect, ColorModifierLegacyHashes) {
   }
 }
 
+#if AVS_BUILD_PLATFORM
 TEST(FileWatcher, DetectsModification) {
   auto tmp = std::filesystem::temp_directory_path() / "watch.txt";
   {
@@ -389,7 +441,9 @@ TEST(FileWatcher, DetectsModification) {
   EXPECT_TRUE(changed);
   std::filesystem::remove(tmp);
 }
+#endif  // AVS_BUILD_PLATFORM
 
+#if AVS_BUILD_AUDIO
 TEST(PortAudioCallback, NullInputRaisesUnderflowFlag) {
   std::vector<float> ring(8, 1.0f);
   const size_t mask = ring.size() - 1;
@@ -574,6 +628,7 @@ TEST(PortAudioDeviceSelection, RejectsCapturelessDevice) {
   EXPECT_FALSE(result.error.empty());
   EXPECT_NE(result.error.find("cannot capture audio"), std::string::npos);
 }
+#endif  // AVS_BUILD_AUDIO
 
 namespace {
 
@@ -778,3 +833,90 @@ TEST(EelVmBuiltins, GMegaBufIsSharedAcrossVms) {
   vm2.freeCode(readCode);
   EXPECT_EQ(*res, 42.0);
 }
+
+TEST(RenderGeometryEffects, ShapesCircleSnapshot) {
+  auto frame = makeFrameView(64, 64);
+  auto prev = makeFrameView(64, 64);
+  RenderFixture fixture(frame.view, prev.view);
+  ShapesEffect effect;
+  effect.set_parameter("shape", ParamValue(std::string("circle")));
+  effect.set_parameter("x", ParamValue(32));
+  effect.set_parameter("y", ParamValue(32));
+  effect.set_parameter("radius", ParamValue(18));
+  effect.set_parameter("color", ParamValue(ColorRGBA8{200, 100, 40, 255}));
+  effect.set_parameter("outlinecolor", ParamValue(ColorRGBA8{255, 255, 255, 255}));
+  effect.set_parameter("outlinewidth", ParamValue(2));
+  effect.process(fixture.ctx, frame.view);
+  EXPECT_EQ(hashBytes(frame.data), "dcce202fe84d403e");
+}
+
+TEST(RenderGeometryEffects, TrianglesFilledSnapshot) {
+  auto frame = makeFrameView(72, 72);
+  auto prev = makeFrameView(72, 72);
+  RenderFixture fixture(frame.view, prev.view);
+  TrianglesEffect effect;
+  effect.set_parameter("triangles", ParamValue(std::string("16,12 56,16 20,60")));
+  effect.set_parameter("color", ParamValue(ColorRGBA8{20, 200, 220, 255}));
+  effect.set_parameter("outlinecolor", ParamValue(ColorRGBA8{0, 0, 0, 255}));
+  effect.set_parameter("outlinewidth", ParamValue(3));
+  effect.process(fixture.ctx, frame.view);
+  EXPECT_EQ(hashBytes(frame.data), "8598a1b7ef3b611a");
+}
+
+TEST(RenderGeometryEffects, DotGridAlternatingSnapshot) {
+  auto frame = makeFrameView(80, 80);
+  auto prev = makeFrameView(80, 80);
+  RenderFixture fixture(frame.view, prev.view);
+  DotGridEffect effect;
+  effect.set_parameter("cols", ParamValue(5));
+  effect.set_parameter("rows", ParamValue(5));
+  effect.set_parameter("spacing_x", ParamValue(12));
+  effect.set_parameter("spacing_y", ParamValue(12));
+  effect.set_parameter("offset_x", ParamValue(10));
+  effect.set_parameter("offset_y", ParamValue(10));
+  effect.set_parameter("radius", ParamValue(3));
+  effect.set_parameter("color", ParamValue(ColorRGBA8{255, 180, 0, 255}));
+  effect.set_parameter("alt_color", ParamValue(ColorRGBA8{40, 120, 255, 255}));
+  effect.set_parameter("alternate", ParamValue(true));
+  effect.process(fixture.ctx, frame.view);
+  EXPECT_EQ(hashBytes(frame.data), "70b8a4f73ec541b5");
+}
+
+TEST(RenderGeometryEffects, TextOutlineShadowSnapshot) {
+  auto frame = makeFrameView(96, 48);
+  auto prev = makeFrameView(96, 48);
+  RenderFixture fixture(frame.view, prev.view);
+  TextEffect effect;
+  effect.set_parameter("text", ParamValue(std::string("AVS")));
+  effect.set_parameter("x", ParamValue(48));
+  effect.set_parameter("y", ParamValue(24));
+  effect.set_parameter("size", ParamValue(20));
+  effect.set_parameter("color", ParamValue(ColorRGBA8{0, 120, 255, 255}));
+  effect.set_parameter("outlinecolor", ParamValue(ColorRGBA8{0, 0, 0, 255}));
+  effect.set_parameter("outlinesize", ParamValue(2));
+  effect.set_parameter("shadow", ParamValue(true));
+  effect.set_parameter("shadowcolor", ParamValue(ColorRGBA8{0, 0, 0, 180}));
+  effect.set_parameter("shadowoffsetx", ParamValue(3));
+  effect.set_parameter("shadowoffsety", ParamValue(3));
+  effect.set_parameter("shadowblur", ParamValue(2));
+  effect.set_parameter("halign", ParamValue(std::string("center")));
+  effect.set_parameter("valign", ParamValue(std::string("middle")));
+  effect.process(fixture.ctx, frame.view);
+  EXPECT_EQ(hashBytes(frame.data), "8163c4119c3af4fb");
+}
+
+TEST(RenderGeometryEffects, SuperscopeSineWaveSnapshot) {
+  auto frame = makeFrameView(96, 96);
+  auto prev = makeFrameView(96, 96);
+  RenderFixture fixture(frame.view, prev.view);
+  SuperscopeEffect effect;
+  effect.set_parameter("init", ParamValue(std::string("n=64; linesize=2; drawmode=1;")));
+  effect.set_parameter("point", ParamValue(std::string("x=cos(i*6.2831853); y=sin(i*6.2831853); red=0.6; green=0.8; blue=0.2;")));
+  InitContext initCtx;
+  initCtx.frame_size = FrameSize{frame.view.width, frame.view.height};
+  initCtx.deterministic = true;
+  effect.init(initCtx);
+  effect.process(fixture.ctx, frame.view);
+  EXPECT_EQ(hashBytes(frame.data), "a7ea528ce862219f");
+}
+

@@ -205,24 +205,7 @@ void StarfieldEffect::process(const ProcessContext& ctx, FrameBufferView& dst) {
 }
 
 // ---------------- Text / Picture / Superscope / Triangles / Shapes / DotGrid ----------------
-// Stubs for now.
-std::vector<Param> TextEffect::parameters() const { return {}; }
-void TextEffect::process(const ProcessContext&, FrameBufferView&) {}
-
 std::vector<Param> PictureEffect::parameters() const { return {}; }
 void PictureEffect::process(const ProcessContext&, FrameBufferView&) {}
-
-void SuperscopeEffect::init(const InitContext&) {}
-std::vector<Param> SuperscopeEffect::parameters() const { return {}; }
-void SuperscopeEffect::process(const ProcessContext&, FrameBufferView&) {}
-
-std::vector<Param> TrianglesEffect::parameters() const { return {}; }
-void TrianglesEffect::process(const ProcessContext&, FrameBufferView&) {}
-
-std::vector<Param> ShapesEffect::parameters() const { return {}; }
-void ShapesEffect::process(const ProcessContext&, FrameBufferView&) {}
-
-std::vector<Param> DotGridEffect::parameters() const { return {}; }
-void DotGridEffect::process(const ProcessContext&, FrameBufferView&) {}
 
 }  // namespace avs

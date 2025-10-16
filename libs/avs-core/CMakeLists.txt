@@ -38,6 +38,7 @@ target_include_directories(avs-core
 )
 target_compile_options(avs-core PRIVATE -Wall -Wextra -Werror)
 target_compile_features(avs-core PUBLIC cxx_std_20)
+# Required for Framebuffers::save/restore used by SaveBufferEffect and RestoreBufferEffect
 target_link_libraries(avs-core
   PUBLIC
     ns-eel

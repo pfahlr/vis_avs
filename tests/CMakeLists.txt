@@ -102,7 +102,7 @@ if(TARGET avs-resources)
 endif()
 
 add_executable(runtime_effect_list_parser_tests
-  runtime/effect_list_parser_tests.cpp)
+  runtime/parser/effect_list_parser_tests.cpp)
 target_link_libraries(runtime_effect_list_parser_tests PRIVATE avs-core avs-runtime GTest::gtest_main)
 target_compile_options(runtime_effect_list_parser_tests PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(runtime_effect_list_parser_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")

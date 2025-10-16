@@ -18,6 +18,7 @@
 #include "avs/core/RenderContext.hpp"
 #include "avs/effects/RegisterEffects.hpp"
 #include "avs/offscreen/Md5.hpp"
+#include "effects/filters/effect_fast_brightness.h"
 
 namespace {
 
@@ -165,6 +166,92 @@ TEST_F(FilterEffectTests, FastBrightnessGolden) {
   params.setBool("clamp", true);
   const auto result = renderEffect("filter_fast_brightness", params);
   expectGolden("fast_brightness", result.hashes);
+}
+
+TEST(FastBrightnessEffect, HonorsClampOutputModes) {
+  {
+    avs::effects::filters::FastBrightness effect;
+    avs::core::ParamBlock params;
+    params.setFloat("amount", 1.5f);
+    params.setFloat("bias", 200.0f);
+    params.setBool("clamp", true);
+    effect.setParams(params);
+
+    std::array<std::uint8_t, 4> pixel{200u, 10u, 180u, 255u};
+    avs::core::RenderContext context{};
+    context.width = 1;
+    context.height = 1;
+    context.framebuffer = {pixel.data(), pixel.size()};
+
+    ASSERT_TRUE(effect.render(context));
+    EXPECT_EQ(pixel[0], 255u);
+    EXPECT_EQ(pixel[1], 215u);
+    EXPECT_EQ(pixel[2], 255u);
+    EXPECT_EQ(pixel[3], 255u);
+  }
+
+  {
+    avs::effects::filters::FastBrightness effect;
+    avs::core::ParamBlock params;
+    params.setFloat("amount", 1.5f);
+    params.setFloat("bias", 200.0f);
+    params.setBool("clamp", false);
+    effect.setParams(params);
+
+    std::array<std::uint8_t, 4> pixel{200u, 10u, 180u, 255u};
+    avs::core::RenderContext context{};
+    context.width = 1;
+    context.height = 1;
+    context.framebuffer = {pixel.data(), pixel.size()};
+
+    ASSERT_TRUE(effect.render(context));
+    EXPECT_EQ(pixel[0], static_cast<std::uint8_t>(500));
+    EXPECT_EQ(pixel[1], 215u);
+    EXPECT_EQ(pixel[2], static_cast<std::uint8_t>(470));
+    EXPECT_EQ(pixel[3], 255u);
+  }
+
+  {
+    avs::effects::filters::FastBrightness effect;
+    avs::core::ParamBlock params;
+    params.setFloat("amount", 1.0f);
+    params.setFloat("bias", -300.0f);
+    params.setBool("clamp", true);
+    effect.setParams(params);
+
+    std::array<std::uint8_t, 4> pixel{50u, 5u, 123u, 255u};
+    avs::core::RenderContext context{};
+    context.width = 1;
+    context.height = 1;
+    context.framebuffer = {pixel.data(), pixel.size()};
+
+    ASSERT_TRUE(effect.render(context));
+    EXPECT_EQ(pixel[0], 0u);
+    EXPECT_EQ(pixel[1], 0u);
+    EXPECT_EQ(pixel[2], 0u);
+    EXPECT_EQ(pixel[3], 255u);
+  }
+
+  {
+    avs::effects::filters::FastBrightness effect;
+    avs::core::ParamBlock params;
+    params.setFloat("amount", 1.0f);
+    params.setFloat("bias", -300.0f);
+    params.setBool("clamp", false);
+    effect.setParams(params);
+
+    std::array<std::uint8_t, 4> pixel{50u, 5u, 123u, 255u};
+    avs::core::RenderContext context{};
+    context.width = 1;
+    context.height = 1;
+    context.framebuffer = {pixel.data(), pixel.size()};
+
+    ASSERT_TRUE(effect.render(context));
+    EXPECT_EQ(pixel[0], static_cast<std::uint8_t>(-250));
+    EXPECT_EQ(pixel[1], static_cast<std::uint8_t>(-295));
+    EXPECT_EQ(pixel[2], static_cast<std::uint8_t>(-177));
+    EXPECT_EQ(pixel[3], 255u);
+  }
 }
 
 TEST_F(FilterEffectTests, ColorMapGolden) {

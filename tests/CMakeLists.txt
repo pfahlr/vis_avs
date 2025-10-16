@@ -38,7 +38,8 @@ endif()
 add_executable(core_effects_tests
   core/test_effect_registry.cpp
   core/test_pipeline.cpp
-  core/test_blend_ops.cpp)
+  core/test_blend_ops.cpp
+  core/test_primitives.cpp)
 target_link_libraries(core_effects_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
 target_compile_options(core_effects_tests PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(core_effects_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
@@ -67,6 +68,14 @@ target_link_libraries(offscreen_golden_test PRIVATE avs-offscreen GTest::gtest_m
 target_compile_options(offscreen_golden_test PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(offscreen_golden_test PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 add_test(NAME offscreen_golden_test COMMAND offscreen_golden_test)
+
+add_executable(fb_ops_tests
+  presets/fb_ops/test_fb_ops.cpp
+  presets/fb_ops/md5_helper.cpp)
+target_link_libraries(fb_ops_tests PRIVATE avs-runtime GTest::gtest_main)
+target_compile_options(fb_ops_tests PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(fb_ops_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+add_test(NAME fb_ops_tests COMMAND fb_ops_tests)
 
 if(TARGET gen_golden_md5)
   add_test(NAME offscreen_golden_md5_snapshot

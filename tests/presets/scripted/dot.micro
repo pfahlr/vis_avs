@@ -1,0 +1,1 @@
+scripted arbval=0.20 init="q1=0;" frame="q1=q1+0.125;" pixel="radius=sqrt(x*x+y*y); glow=(radius<arbval); red=glow; green=glow; blue=glow;"

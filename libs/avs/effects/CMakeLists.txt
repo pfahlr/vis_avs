@@ -6,6 +6,7 @@ add_library(avs-effects-core
   src/RegisterEffects.cpp
   src/Swizzle.cpp
   src/Zoom.cpp
+  src/effects/effect_scripted.cpp
   src/micro_preset_parser.cpp
   src/TransformAffine.cpp
   src/effects/blend_ops.cpp
@@ -20,7 +21,7 @@ add_library(avs-effects-core
   src/text/text_renderer.cpp)
 
 
-target_link_libraries(avs-effects-core PUBLIC avs-core-runtime)
+target_link_libraries(avs-effects-core PUBLIC avs-core-runtime avs-runtime)
 
 target_include_directories(avs-effects-core
   PUBLIC

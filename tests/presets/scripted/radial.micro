@@ -1,0 +1,1 @@
+scripted init="q1=0; q5=0; q6=1;" frame="q1=q1+0.3; q5=sin(q1); q6=cos(q1);" pixel="radius=sqrt(x*x+y*y); angle=atan2(y,x); red=0.5+0.5*sin(radius*10-q1); green=0.5+0.5*sin(angle+q5); blue=0.5+0.5*cos(radius*12+q6);"

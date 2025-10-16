@@ -10,6 +10,7 @@
 #include "avs/effects/Swizzle.hpp"
 #include "avs/effects/TransformAffine.hpp"
 #include "avs/effects/Zoom.hpp"
+#include "effects/effect_scripted.h"
 
 namespace avs::effects {
 
@@ -19,6 +20,7 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("blend", []() { return std::make_unique<Blend>(); });
   registry.registerFactory("overlay", []() { return std::make_unique<Overlay>(); });
   registry.registerFactory("swizzle", []() { return std::make_unique<Swizzle>(); });
+  registry.registerFactory("scripted", []() { return std::make_unique<ScriptedEffect>(); });
   registry.registerFactory("transform_affine", []() { return std::make_unique<TransformAffine>(); });
   registry.registerFactory("effect_wave", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Wave); });
   registry.registerFactory("effect_spec", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Spectrum);});
@@ -36,6 +38,7 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("rrect", []() { return std::make_unique<PrimitiveRoundedRect>(); });
   registry.registerFactory("roundedrect", []() { return std::make_unique<PrimitiveRoundedRect>(); });
   registry.registerFactory("text", []() { return std::make_unique<Text>(); });
+
 }
 
 }  // namespace avs::effects

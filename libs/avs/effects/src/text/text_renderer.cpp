@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <iterator>
 
 #include "../effects/primitive_common.hpp"
 
@@ -136,6 +137,9 @@ static constexpr std::uint8_t kFont8x8[128][8] = {
   {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 };
 
+constexpr std::size_t kFont8x8Size = std::size(kFont8x8);
+constexpr unsigned char kFallbackGlyphIndex = static_cast<unsigned char>('?');
+
 }  // namespace
 
 Surface TextRenderer::render(std::string_view text, const RasterOptions& options) const {
@@ -187,7 +191,8 @@ Surface TextRenderer::render(std::string_view text, const RasterOptions& options
       continue;
     }
     const unsigned char glyphIndex = static_cast<unsigned char>(ch);
-    const auto& glyph = kFont8x8[glyphIndex];
+    const auto& glyph =
+        kFont8x8[glyphIndex < kFont8x8Size ? glyphIndex : kFallbackGlyphIndex];
     for (int y = 0; y < glyphHeight; ++y) {
       const int srcY = y * kBaseHeight / glyphHeight;
       for (int x = 0; x < glyphWidth; ++x) {

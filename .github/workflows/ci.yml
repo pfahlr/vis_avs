@@ -121,8 +121,8 @@ jobs:
         run: |
          set -euxo pipefail
          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
-           test -d "${{ github.workspace }}//external/portaudio/.git"
-           ls -la "${{ github.workspace }}//external/portaudio" | head -n 20
+           test -d "$GITHUB_WORKSPACE/external/portaudio/.git"
+           ls -la "$GITHUB_WORKSPACE/external/portaudio" | head -n 20
          fi
 
       - name: Configure
@@ -130,8 +130,8 @@ jobs:
           if [ "${{ matrix.distro }}" = "ubuntu" ]; then
             cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DFETCHCONTENT_SOURCE_DIR_PORTAUDIO="${{ github.workspace }}/external/portaudio" \
-            -DFETCHCONTENT_FULLY_DISCONNECTED=ON
+            -DFETCHCONTENT_SOURCE_DIR_PORTAUDIO="$GITHUB_WORKSPACE/external/portaudio" \
+            -DFETCHCONTENT_FULLY_DISCONNECTED=ON \
             -DCMAKE_INSTALL_PREFIX="${PWD}/install"
           else
             cmake -S . -B build -G Ninja \

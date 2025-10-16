@@ -11,7 +11,9 @@ if(NOT TARGET avs-core)
 endif()
 
 target_include_directories(avs-offscreen
-  PUBLIC ${CMAKE_SOURCE_DIR}/libs
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/libs>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(avs-offscreen
@@ -19,3 +21,13 @@ target_link_libraries(avs-offscreen
 
 target_compile_options(avs-offscreen PRIVATE -Wall -Wextra -Werror)
 
+install(TARGETS avs-offscreen
+  EXPORT ${AVS_EXPORT_NAME}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+install(FILES
+  OffscreenRenderer.hpp
+  Md5.hpp
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/avs/offscreen)

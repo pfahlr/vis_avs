@@ -1,5 +1,7 @@
 # AVS Cross-Platform Port
 
+[![CI](https://github.com/pfahlr/vis_avs/actions/workflows/ci.yml/badge.svg?branch=development-branch)](https://github.com/pfahlr/vis_avs/actions/workflows/ci.yml)
+
 This project aims to reimplement Winamp's Advanced Visualization Studio (AVS) as a standalone,
 portable engine and tooling.
 
@@ -24,6 +26,19 @@ cmake ..
 cmake --build .
 ctest
 ```
+
+## Build Options
+
+Configure the project with `-D<option>=<ON|OFF>` to toggle these components:
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `AVS_BUILD_PLAYER` | `ON` | Build the Winamp-compatible `apps/avs-player` binary. |
+| `AVS_BUILD_TOOLS` | `ON` | Compile utilities under `tools/`, including `gen_golden_md5`. |
+| `AVS_ENABLE_SDL3` | `OFF` | Experimental SDL3 backend switch; defaults to SDL2 when disabled. |
+| `AVS_INSTALL_RESOURCES` | `ON` | Install the asset payload under `share/vis_avs/resources/`. |
+
+Installed artifacts follow the Unix-style layout: executables in `bin/`, libraries in `lib/vis_avs/`, headers in `include/vis_avs/`, and resources in `share/vis_avs/resources/`.
 
 Run the stub player after building:
 

@@ -1,28 +1,113 @@
 name: CI
 
 on:
- workflow_dispatch:
+  push:
+    branches:
+      - development-branch
+  pull_request:
+
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: 4
 
 jobs:
   build:
+    name: Build and test (${{ matrix.distro }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: ubuntu
+            container: ubuntu:22.04
+            pkg_cache: /var/cache/apt
+          - distro: fedora
+            container: fedora:39
+            pkg_cache: /var/cache/dnf
+    container: ${{ matrix.container }}
+
     steps:
-      - uses: actions/checkout@v3
-      - name: Install dependencies
+      - uses: actions/checkout@v4
+
+      - name: Prepare cache directories
         run: |
-          sudo apt-get update && sudo apt-get install -y \
-            cmake g++ clang-format git pkg-config \
-            libsdl2-dev mesa-common-dev libglu1-mesa-dev \
-            portaudio19-dev libportaudio2 libgtest-dev libsamplerate0-dev \
-            libjack-dev libasound2-dev
+          mkdir -p build/_deps
+          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
+            mkdir -p /var/cache/apt
+          else
+            mkdir -p /var/cache/dnf
+          fi
+
+      - name: Cache package manager artifacts
+        uses: actions/cache@v3
+        with:
+          path: ${{ matrix.pkg_cache }}
+          key: ${{ runner.os }}-${{ matrix.distro }}-pkg-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.distro }}-pkg-
+
+      - name: Install build dependencies
+        run: |
+          set -euo pipefail
+          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update
+            apt-get install -y --no-install-recommends \
+              build-essential \
+              clang \
+              cmake \
+              git \
+              ninja-build \
+              pkg-config \
+              python3 \
+              libsdl2-dev \
+              libgl1-mesa-dev \
+              libglu1-mesa-dev \
+              libasound2-dev \
+              libjack-dev \
+              libportaudio2 \
+              portaudio19-dev \
+              libsamplerate0-dev \
+              libfftw3-dev
+          else
+            dnf -y makecache
+            dnf -y install \
+              clang \
+              cmake \
+              gcc \
+              gcc-c++ \
+              git \
+              ninja-build \
+              pkgconf-pkg-config \
+              python3 \
+              SDL2-devel \
+              mesa-libGL-devel \
+              mesa-libGLU-devel \
+              alsa-lib-devel \
+              jack-audio-connection-kit-devel \
+              portaudio-devel \
+              libsamplerate-devel \
+              fftw-devel
+          fi
+
+      - name: Cache CMake dependencies
+        uses: actions/cache@v3
+        with:
+          path: build/_deps
+          key: cmake-${{ matrix.distro }}-${{ hashFiles('CMakeLists.txt', 'libs/**/CMakeLists.txt', 'apps/**/CMakeLists.txt', 'tools/CMakeLists.txt', 'tests/CMakeLists.txt') }}
+          restore-keys: |
+            cmake-${{ matrix.distro }}-
+
       - name: Configure
-        run: cmake -S . -B build
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="${PWD}/install"
+
       - name: Build
         run: cmake --build build
+
       - name: Test
-        run: ctest --test-dir build --output-on-failure
-#      - name: clang-format
-#        run: |
-#          clang-format --version
-#          find . \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) | xargs clang-format -i
-#          git diff --exit-code
+        run: ctest --output-on-failure --test-dir build
+
+      - name: Install
+        run: cmake --install build --prefix "${PWD}/install"

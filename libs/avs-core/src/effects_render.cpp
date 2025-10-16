@@ -210,13 +210,6 @@ void StarfieldEffect::process(const ProcessContext& ctx, FrameBufferView& dst) {
 }
 
 // ---------------- Text / Picture / Superscope / Triangles / Shapes / DotGrid ----------------
-std::vector<Param> PictureEffect::parameters() const { return {}; }
-void PictureEffect::process(const ProcessContext&, FrameBufferView&) {}
-
-// Stubs for now.
-std::vector<Param> TextEffect::parameters() const { return {}; }
-void TextEffect::process(const ProcessContext&, FrameBufferView&) {}
-
 std::vector<Param> PictureEffect::parameters() const {
   return {Param{"path", ParamKind::String, path_}};
 }

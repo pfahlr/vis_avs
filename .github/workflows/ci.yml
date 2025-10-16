@@ -46,6 +46,7 @@ jobs:
             ${{ runner.os }}-${{ matrix.distro }}-pkg-
 
       - name: Install build dependencies
+        shell: bash
         run: |
           set -euo pipefail
           if [ "${{ matrix.distro }}" = "ubuntu" ]; then

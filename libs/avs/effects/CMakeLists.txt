@@ -31,7 +31,14 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_unique_tone.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_water.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_water_bump.cpp
-  ${CMAKE_SOURCE_DIR}/src/runtime/parser.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/dynamic/frame_warp.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/dynamic/dynamic_shader.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/dynamic/dyn_movement.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/dynamic/dyn_distance.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/dynamic/dyn_shift.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/dynamic/movement.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/dynamic/zoom_rotate.cpp
+  ${CMAKE_SOURCE_DIR}/src/runtime/parser.cpp)
   ${CMAKE_SOURCE_DIR}/src/runtime/framebuffers.cpp)
 
 add_library(avs-effects-core

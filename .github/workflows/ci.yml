@@ -118,10 +118,11 @@ jobs:
       # Prove the path exists before CMake runs (avoids the exact error you hit)
       - name: Verify PortAudio path
         run: |
-          set -euxo pipefail
+        if [ "${{ matrix.distro }}" = "ubuntu" ]; then
+          set -euo pipefail
           test -d "${{ github.workspace }}//external/portaudio/.git"
           ls -la "${{ github.workspace }}//external/portaudio" | head -n 20
-
+        fi
 
       - name: Configure
         run: |

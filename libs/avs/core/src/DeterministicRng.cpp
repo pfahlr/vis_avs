@@ -1,20 +1,30 @@
 #include "avs/core/DeterministicRng.hpp"
 
 #include <cstdlib>
+#include <optional>
 
 namespace {
 
-std::uint64_t readSeedFromEnv() {
-  const char* value = std::getenv("AVS_SEED");
+std::optional<std::uint64_t> parseSeed(const char* value) {
   if (!value) {
-    return 0;
+    return std::nullopt;
   }
   char* end = nullptr;
   unsigned long long parsed = std::strtoull(value, &end, 10);
   if (end == value) {
-    return 0;
+    return std::nullopt;
   }
   return static_cast<std::uint64_t>(parsed);
+}
+
+std::uint64_t readSeedFromEnv() {
+  if (auto seed = parseSeed(std::getenv("VIS_AVS_SEED"))) {
+    return *seed;
+  }
+  if (auto seed = parseSeed(std::getenv("AVS_SEED"))) {
+    return *seed;
+  }
+  return 0;
 }
 
 }  // namespace

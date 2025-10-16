@@ -26,6 +26,20 @@ struct AudioBufferView {
 /**
  * @brief Per-frame rendering state passed to every effect.
  */
+struct BeatInfo {
+  bool isBeat = false;
+  bool sticky = false;
+};
+
+struct GatingState {
+  bool active = true;
+  bool triggered = false;
+  bool latched = false;
+  float randomOffsetX = 0.0f;
+  float randomOffsetY = 0.0f;
+  std::uint8_t flag = 0;
+};
+
 struct RenderContext {
   std::uint64_t frameIndex = 0;
   double deltaSeconds = 0.0;
@@ -34,6 +48,9 @@ struct RenderContext {
   PixelBufferView framebuffer;
   AudioBufferView audioSpectrum;
   DeterministicRng rng;
+  BeatInfo beat;
+  bool testMode = false;
+  GatingState gating;
 };
 
 }  // namespace avs::core

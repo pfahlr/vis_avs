@@ -61,6 +61,18 @@ target_compile_options(offscreen_golden_test PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(offscreen_golden_test PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 add_test(NAME offscreen_golden_test COMMAND offscreen_golden_test)
 
+add_executable(preset_transform_tests
+  presets/transforms/test_transform_affine.cpp)
+target_link_libraries(preset_transform_tests PRIVATE avs-core-runtime GTest::gtest_main)
+target_compile_options(preset_transform_tests PRIVATE -Wall -Wextra -Werror)
+add_test(NAME preset_transform_tests COMMAND preset_transform_tests)
+
+add_executable(preset_gating_tests
+  presets/gating/test_gating.cpp)
+target_link_libraries(preset_gating_tests PRIVATE avs-core-runtime GTest::gtest_main)
+target_compile_options(preset_gating_tests PRIVATE -Wall -Wextra -Werror)
+add_test(NAME preset_gating_tests COMMAND preset_gating_tests)
+
 if(TARGET gen_golden_md5)
   add_test(NAME offscreen_golden_md5_snapshot
     COMMAND Python3::Interpreter

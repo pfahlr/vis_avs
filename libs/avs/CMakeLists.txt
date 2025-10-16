@@ -1,6 +1,7 @@
 add_subdirectory(core)
 add_subdirectory(effects)
 add_subdirectory(runtime)
+option(AVS_BUILD_AUDIO "Build PortAudio backend" ON)
 if(AVS_BUILD_AUDIO)
   add_subdirectory(audio)
 endif()

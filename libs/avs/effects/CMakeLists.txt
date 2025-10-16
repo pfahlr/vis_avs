@@ -2,6 +2,7 @@ add_library(avs-effects-core
   src/Blend.cpp
   src/Clear.cpp
   src/Overlay.cpp
+  src/Text.cpp
   src/RegisterEffects.cpp
   src/Swizzle.cpp
   src/Zoom.cpp
@@ -9,13 +10,22 @@ add_library(avs-effects-core
   src/TransformAffine.cpp
   src/effects/blend_ops.cpp
   src/effects/gating.cpp
-  src/effects/transform_affine.cpp)
+  src/effects/transform_affine.cpp
+  src/AudioOverlays.cpp
+  src/effects/primitive_dots.cpp
+  src/effects/primitive_lines.cpp
+  src/effects/primitive_rrect.cpp
+  src/effects/primitive_solid.cpp
+  src/effects/primitive_tri.cpp
+  src/text/text_renderer.cpp)
+
 
 target_link_libraries(avs-effects-core PUBLIC avs-core-runtime)
 
 target_include_directories(avs-effects-core
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/src>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 target_compile_options(avs-effects-core PRIVATE -Wall -Wextra -Werror)

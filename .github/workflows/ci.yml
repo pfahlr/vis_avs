@@ -45,6 +45,30 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.distro }}-pkg-
 
+      # Optional: fix trust store if your runner image is missing CA certs
+      - name: Ensure CA trust for git (defensive)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ca-certificates
+          git config --global http.sslcainfo /etc/ssl/certs/ca-certificates.crt
+          unset CURL_CA_BUNDLE SSL_CERT_FILE
+
+      - name: Checkout PortAudio (shallow)
+        uses: actions/checkout@v4
+        with:
+          repository: PortAudio/portaudio
+          path: external/portaudio
+          fetch-depth: 1
+
+      # Optional but nice: cache the checkout between runs
+      - name: Cache PortAudio
+        uses: actions/cache@v4
+        with:
+          path: external/portaudio
+          key: portaudio-${{ runner.os }}-${{ hashFiles('external/portaudio/.git/refs/heads/*') }}
+          restore-keys: |
+            portaudio-${{ runner.os }}-
+
       - name: Install build dependencies
         shell: bash
         run: |
@@ -102,6 +126,8 @@ jobs:
         run: |
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
+            -DFETCHCONTENT_SOURCE_DIR_PORTAUDIO="${{ github.workspace }}/external/portaudio" \
+            -DFETCHCONTENT_FULLY_DISCONNECTED=ON
             -DCMAKE_INSTALL_PREFIX="${PWD}/install"
 
       - name: Build

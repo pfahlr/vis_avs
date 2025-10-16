@@ -166,9 +166,42 @@ MicroPreset parseMicroPreset(std::string_view text) {
     if (!line.empty() && line.back() == '\r') {
       line.pop_back();
     }
-    const auto commentPos = line.find('#');
-    if (commentPos != std::string::npos) {
-      line.erase(commentPos);
+    bool inQuote = false;
+    char quoteChar = '\0';
+    for (std::size_t i = 0; i < line.size(); ++i) {
+      const char ch = line[i];
+      if (inQuote) {
+        if (ch == quoteChar) {
+          inQuote = false;
+        }
+        continue;
+      }
+      if (ch == '"' || ch == 39) {
+        inQuote = true;
+        quoteChar = ch;
+        continue;
+      }
+      if (ch == '#') {
+        std::size_t pos = i;
+        while (pos > 0) {
+          const unsigned char prev = static_cast<unsigned char>(line[pos - 1]);
+          if (!std::isspace(prev)) {
+            break;
+          }
+          --pos;
+        }
+        bool treatAsComment = true;
+        if (pos > 0) {
+          const unsigned char prev = static_cast<unsigned char>(line[pos - 1]);
+          if (prev == '=') {
+            treatAsComment = false;
+          }
+        }
+        if (treatAsComment) {
+          line.erase(i);
+          break;
+        }
+      }
     }
     const std::string trimmed = trimCopy(line);
     if (trimmed.empty()) {

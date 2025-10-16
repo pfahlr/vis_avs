@@ -1,5 +1,3 @@
-#include <portaudio.h>
-
 #include <algorithm>
 #include <array>
 #include <cctype>
@@ -13,8 +11,10 @@
 #include <fstream>
 #include <iomanip>
 #include <limits>
+#include <mutex>
 #include <memory>
 #include <optional>
+#include <variant>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -31,6 +31,8 @@ extern "C" {
 }
 
 #include "avs/audio.hpp"
+#include "avs/audio/AudioEngine.hpp"
+#include "avs/audio/DeviceInfo.hpp"
 #include "avs/effects.hpp"
 #include "avs/engine.hpp"
 #include "avs/fft.hpp"
@@ -97,39 +99,23 @@ void printUsage() {
       "                 [--list-input-devices] [--demo-script] [--presets <directory>] [--help]\n");
 }
 
-int listPortAudioInputDevices() {
-  PaError err = Pa_Initialize();
-  if (err != paNoError) {
-    std::fprintf(stderr, "Failed to initialize PortAudio: %s\n", Pa_GetErrorText(err));
-    return 1;
+void printInputDevices(const std::vector<avs::audio::DeviceInfo>& devices) {
+  if (devices.empty()) {
+    std::printf("No audio capture devices detected.\n");
+    return;
   }
 
-  PaDeviceIndex count = Pa_GetDeviceCount();
-  if (count < 0) {
-    std::fprintf(stderr, "Failed to enumerate PortAudio devices: %s\n", Pa_GetErrorText(count));
-    Pa_Terminate();
-    return 1;
+  std::printf("%-6s %-40s %-7s %-7s %-10s %-10s\n", "Index", "Name", "Inputs", "Outputs",
+              "Default", "Rate(Hz)");
+  for (const auto& device : devices) {
+    std::string defaults;
+    if (device.isDefaultInput) defaults.push_back('I');
+    if (device.isDefaultOutput) defaults.push_back('O');
+    if (defaults.empty()) defaults = "-";
+    std::printf("%-6d %-40.40s %-7d %-7d %-10s %-10.0f\n", device.index, device.name.c_str(),
+                device.maxInputChannels, device.maxOutputChannels, defaults.c_str(),
+                device.defaultSampleRate);
   }
-
-  PaDeviceIndex defaultDevice = Pa_GetDefaultInputDevice();
-  std::printf("Available PortAudio input devices:\n");
-  for (PaDeviceIndex i = 0; i < count; ++i) {
-    const PaDeviceInfo* info = Pa_GetDeviceInfo(i);
-    if (!info) {
-      continue;
-    }
-    bool isDefault = (i == defaultDevice);
-    std::printf("  %d: %s%s\n", static_cast<int>(i), info->name, isDefault ? " (default)" : "");
-    if (info->maxInputChannels > 0) {
-      std::printf("     inputs: %d, default sample rate: %.0f Hz\n", info->maxInputChannels,
-                  info->defaultSampleRate);
-    } else {
-      std::printf("     inputs: %d (cannot capture audio)\n", info->maxInputChannels);
-    }
-  }
-
-  Pa_Terminate();
-  return 0;
 }
 
 class OfflineAudio {
@@ -260,6 +246,221 @@ class OfflineAudio {
   static constexpr float kBandSmooth = 0.2f;
 };
 
+class LiveAudioAnalyzer {
+ public:
+  explicit LiveAudioAnalyzer(int sampleRate)
+      : sampleRate_(sampleRate),
+        fft_(kFftSize),
+        mono_(kFftSize, 0.0f),
+        leftWindow_(kFftSize, 0.0f),
+        rightWindow_(kFftSize, 0.0f),
+        spectrum_(kFftSize / 2, 0.0f) {
+    ringLeft_.assign(kRingSize, 0.0f);
+    ringRight_.assign(kRingSize, 0.0f);
+  }
+
+  void setSampleRate(int sampleRate) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    sampleRate_ = sampleRate;
+  }
+
+  void setOutputChannelCount(int channels) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    requestedChannels_ = std::max(1, channels);
+  }
+
+  void pushSamples(const float* samples, unsigned long frames, int channels, double streamTime) {
+    if (frames == 0) return;
+    if (channels <= 0) channels = 1;
+
+    std::lock_guard<std::mutex> lock(mutex_);
+    const size_t frameCount = static_cast<size_t>(frames);
+    const size_t channelCount = static_cast<size_t>(channels);
+    const size_t mask = kRingSize - 1;
+
+    zeroBuffer_.resize(frameCount * channelCount);
+    const float* data = samples;
+    if (!data) {
+      std::fill(zeroBuffer_.begin(), zeroBuffer_.end(), 0.0f);
+      data = zeroBuffer_.data();
+    }
+
+    for (size_t frame = 0; frame < frameCount; ++frame) {
+      size_t base = frame * channelCount;
+      float left = data[base];
+      float right = channels > 1 ? data[base + 1] : left;
+      if (channels > 2) {
+        float sum = left + right;
+        for (int ch = 2; ch < channels; ++ch) {
+          sum += data[base + static_cast<size_t>(ch)];
+        }
+        float avg = sum / static_cast<float>(channels);
+        left = avg;
+        right = avg;
+      }
+      ringLeft_[(writeIndex_ + frame) & mask] = left;
+      ringRight_[(writeIndex_ + frame) & mask] = right;
+    }
+
+    writeIndex_ = (writeIndex_ + frameCount) & mask;
+    framesFilled_ = std::min<size_t>(framesFilled_ + frameCount, kRingSize);
+    channelCount_ = channels;
+    lastStreamTime_ = streamTime;
+  }
+
+  avs::AudioState poll() {
+    avs::AudioState state;
+    const size_t mask = kRingSize - 1;
+
+    int channels = 1;
+    double streamTime = 0.0;
+    int sampleRate = 0;
+    int requestedChannels = 0;
+
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      channels = std::max(1, channelCount_);
+      streamTime = lastStreamTime_;
+      sampleRate = sampleRate_;
+      requestedChannels = requestedChannels_;
+      std::fill(leftWindow_.begin(), leftWindow_.end(), 0.0f);
+      std::fill(rightWindow_.begin(), rightWindow_.end(), 0.0f);
+
+      size_t available = std::min(framesFilled_, kRingSize);
+      size_t framesToCopy = std::min<size_t>(available, kFftSize);
+      size_t start = (writeIndex_ + kRingSize - framesToCopy) & mask;
+      for (size_t i = 0; i < framesToCopy; ++i) {
+        size_t ringIndex = (start + i) & mask;
+        size_t dest = kFftSize - framesToCopy + i;
+        leftWindow_[dest] = ringLeft_[ringIndex];
+        rightWindow_[dest] = ringRight_[ringIndex];
+      }
+    }
+
+    for (size_t i = 0; i < kFftSize; ++i) {
+      float left = leftWindow_[i];
+      float right = channels > 1 ? rightWindow_[i] : leftWindow_[i];
+      if (channels == 1) {
+        right = left;
+      }
+      leftWindow_[i] = left;
+      rightWindow_[i] = right;
+      mono_[i] = 0.5f * (left + right);
+    }
+
+    float sumSq = 0.0f;
+    for (float v : mono_) sumSq += v * v;
+    if (kFftSize > 0) {
+      state.rms = std::sqrt(sumSq / static_cast<float>(kFftSize));
+    } else {
+      state.rms = 0.0f;
+    }
+
+    fft_.compute(mono_.data(), spectrum_);
+    state.spectrum = spectrum_;
+
+    avs::AudioState::LegacyBuffer legacy{};
+    legacy.fill(0.0f);
+    const size_t legacyCount = avs::AudioState::kLegacyVisSamples;
+    if (!spectrum_.empty()) {
+      double scale = static_cast<double>(spectrum_.size()) / static_cast<double>(legacyCount);
+      for (size_t i = 0; i < legacyCount; ++i) {
+        size_t begin = static_cast<size_t>(std::floor(static_cast<double>(i) * scale));
+        size_t end = static_cast<size_t>(std::floor(static_cast<double>(i + 1) * scale));
+        if (end <= begin) {
+          end = begin + 1;
+        }
+        double sum = 0.0;
+        size_t count = 0;
+        for (size_t j = begin; j < end && j < spectrum_.size(); ++j) {
+          sum += spectrum_[j];
+          ++count;
+        }
+        float value = 0.0f;
+        if (count > 0) {
+          value = static_cast<float>(sum / static_cast<double>(count));
+        } else if (begin < spectrum_.size()) {
+          value = spectrum_[begin];
+        }
+        legacy[i] = value;
+      }
+    }
+    state.spectrumLegacy[0] = legacy;
+    state.spectrumLegacy[1] = legacy;
+
+    state.oscilloscope[0].fill(0.0f);
+    state.oscilloscope[1].fill(0.0f);
+    size_t oscCount = avs::AudioState::kLegacyVisSamples;
+    size_t oscStart = kFftSize > oscCount ? kFftSize - oscCount : 0;
+    for (size_t i = 0; i < oscCount && (oscStart + i) < kFftSize; ++i) {
+      state.oscilloscope[0][i] = leftWindow_[oscStart + i];
+      state.oscilloscope[1][i] = rightWindow_[oscStart + i];
+    }
+
+    std::array<float, 3> newBands{0.f, 0.f, 0.f};
+    std::array<int, 3> counts{0, 0, 0};
+    double binHz = sampleRate > 0 ? static_cast<double>(sampleRate) / static_cast<double>(kFftSize) : 0.0;
+    for (size_t i = 0; i < spectrum_.size(); ++i) {
+      double freq = binHz * static_cast<double>(i);
+      float mag = spectrum_[i];
+      if (freq < 250.0) {
+        newBands[0] += mag;
+        counts[0]++;
+      } else if (freq < 4000.0) {
+        newBands[1] += mag;
+        counts[1]++;
+      } else {
+        newBands[2] += mag;
+        counts[2]++;
+      }
+    }
+    for (int i = 0; i < 3; ++i) {
+      if (counts[i] > 0) {
+        newBands[i] /= static_cast<float>(counts[i]);
+      }
+      bands_[i] = bands_[i] * (1.0f - kBandSmooth) + newBands[i] * kBandSmooth;
+    }
+    state.bands = bands_;
+
+    int reportedChannels = requestedChannels > 0 ? requestedChannels : channels;
+    if (reportedChannels <= 1) {
+      state.oscilloscope[1] = state.oscilloscope[0];
+      state.spectrumLegacy[1] = state.spectrumLegacy[0];
+    }
+
+    state.timeSeconds = streamTime;
+    state.sampleRate = sampleRate;
+    state.inputSampleRate = sampleRate;
+    state.channels = reportedChannels;
+
+    return state;
+  }
+
+ private:
+  static constexpr size_t kFftSize = 2048;
+  static constexpr size_t kRingSize = 1 << 15;
+  static constexpr float kBandSmooth = 0.2f;
+
+  std::vector<float> ringLeft_;
+  std::vector<float> ringRight_;
+  size_t writeIndex_ = 0;
+  size_t framesFilled_ = 0;
+  int channelCount_ = 0;
+  double lastStreamTime_ = 0.0;
+  int sampleRate_ = 0;
+  std::vector<float> zeroBuffer_;
+  int requestedChannels_ = 0;
+
+  avs::FFT fft_;
+  std::vector<float> mono_;
+  std::vector<float> leftWindow_;
+  std::vector<float> rightWindow_;
+  std::vector<float> spectrum_;
+  std::array<float, 3> bands_{{0.f, 0.f, 0.f}};
+
+  std::mutex mutex_;
+};
+
 int runHeadless(const std::filesystem::path& wavPath, const std::filesystem::path& presetPath,
                 int frames, const std::filesystem::path& outDir, bool writePngs) {
   WavData wav;
@@ -326,7 +527,22 @@ int main(int argc, char** argv) {
   std::optional<std::string> requestedInputDevice;
   bool listInputDevices = false;
   bool useDeviceDefaultSampleRate = true;
-  bool useDeviceDefaultChannels = false;
+
+  std::unique_ptr<avs::audio::AudioEngine> audioEngine;
+  std::vector<avs::audio::DeviceInfo> availableDevices;
+  auto ensureAudioEngine = [&]() -> bool {
+    if (audioEngine) {
+      return true;
+    }
+    try {
+      audioEngine = std::make_unique<avs::audio::AudioEngine>();
+      availableDevices = audioEngine->listInputDevices();
+      return true;
+    } catch (const std::exception& ex) {
+      std::fprintf(stderr, "%s\n", ex.what());
+      return false;
+    }
+  };
 
   auto normalizeToken = [](std::string value) {
     std::transform(value.begin(), value.end(), value.begin(),
@@ -381,7 +597,6 @@ int main(int argc, char** argv) {
       std::string lowered = normalizeToken(token);
       if (lowered == "default" || lowered == "device-default" || lowered == "auto") {
         requestedChannels.reset();
-        useDeviceDefaultChannels = true;
       } else {
         auto parsed = parsePositiveInt(token);
         if (!parsed.has_value()) {
@@ -389,7 +604,6 @@ int main(int argc, char** argv) {
           return 1;
         }
         requestedChannels = parsed;
-        useDeviceDefaultChannels = false;
       }
     } else if (arg == "--input-device" && i + 1 < argc) {
       requestedInputDevice = argv[++i];
@@ -413,7 +627,11 @@ int main(int argc, char** argv) {
   }
 
   if (listInputDevices) {
-    return listPortAudioInputDevices();
+    if (!ensureAudioEngine()) {
+      return 1;
+    }
+    printInputDevices(availableDevices);
+    return 0;
   }
 
   if (!headless && !wavPath.empty()) {
@@ -430,27 +648,71 @@ int main(int argc, char** argv) {
     return runHeadless(wavPath, presetPath, frames, outPath, writePngs);
   }
 
-  avs::Window window(1920, 1080, "AVS Player");
-  avs::AudioInputConfig audioConfig;
-  audioConfig.useDeviceDefaultSampleRate = useDeviceDefaultSampleRate;
-  if (!useDeviceDefaultSampleRate && requestedSampleRate) {
-    audioConfig.requestedSampleRate = requestedSampleRate;
-  }
-  if (requestedChannels) {
-    audioConfig.engineChannels = std::max(1, *requestedChannels);
-  }
-  audioConfig.useDeviceDefaultChannels = useDeviceDefaultChannels;
-  if (!useDeviceDefaultChannels && requestedChannels) {
-    audioConfig.requestedChannels = requestedChannels;
-  }
-  if (requestedInputDevice) {
-    audioConfig.requestedDeviceIdentifier = requestedInputDevice;
-  }
-  avs::AudioInput audio(audioConfig);
-  if (!audio.ok()) {
-    std::fprintf(stderr, "audio init failed\n");
+  if (!ensureAudioEngine()) {
     return 1;
   }
+  if (availableDevices.empty()) {
+    std::fprintf(stderr, "No audio capture devices are available.\n");
+    return 1;
+  }
+
+  double selectionRate = requestedSampleRate ? static_cast<double>(*requestedSampleRate) : 48000.0;
+  std::optional<avs::audio::DeviceSpecifier> deviceRequest;
+  if (requestedInputDevice) {
+    const std::string& token = *requestedInputDevice;
+    char* end = nullptr;
+    long parsed = std::strtol(token.c_str(), &end, 10);
+    if (end != token.c_str() && *end == '\0') {
+      if (parsed < std::numeric_limits<int>::min() || parsed > std::numeric_limits<int>::max()) {
+        std::fprintf(stderr, "Input device index %s is out of range.\n", token.c_str());
+        return 1;
+      }
+      deviceRequest = avs::audio::DeviceSpecifier{static_cast<int>(parsed)};
+    } else {
+      deviceRequest = avs::audio::DeviceSpecifier{token};
+    }
+  }
+
+  avs::audio::DeviceInfo selectedDevice;
+  try {
+    selectedDevice = avs::audio::selectInputDevice(availableDevices, deviceRequest, selectionRate);
+  } catch (const std::exception& ex) {
+    std::fprintf(stderr, "%s\n", ex.what());
+    return 1;
+  }
+
+  double captureSampleRate = selectionRate;
+  if (useDeviceDefaultSampleRate || !requestedSampleRate) {
+    if (selectedDevice.defaultSampleRate > 0.0) {
+      captureSampleRate = selectedDevice.defaultSampleRate;
+    }
+  }
+  if (captureSampleRate <= 0.0) {
+    captureSampleRate = 48000.0;
+  }
+
+  LiveAudioAnalyzer analyzer(static_cast<int>(std::lround(captureSampleRate)));
+  analyzer.setSampleRate(static_cast<int>(std::lround(captureSampleRate)));
+  if (requestedChannels) {
+    analyzer.setOutputChannelCount(std::max(1, *requestedChannels));
+  }
+
+  avs::audio::AudioEngine::InputStream inputStream;
+  try {
+    inputStream = audioEngine->openInputStream(
+        selectedDevice, captureSampleRate, 0,
+        [&analyzer](const float* data, unsigned long frames, int channels, double streamTime) {
+          analyzer.pushSamples(data, frames, channels, streamTime);
+        });
+  } catch (const std::exception& ex) {
+    std::fprintf(stderr, "%s\n", ex.what());
+    return 1;
+  }
+
+  std::printf("Capturing from device %d: %s (%.0f Hz)\n", selectedDevice.index,
+              selectedDevice.name.c_str(), captureSampleRate);
+
+  avs::Window window(1920, 1080, "AVS Player");
 
   avs::Engine engine(1920, 1080);
   std::filesystem::path currentPreset;
@@ -523,7 +785,7 @@ int main(int argc, char** argv) {
     float dt = std::chrono::duration<float>(now - last).count();
     last = now;
 
-    auto s = audio.poll();
+    auto s = analyzer.poll();
     engine.setAudio(s);
     printAccum += dt;
     if (printAccum > 0.5f) {

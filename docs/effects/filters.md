@@ -56,11 +56,13 @@ per frame.
 | `amount` | float | `2.0` (or `0.5` when `mode == 1`) | Scalar gain applied to RGB channels. |
 | `mode` | int | `0` | Legacy compatibility: `0` doubles brightness, `1` halves it. Ignored when `amount` is provided. |
 | `bias` | float | `0.0` | Linear offset applied after scaling. |
-| `clamp` | bool | `true` | Clamps the result to `[0, 255]` before quantisation. |
+| `clamp` | bool | `true` | When `true`, saturates the result to `[0, 255]` before quantisation. When `false`, stores the 8-bit truncation of the computed value (wrapping on overflow). |
 
 The effect multiplies each color channel by the requested gain, optionally adds
-an offset, and stores the rounded result. When both `amount` equals `1.0` and
-`bias` equals `0.0`, the pass is skipped.
+an offset, and stores the rounded result. With clamping disabled the final
+assignment follows 8-bit wraparound semantics, matching the original AVS plug-
+in. When both `amount` equals `1.0` and `bias` equals `0.0`, the pass is
+skipped.
 
 ## `filter_color_map`
 

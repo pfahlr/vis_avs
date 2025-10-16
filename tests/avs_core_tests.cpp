@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <portaudio.h>
 
+#include <algorithm>
 #include <array>
 #include <cctype>
 #include <chrono>
@@ -8,11 +9,13 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <iomanip>
 #include <map>
 #include <optional>
 #include <sstream>
 #include <thread>
+#include <vector>
 
 #include "avs/audio_portaudio_internal.hpp"
 #include "avs/effects.hpp"
@@ -261,6 +264,40 @@ TEST(PresetParser, ParsesBinaryColorModifier) {
   EXPECT_TRUE(scripted->beatScript().empty());
   EXPECT_EQ(scripted->frameScript(), "red=bass; green=mid; blue=treb;");
   EXPECT_EQ(scripted->pixelScript(), "red=red; green=green; blue=blue;");
+}
+
+TEST(PresetParser, ParsesLegacyBinaryPreset) {
+  namespace fs = std::filesystem;
+  auto source = fs::path(SOURCE_DIR) / "tests/data/simple.avs";
+  std::ifstream in(source, std::ios::binary);
+  ASSERT_TRUE(in);
+  std::vector<char> data((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+  const std::string prefix = "Nullsoft AVS Preset ";
+  auto prefixPos = std::search(data.begin(), data.end(), prefix.begin(), prefix.end());
+  ASSERT_NE(prefixPos, data.end());
+  auto versionBegin = prefixPos;
+  std::advance(versionBegin, static_cast<std::vector<char>::difference_type>(prefix.size()));
+  auto versionEnd = std::find(versionBegin, data.end(), '\x1a');
+  ASSERT_NE(versionEnd, data.end());
+  ASSERT_GE(std::distance(versionBegin, versionEnd), 3);
+  const std::array<char, 3> legacyVersion{'0', '.', '1'};
+  std::vector<char> legacy = data;
+  auto versionIndex = std::distance(data.begin(), versionBegin);
+  std::copy(legacyVersion.begin(), legacyVersion.end(), legacy.begin() + versionIndex);
+  auto tmp = fs::temp_directory_path() / "legacy_preset.avs";
+  {
+    std::ofstream out(tmp, std::ios::binary);
+    ASSERT_TRUE(out);
+    out.write(legacy.data(), static_cast<std::streamsize>(legacy.size()));
+  }
+  auto preset = avs::parsePreset(tmp);
+  EXPECT_TRUE(preset.warnings.empty());
+  ASSERT_EQ(preset.chain.size(), 1u);
+  auto* scripted = dynamic_cast<avs::ScriptedEffect*>(preset.chain[0].get());
+  ASSERT_NE(scripted, nullptr);
+  EXPECT_EQ(scripted->frameScript(), "red=bass; green=mid; blue=treb;");
+  EXPECT_EQ(scripted->pixelScript(), "red=red; green=green; blue=blue;");
+  fs::remove(tmp);
 }
 
 TEST(PresetParser, ParsesNestedRenderLists) {

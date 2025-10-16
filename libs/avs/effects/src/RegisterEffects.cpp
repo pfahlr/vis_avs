@@ -5,6 +5,7 @@
 #include "avs/effects/Blend.hpp"
 #include "avs/effects/Clear.hpp"
 #include "avs/effects/Overlay.hpp"
+#include "avs/effects/Primitives.hpp"
 #include "avs/effects/Swizzle.hpp"
 #include "avs/effects/Zoom.hpp"
 
@@ -16,6 +17,17 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("blend", []() { return std::make_unique<Blend>(); });
   registry.registerFactory("overlay", []() { return std::make_unique<Overlay>(); });
   registry.registerFactory("swizzle", []() { return std::make_unique<Swizzle>(); });
+  registry.registerFactory("solid", []() { return std::make_unique<PrimitiveSolid>(); });
+  registry.registerFactory("dot", []() { return std::make_unique<PrimitiveDots>(); });
+  registry.registerFactory("dots", []() { return std::make_unique<PrimitiveDots>(); });
+  registry.registerFactory("line", []() { return std::make_unique<PrimitiveLines>(); });
+  registry.registerFactory("lines", []() { return std::make_unique<PrimitiveLines>(); });
+  registry.registerFactory("tri", []() { return std::make_unique<PrimitiveTriangles>(); });
+  registry.registerFactory("triangle", []() { return std::make_unique<PrimitiveTriangles>(); });
+  registry.registerFactory("triangles", []() { return std::make_unique<PrimitiveTriangles>(); });
+  registry.registerFactory("rrect", []() { return std::make_unique<PrimitiveRoundedRect>(); });
+  registry.registerFactory("roundedrect", []() { return std::make_unique<PrimitiveRoundedRect>(); });
+  registry.registerFactory("text", []() { return std::make_unique<Text>(); });
 }
 
 }  // namespace avs::effects

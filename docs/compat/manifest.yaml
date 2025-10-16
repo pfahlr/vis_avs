@@ -18,6 +18,24 @@ effects:
     status: implemented
     ops: *blend_ops
     notes: "Constant background/foreground colors blended per pixel."
+  solid:
+    status: implemented
+    notes: "Axis-aligned rectangle fill; integer raster."
+  dots:
+    status: implemented
+    notes: "Filled circles drawn with midpoint rasterisation."
+  lines:
+    status: implemented
+    notes: "Bresenham polyline with optional closure and thickness."
+  triangles:
+    status: implemented
+    notes: "Filled and outlined triangles using barycentric coverage."
+  rrect:
+    status: implemented
+    notes: "Rounded rectangles with fill/outline and integer corner checks."
+  text:
+    status: implemented
+    notes: "Deterministic bitmap text with outline, shadow, and anti-alias toggle."
   swizzle:
     status: implemented
     modes: [rgb, rbg, grb, gbr, brg, bgr]

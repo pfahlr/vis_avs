@@ -112,17 +112,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: PortAudio/portaudio
-          path: ${{ github.workspace }}/external/portaudio
+          path: external/portaudio
           fetch-depth: 1
 
-      # Optional but nice: cache the checkout between runs
-      - name: Cache PortAudio
-        uses: actions/cache@v4
-        with:
-          path: ${{ github.workspace }}/external/portaudio
-          key: portaudio-${{ runner.os }}-${{ hashFiles('external/portaudio/.git/refs/heads/*') }}
-          restore-keys: |
-            portaudio-${{ runner.os }}-
+      # Prove the path exists before CMake runs (avoids the exact error you hit)
+      - name: Verify PortAudio path
+        run: |
+          set -euxo pipefail
+          test -d "${{ github.workspace }}//external/portaudio/.git"
+          ls -la "${{ github.workspace }}//external/portaudio" | head -n 20
 
 
       - name: Configure

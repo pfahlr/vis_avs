@@ -63,6 +63,13 @@ target_compile_options(audio_vis_tests PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(audio_vis_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 add_test(NAME audio_vis_tests COMMAND audio_vis_tests)
 
+add_executable(filter_effects_tests
+  presets/filters/test_filters.cpp)
+target_link_libraries(filter_effects_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
+target_compile_options(filter_effects_tests PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(filter_effects_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+add_test(NAME filter_effects_tests COMMAND filter_effects_tests)
+
 add_executable(runtime_resource_tests
   runtime/test_resources.cpp)
 target_link_libraries(runtime_resource_tests PRIVATE avs-runtime GTest::gtest_main)

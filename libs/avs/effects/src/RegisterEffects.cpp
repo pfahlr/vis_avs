@@ -11,6 +11,11 @@
 #include "avs/effects/TransformAffine.hpp"
 #include "avs/effects/Zoom.hpp"
 #include "effects/effect_scripted.h"
+#include "effects/dynamic/dyn_distance.h"
+#include "effects/dynamic/dyn_movement.h"
+#include "effects/dynamic/dyn_shift.h"
+#include "effects/dynamic/movement.h"
+#include "effects/dynamic/zoom_rotate.h"
 #include "effects/stubs/effect_channel_shift.h"
 #include "effects/stubs/effect_color_reduction.h"
 #include "effects/stubs/effect_holden04_video_delay.h"
@@ -53,6 +58,11 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("swizzle", []() { return std::make_unique<Swizzle>(); });
   registry.registerFactory("scripted", []() { return std::make_unique<ScriptedEffect>(); });
   registry.registerFactory("transform_affine", []() { return std::make_unique<TransformAffine>(); });
+  registry.registerFactory("movement", []() { return std::make_unique<MovementEffect>(); });
+  registry.registerFactory("dyn_movement", []() { return std::make_unique<DynamicMovementEffect>(); });
+  registry.registerFactory("dyn_distance", []() { return std::make_unique<DynamicDistanceModifierEffect>(); });
+  registry.registerFactory("dyn_shift", []() { return std::make_unique<DynamicShiftEffect>(); });
+  registry.registerFactory("zoom_rotate", []() { return std::make_unique<ZoomRotateEffect>(); });
   registry.registerFactory("effect_wave", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Wave); });
   registry.registerFactory("effect_spec", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Spectrum);});
   registry.registerFactory("effect_bands", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Bands); });

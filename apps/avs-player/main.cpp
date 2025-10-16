@@ -266,7 +266,7 @@ class LiveAudioAnalyzer {
 
   void setOutputChannelCount(int channels) {
     std::lock_guard<std::mutex> lock(mutex_);
-    requestedChannels_ = std::max(1, channels);
+    requestedChannels_ = channels > 0 ? channels : 1;
   }
 
   void pushSamples(const float* samples, unsigned long frames, int channels, double streamTime) {
@@ -522,8 +522,10 @@ int main(int argc, char** argv) {
   bool demoScript = false;
   std::filesystem::path presetDir;
   bool showHelp = false;
-  std::optional<int> requestedSampleRate;
-  std::optional<int> requestedChannels;
+  int requestedSampleRate = 0;
+  bool hasRequestedSampleRate = false;
+  int requestedChannels = 0;
+  bool hasRequestedChannels = false;
   std::optional<std::string> requestedInputDevice;
   bool listInputDevices = false;
   bool useDeviceDefaultSampleRate = true;
@@ -581,7 +583,8 @@ int main(int argc, char** argv) {
       std::string token = argv[++i];
       std::string lowered = normalizeToken(token);
       if (lowered == "default" || lowered == "device-default" || lowered == "auto") {
-        requestedSampleRate.reset();
+        hasRequestedSampleRate = false;
+        requestedSampleRate = 0;
         useDeviceDefaultSampleRate = true;
       } else {
         auto parsed = parsePositiveInt(token);
@@ -589,21 +592,24 @@ int main(int argc, char** argv) {
           std::fprintf(stderr, "--sample-rate expects a positive integer or 'default'\n");
           return 1;
         }
-        requestedSampleRate = parsed;
+        requestedSampleRate = parsed.value();
+        hasRequestedSampleRate = true;
         useDeviceDefaultSampleRate = false;
       }
     } else if (arg == "--channels" && i + 1 < argc) {
       std::string token = argv[++i];
       std::string lowered = normalizeToken(token);
       if (lowered == "default" || lowered == "device-default" || lowered == "auto") {
-        requestedChannels.reset();
+        hasRequestedChannels = false;
+        requestedChannels = 0;
       } else {
         auto parsed = parsePositiveInt(token);
         if (!parsed.has_value()) {
           std::fprintf(stderr, "--channels expects a positive integer or 'default'\n");
           return 1;
         }
-        requestedChannels = parsed;
+        requestedChannels = parsed.value();
+        hasRequestedChannels = true;
       }
     } else if (arg == "--input-device" && i + 1 < argc) {
       requestedInputDevice = argv[++i];
@@ -656,7 +662,10 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  double selectionRate = requestedSampleRate ? static_cast<double>(*requestedSampleRate) : 48000.0;
+  double selectionRate = 48000.0;
+  if (hasRequestedSampleRate) {
+    selectionRate = static_cast<double>(requestedSampleRate);
+  }
   std::optional<avs::audio::DeviceSpecifier> deviceRequest;
   if (requestedInputDevice) {
     const std::string& token = *requestedInputDevice;
@@ -682,7 +691,7 @@ int main(int argc, char** argv) {
   }
 
   double captureSampleRate = selectionRate;
-  if (useDeviceDefaultSampleRate || !requestedSampleRate) {
+  if (useDeviceDefaultSampleRate || !hasRequestedSampleRate) {
     if (selectedDevice.defaultSampleRate > 0.0) {
       captureSampleRate = selectedDevice.defaultSampleRate;
     }
@@ -693,8 +702,12 @@ int main(int argc, char** argv) {
 
   LiveAudioAnalyzer analyzer(static_cast<int>(std::lround(captureSampleRate)));
   analyzer.setSampleRate(static_cast<int>(std::lround(captureSampleRate)));
-  if (requestedChannels) {
-    analyzer.setOutputChannelCount(std::max(1, *requestedChannels));
+  if (hasRequestedChannels) {
+    int channelCount = requestedChannels;
+    if (channelCount <= 0) {
+      channelCount = 1;
+    }
+    analyzer.setOutputChannelCount(channelCount);
   }
 
   avs::audio::AudioEngine::InputStream inputStream;

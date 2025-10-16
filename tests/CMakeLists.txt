@@ -31,7 +31,9 @@ target_link_libraries(deterministic_render_test PRIVATE GTest::gtest_main)
 target_compile_options(deterministic_render_test PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(deterministic_render_test PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 add_test(NAME deterministic_render_test COMMAND deterministic_render_test)
-add_dependencies(deterministic_render_test avs-player)
+if(TARGET avs-player)
+  add_dependencies(deterministic_render_test avs-player)
+endif()
 
 add_executable(core_effects_tests
   core/test_effect_registry.cpp
@@ -57,13 +59,17 @@ target_compile_options(offscreen_golden_test PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(offscreen_golden_test PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 add_test(NAME offscreen_golden_test COMMAND offscreen_golden_test)
 
-add_test(NAME offscreen_golden_md5_snapshot
-  COMMAND Python3::Interpreter
-          ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_golden_md5.py
-          --binary $<TARGET_FILE:gen_golden_md5>
-          --expected ${CMAKE_CURRENT_SOURCE_DIR}/regression/data/expected_md5_320x240_seed1234.json
-          --frames 10 --width 320 --height 240 --seed 1234
-          --preset ${CMAKE_SOURCE_DIR}/tests/regression/data/tiny_preset_fragment.avs)
+if(TARGET gen_golden_md5)
+  add_test(NAME offscreen_golden_md5_snapshot
+    COMMAND Python3::Interpreter
+            ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_golden_md5.py
+            --binary $<TARGET_FILE:gen_golden_md5>
+            --expected ${CMAKE_CURRENT_SOURCE_DIR}/regression/data/expected_md5_320x240_seed1234.json
+            --frames 10 --width 320 --height 240 --seed 1234
+            --preset ${CMAKE_SOURCE_DIR}/tests/regression/data/tiny_preset_fragment.avs)
+else()
+  message(WARNING "Golden MD5 snapshot test disabled because gen_golden_md5 is not built")
+endif()
 
 set(PHASE1_DATA_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/data/phase1")
 set(PHASE1_GOLDEN_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/golden/phase1")

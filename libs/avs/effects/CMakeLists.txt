@@ -6,6 +6,19 @@ add_library(avs-effects-core
 target_link_libraries(avs-effects-core PUBLIC avs-core-runtime)
 
 target_include_directories(avs-effects-core
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 target_compile_options(avs-effects-core PRIVATE -Wall -Wextra -Werror)
+
+target_compile_features(avs-effects-core PUBLIC cxx_std_20)
+
+install(TARGETS avs-effects-core
+  EXPORT ${AVS_EXPORT_NAME}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+install(DIRECTORY include/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

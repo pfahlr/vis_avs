@@ -1,11 +1,3 @@
-cmake_minimum_required(VERSION 3.16)
-project(avs_scaffold LANGUAGES CXX)
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
-endif()
-
 add_library(avs-core STATIC
   src/core.cpp
   src/engine.cpp
@@ -30,8 +22,23 @@ add_library(avs-core STATIC
   src/effects/scripted.cpp
   src/preset.cpp
 )
-target_include_directories(avs-core PUBLIC include ../avs-platform/include)
+target_include_directories(avs-core
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/libs/avs-platform/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_compile_options(avs-core PRIVATE -Wall -Wextra -Werror)
+target_compile_features(avs-core PUBLIC cxx_std_20)
 target_link_libraries(avs-core PUBLIC ns-eel)
 add_executable(avs_headless src/headless_main.cpp)
 target_link_libraries(avs_headless PRIVATE avs-core)
+target_compile_options(avs_headless PRIVATE -Wall -Wextra -Werror)
+
+install(TARGETS avs-core avs_headless
+  EXPORT ${AVS_EXPORT_NAME}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install(DIRECTORY include/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

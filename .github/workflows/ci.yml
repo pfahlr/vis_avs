@@ -48,8 +48,8 @@ jobs:
       # Optional: fix trust store if your runner image is missing CA certs
       - name: Ensure CA trust for git (defensive)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ca-certificates
+          apt-get update
+          apt-get install -y ca-certificates
           git config --global http.sslcainfo /etc/ssl/certs/ca-certificates.crt
           unset CURL_CA_BUNDLE SSL_CERT_FILE
 

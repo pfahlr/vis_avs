@@ -1,0 +1,5 @@
+# name md5
+blend_additive 2c9accb89e77e2dd59f57ca974ef36b6
+blend_alpha 560c7034dfcc449a6365b82bcf9379eb
+overlay_blendslide 9189499d7106a30a1e58ea2c6a5ff789
+swizzle_bgr fa44900dc5b28feed9598e38288d2f31

@@ -1,0 +1,2 @@
+# Micro preset applying blend-slide overlay between red and blue
+overlay op=blendslide bg=0xff0000 fg=0x0000ff slide=64

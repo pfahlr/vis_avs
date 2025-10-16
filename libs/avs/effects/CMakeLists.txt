@@ -1,7 +1,12 @@
 add_library(avs-effects-core
+  src/Blend.cpp
   src/Clear.cpp
+  src/Overlay.cpp
   src/RegisterEffects.cpp
-  src/Zoom.cpp)
+  src/Swizzle.cpp
+  src/Zoom.cpp
+  src/micro_preset_parser.cpp
+  src/effects/blend_ops.cpp)
 
 target_link_libraries(avs-effects-core PUBLIC avs-core-runtime)
 

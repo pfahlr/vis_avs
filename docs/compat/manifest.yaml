@@ -1,0 +1,67 @@
+effects:
+  blend:
+    status: implemented
+    ops: &blend_ops
+      - additive
+      - alpha
+      - alpha2
+      - alphaslide
+      - blend
+      - blendslide
+      - replace
+      - defaultblend
+      - defrendblend
+      - above
+      - below
+    notes: "Integer math with 8-bit saturation matches AVS 2.x behaviour."
+  overlay:
+    status: implemented
+    ops: *blend_ops
+    notes: "Constant background/foreground colors blended per pixel."
+  swizzle:
+    status: implemented
+    modes: [rgb, rbg, grb, gbr, brg, bgr]
+    notes: "Alpha preserved; permutations applied branchlessly per pixel."
+parser:
+  micro_preset:
+    status: available
+    ignores:
+      - BUTTON*
+      - CHECK*
+      - EDIT*
+      - SLIDER*
+      - RADIO*
+      - TAB1
+      - LIST1
+      - SCROLLBAR1
+      - HELPBTN
+      - CHOOSEFONT
+      - VIS_*
+      - L_*
+      - DEBUGREG_*
+      - EFFECTRECT
+      - EFFECTS
+      - EFNAME
+      - SETTINGS
+      - VERSTR
+      - TRANS_CHECK
+      - TRANS_SLIDER
+      - THREADSBORDER
+      - REMSEL
+      - EXCLUDE
+      - NEWRESET
+      - HRESET
+      - VRESET
+      - MAX
+      - OFF
+      - IN
+      - OUT
+      - SA
+      - QUAL*
+    output: "Vector of effect+ParamBlock pairs"
+    tests:
+      - tests/core/test_blend_ops.cpp
+goldens:
+  micro_blend_md5:
+    file: tests/golden/micro_blend_md5.txt
+    update_command: ./tools/update_goldens.sh

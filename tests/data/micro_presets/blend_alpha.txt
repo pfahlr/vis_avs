@@ -1,0 +1,3 @@
+# Micro preset for alpha blending with half weight
+overlay op=replace fg=0xff0000
+blend op=alpha fg=0x00ff00 alpha=128

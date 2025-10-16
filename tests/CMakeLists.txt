@@ -8,6 +8,7 @@ if(NOT GTest_FOUND)
   set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(googletest)
 endif()
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 add_executable(avs_core_tests avs_core_tests.cpp)
 target_link_libraries(avs_core_tests PRIVATE avs-core avs-platform GTest::gtest_main)
@@ -48,6 +49,21 @@ add_test(NAME runtime_resource_tests COMMAND runtime_resource_tests)
 if(TARGET avs-resources)
   add_dependencies(runtime_resource_tests avs-resources)
 endif()
+
+add_executable(offscreen_golden_test
+  regression/test_offscreen_golden.cpp)
+target_link_libraries(offscreen_golden_test PRIVATE avs-offscreen GTest::gtest_main)
+target_compile_options(offscreen_golden_test PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(offscreen_golden_test PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+add_test(NAME offscreen_golden_test COMMAND offscreen_golden_test)
+
+add_test(NAME offscreen_golden_md5_snapshot
+  COMMAND Python3::Interpreter
+          ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_golden_md5.py
+          --binary $<TARGET_FILE:gen_golden_md5>
+          --expected ${CMAKE_CURRENT_SOURCE_DIR}/regression/data/expected_md5_320x240_seed1234.json
+          --frames 10 --width 320 --height 240 --seed 1234
+          --preset ${CMAKE_SOURCE_DIR}/tests/regression/data/tiny_preset_fragment.avs)
 
 set(PHASE1_DATA_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/data/phase1")
 set(PHASE1_GOLDEN_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/golden/phase1")

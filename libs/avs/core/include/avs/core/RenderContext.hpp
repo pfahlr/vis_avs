@@ -5,6 +5,10 @@
 
 #include "avs/core/DeterministicRng.hpp"
 
+namespace avs::runtime {
+struct GlobalState;
+}
+
 namespace avs::audio {
 struct Analysis;
 }
@@ -39,6 +43,7 @@ struct RenderContext {
   AudioBufferView audioSpectrum;
   bool audioBeat = false;
   const avs::audio::Analysis* audioAnalysis = nullptr;
+  avs::runtime::GlobalState* globals = nullptr;
   DeterministicRng rng;
 };
 

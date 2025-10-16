@@ -198,6 +198,10 @@ void ScriptedEffect::ensureRuntime() {
   midVar_ = runtime_->registerVar("mid");
   trebVar_ = runtime_->registerVar("treb");
   arbValVar_ = runtime_->registerVar("arbval");
+  for (std::size_t i = 0; i < globalVars_.size(); ++i) {
+    const std::string name = "g" + std::to_string(i + 1);
+    globalVars_[i] = runtime_->registerVar(name);
+  }
 }
 
 bool ScriptedEffect::compileScripts() {
@@ -252,6 +256,7 @@ bool ScriptedEffect::render(avs::core::RenderContext& context) {
   runtimeErrorDetail_.clear();
 
   runtime_->setRandomSeed(context.rng.nextUint32());
+  loadGlobalRegisters(context);
   timeSeconds_ += context.deltaSeconds;
   updateBindings(context);
 
@@ -274,6 +279,7 @@ bool ScriptedEffect::render(avs::core::RenderContext& context) {
     }
   }
 
+  storeGlobalRegisters(context);
   drawOverlays(context);
   return runtimeErrorStage_.empty() && compileErrorStage_.empty();
 }
@@ -427,6 +433,38 @@ void ScriptedEffect::drawText(avs::core::RenderContext& context,
       }
     }
     cursorX += glyph.width + kGlyphSpacing;
+  }
+}
+
+void ScriptedEffect::loadGlobalRegisters(const avs::core::RenderContext& context) {
+  if (!runtime_) {
+    return;
+  }
+  if (context.globals) {
+    const auto& source = context.globals->registers;
+    for (std::size_t i = 0; i < globalVars_.size(); ++i) {
+      if (globalVars_[i]) {
+        *globalVars_[i] = static_cast<EEL_F>(source[i]);
+      }
+    }
+  } else {
+    for (auto* var : globalVars_) {
+      if (var) {
+        *var = 0.0;
+      }
+    }
+  }
+}
+
+void ScriptedEffect::storeGlobalRegisters(avs::core::RenderContext& context) const {
+  if (!context.globals) {
+    return;
+  }
+  auto& dest = context.globals->registers;
+  for (std::size_t i = 0; i < globalVars_.size(); ++i) {
+    if (globalVars_[i]) {
+      dest[i] = static_cast<double>(*globalVars_[i]);
+    }
   }
 }
 

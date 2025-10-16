@@ -45,30 +45,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.distro }}-pkg-
 
-      # Optional: fix trust store if your runner image is missing CA certs
-      - name: Ensure CA trust for git (defensive)
-        run: |
-          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
-            apt-get update
-            apt-get install -y ca-certificates
-            git config --global http.sslcainfo /etc/ssl/certs/ca-certificates.crt
-            unset CURL_CA_BUNDLE SSL_CERT_FILE
-          fi
-      - name: Checkout PortAudio (shallow)
-        uses: actions/checkout@v4
-        with:
-          repository: PortAudio/portaudio
-          path: external/portaudio
-          fetch-depth: 1
-
-      # Optional but nice: cache the checkout between runs
-      - name: Cache PortAudio
-        uses: actions/cache@v4
-        with:
-          path: external/portaudio
-          key: portaudio-${{ runner.os }}-${{ hashFiles('external/portaudio/.git/refs/heads/*') }}
-          restore-keys: |
-            portaudio-${{ runner.os }}-
 
       - name: Install build dependencies
         shell: bash
@@ -122,6 +98,32 @@ jobs:
           key: cmake-${{ matrix.distro }}-${{ hashFiles('CMakeLists.txt', 'libs/**/CMakeLists.txt', 'apps/**/CMakeLists.txt', 'tools/CMakeLists.txt', 'tests/CMakeLists.txt') }}
           restore-keys: |
             cmake-${{ matrix.distro }}-
+
+      # Optional: fix trust store if your runner image is missing CA certs
+      - name: Ensure CA trust for git (defensive)
+        run: |
+          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
+            apt-get update
+            apt-get install -y ca-certificates
+            git config --global http.sslcainfo /etc/ssl/certs/ca-certificates.crt
+            unset CURL_CA_BUNDLE SSL_CERT_FILE
+          fi
+      - name: Checkout PortAudio (shallow)
+        uses: actions/checkout@v4
+        with:
+          repository: PortAudio/portaudio
+          path: external/portaudio
+          fetch-depth: 1
+
+      # Optional but nice: cache the checkout between runs
+      - name: Cache PortAudio
+        uses: actions/cache@v4
+        with:
+          path: external/portaudio
+          key: portaudio-${{ runner.os }}-${{ hashFiles('external/portaudio/.git/refs/heads/*') }}
+          restore-keys: |
+            portaudio-${{ runner.os }}-
+
 
       - name: Configure
         run: |

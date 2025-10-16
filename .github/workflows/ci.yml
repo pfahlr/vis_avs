@@ -125,12 +125,28 @@ jobs:
            ls -la "$GITHUB_WORKSPACE/external/portaudio" | head -n 20
          fi
 
+      # Add after the PortAudio checkout
+      - name: Checkout googletest (shallow)
+        uses: actions/checkout@v4
+        with:
+          repository: google/googletest
+          path: external/googletest
+          fetch-depth: 1
+
+      - name: Verify googletest path
+        run: |
+          set -euo pipefail
+          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
+          test -d "$GITHUB_WORKSPACE/external/googletest/.git"
+          git -C "$GITHUB_WORKSPACE/external/googletest" rev-parse --short HEAD
+          fi
       - name: Configure
         run: |
           if [ "${{ matrix.distro }}" = "ubuntu" ]; then
             cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DFETCHCONTENT_SOURCE_DIR_PORTAUDIO="$GITHUB_WORKSPACE/external/portaudio" \
+            -DFETCHCONTENT_SOURCE_DIR_GOOGLETEST="$GITHUB_WORKSPACE/external/googletest" \
             -DFETCHCONTENT_FULLY_DISCONNECTED=ON \
             -DCMAKE_INSTALL_PREFIX="${PWD}/install"
           else

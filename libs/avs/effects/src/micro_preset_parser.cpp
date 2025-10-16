@@ -8,6 +8,8 @@
 #include <string>
 #include <string_view>
 
+#include "runtime/parser.h"
+
 namespace {
 
 std::string trimCopy(std::string_view text) {
@@ -218,7 +220,7 @@ MicroPreset parseMicroPreset(std::string_view text) {
       continue;
     }
     MicroEffectCommand command;
-    command.effectKey = toLower(effectToken);
+    command.effectKey = avs::runtime::parser::normalizeEffectToken(effectToken);
     for (std::size_t i = 1; i < tokens.size(); ++i) {
       const std::string& token = tokens[i];
       const auto eqPos = token.find('=');

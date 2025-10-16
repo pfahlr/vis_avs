@@ -1,4 +1,6 @@
 add_subdirectory(core)
 add_subdirectory(effects)
 add_subdirectory(runtime)
-add_subdirectory(audio)
+if(AVS_BUILD_AUDIO)
+  add_subdirectory(audio)
+endif()

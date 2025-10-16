@@ -6,7 +6,10 @@ add_library(avs-effects-core
   src/Swizzle.cpp
   src/Zoom.cpp
   src/micro_preset_parser.cpp
-  src/effects/blend_ops.cpp)
+  src/TransformAffine.cpp
+  src/effects/blend_ops.cpp
+  src/effects/gating.cpp
+  src/effects/transform_affine.cpp)
 
 target_link_libraries(avs-effects-core PUBLIC avs-core-runtime)
 

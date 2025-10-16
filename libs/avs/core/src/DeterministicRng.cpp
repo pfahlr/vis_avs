@@ -5,7 +5,10 @@
 namespace {
 
 std::uint64_t readSeedFromEnv() {
-  const char* value = std::getenv("AVS_SEED");
+  const char* value = std::getenv("VIS_AVS_SEED");
+  if (!value) {
+    value = std::getenv("AVS_SEED");
+  }
   if (!value) {
     return 0;
   }

@@ -1,0 +1,3 @@
+# Rotate a triangle around the screen center
+CLEAR value=0
+TRANSFORM_AFFINE anchor=center rotate=90 color=0x0000ff00 test

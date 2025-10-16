@@ -38,10 +38,13 @@ endif()
 add_executable(core_effects_tests
   core/test_effect_registry.cpp
   core/test_pipeline.cpp
-  core/test_blend_ops.cpp)
+  core/test_blend_ops.cpp
+  core/test_transform_affine.cpp
+  core/test_gating.cpp)
 target_link_libraries(core_effects_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
 target_compile_options(core_effects_tests PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(core_effects_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(core_effects_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs/effects/src)
 add_test(NAME core_effects_tests COMMAND core_effects_tests)
 
 add_executable(runtime_resource_tests

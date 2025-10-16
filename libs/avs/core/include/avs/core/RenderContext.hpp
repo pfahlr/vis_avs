@@ -33,6 +33,7 @@ struct RenderContext {
   int height = 0;
   PixelBufferView framebuffer;
   AudioBufferView audioSpectrum;
+  bool audioBeat = false;
   DeterministicRng rng;
 };
 

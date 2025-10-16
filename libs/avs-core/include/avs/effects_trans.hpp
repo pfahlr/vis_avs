@@ -1,5 +1,6 @@
 #pragma once
 #include "effect.hpp"
+#include <vector>
 
 namespace avs {
 
@@ -55,6 +56,11 @@ public:
   std::string_view name() const override { return "Mirror"; }
   void process(const ProcessContext& ctx, FrameBufferView& dst) override;
   std::vector<Param> parameters() const override;
+  void set_parameter(std::string_view name, const ParamValue& value) override;
+
+private:
+  enum class Mode { Horizontal = 0, Vertical = 1, Quad = 2 };
+  Mode mode_{Mode::Horizontal};
 };
 
 class Convolution3x3Effect : public IEffect {
@@ -134,6 +140,18 @@ public:
   std::string_view name() const override { return "Interleave"; }
   void process(const ProcessContext& ctx, FrameBufferView& dst) override;
   std::vector<Param> parameters() const override;
+  void set_parameter(std::string_view name, const ParamValue& value) override;
+
+private:
+  void ensureHistory(int width, int height, int stride);
+
+  int frameCount_{2};
+  int offset_{0};
+  int width_{0};
+  int height_{0};
+  int stride_{0};
+  std::vector<std::vector<std::uint8_t>> frames_;
+  std::vector<bool> ready_;
 };
 
 } // namespace avs

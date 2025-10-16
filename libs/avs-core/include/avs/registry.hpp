@@ -16,12 +16,7 @@ public:
 
   const std::vector<EffectDescriptor>& effects() const { return effects_; }
 
-  std::unique_ptr<IEffect> create(std::string_view id) const {
-    auto it = by_id_.find(std::string(id));
-    if (it == by_id_.end()) return nullptr;
-    const auto& d = effects_.at(it->second);
-    return d.factory ? d.factory() : nullptr;
-  }
+  std::unique_ptr<IEffect> create(std::string_view id) const;
 
 private:
   std::vector<EffectDescriptor> effects_;

@@ -13,24 +13,33 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 add_executable(avs_core_tests avs_core_tests.cpp)
 target_link_libraries(avs_core_tests PRIVATE avs-core avs-platform GTest::gtest_main)
 target_compile_options(avs_core_tests PRIVATE -Wall -Wextra -Werror)
-target_compile_definitions(avs_core_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_compile_definitions(avs_core_tests PRIVATE
+  BUILD_DIR="${CMAKE_BINARY_DIR}"
+  SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+  AVS_BUILD_AUDIO=$<BOOL:${AVS_BUILD_AUDIO}>
+  AVS_BUILD_PLATFORM=$<BOOL:${AVS_BUILD_PLATFORM}>)
+
+target_include_directories(avs_core_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/third_party ${CMAKE_SOURCE_DIR}/src)
+
 add_test(NAME avs_core_tests COMMAND avs_core_tests)
 
-add_executable(audio_underflow_tests audio_underflow_tests.cpp)
-target_link_libraries(audio_underflow_tests PRIVATE avs-platform GTest::gtest_main)
-target_compile_options(audio_underflow_tests PRIVATE -Wall -Wextra -Werror)
-add_test(NAME audio_underflow_tests COMMAND audio_underflow_tests)
+if(AVS_BUILD_AUDIO)
+  add_executable(audio_underflow_tests audio_underflow_tests.cpp)
+  target_link_libraries(audio_underflow_tests PRIVATE avs-platform GTest::gtest_main)
+  target_compile_options(audio_underflow_tests PRIVATE -Wall -Wextra -Werror)
+  add_test(NAME audio_underflow_tests COMMAND audio_underflow_tests)
 
-add_executable(audio_device_negotiation_tests audio/test_device_negotiation.cpp)
-target_link_libraries(audio_device_negotiation_tests PRIVATE avs-audio GTest::gtest_main)
-target_compile_options(audio_device_negotiation_tests PRIVATE -Wall -Wextra -Werror)
-add_test(NAME audio_device_negotiation_tests COMMAND audio_device_negotiation_tests)
+  add_executable(audio_device_negotiation_tests audio/test_device_negotiation.cpp)
+  target_link_libraries(audio_device_negotiation_tests PRIVATE avs-audio GTest::gtest_main)
+  target_compile_options(audio_device_negotiation_tests PRIVATE -Wall -Wextra -Werror)
+  add_test(NAME audio_device_negotiation_tests COMMAND audio_device_negotiation_tests)
 
-add_executable(audio_analyzer_tests audio/test_analyzer.cpp)
-target_link_libraries(audio_analyzer_tests PRIVATE avs-platform avs-audio GTest::gtest_main)
-target_compile_options(audio_analyzer_tests PRIVATE -Wall -Wextra -Werror)
-target_include_directories(audio_analyzer_tests PRIVATE ${CMAKE_SOURCE_DIR}/src)
-add_test(NAME audio_analyzer_tests COMMAND audio_analyzer_tests)
+  add_executable(audio_analyzer_tests audio/test_analyzer.cpp)
+  target_link_libraries(audio_analyzer_tests PRIVATE avs-platform avs-audio GTest::gtest_main)
+  target_compile_options(audio_analyzer_tests PRIVATE -Wall -Wextra -Werror)
+  target_include_directories(audio_analyzer_tests PRIVATE ${CMAKE_SOURCE_DIR}/src)
+  add_test(NAME audio_analyzer_tests COMMAND audio_analyzer_tests)
+endif()
 
 add_executable(deterministic_render_test deterministic_render_test.cpp)
 target_link_libraries(deterministic_render_test PRIVATE GTest::gtest_main)
@@ -56,12 +65,14 @@ target_compile_definitions(core_effects_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_
 target_include_directories(core_effects_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs/effects/src)
 add_test(NAME core_effects_tests COMMAND core_effects_tests)
 
-add_executable(audio_vis_tests
-  presets/audio_vis/test_audio_vis.cpp)
-target_link_libraries(audio_vis_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
-target_compile_options(audio_vis_tests PRIVATE -Wall -Wextra -Werror)
-target_compile_definitions(audio_vis_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
-add_test(NAME audio_vis_tests COMMAND audio_vis_tests)
+if(AVS_BUILD_AUDIO)
+  add_executable(audio_vis_tests
+    presets/audio_vis/test_audio_vis.cpp)
+  target_link_libraries(audio_vis_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
+  target_compile_options(audio_vis_tests PRIVATE -Wall -Wextra -Werror)
+  target_compile_definitions(audio_vis_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+  add_test(NAME audio_vis_tests COMMAND audio_vis_tests)
+endif()
 
 add_executable(dynamic_effects_tests
   presets/dynamic/test_dynamic.cpp
@@ -82,12 +93,25 @@ if(TARGET avs-resources)
   add_dependencies(runtime_resource_tests avs-resources)
 endif()
 
-add_executable(offscreen_golden_test
-  regression/test_offscreen_golden.cpp)
-target_link_libraries(offscreen_golden_test PRIVATE avs-offscreen GTest::gtest_main)
-target_compile_options(offscreen_golden_test PRIVATE -Wall -Wextra -Werror)
-target_compile_definitions(offscreen_golden_test PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
-add_test(NAME offscreen_golden_test COMMAND offscreen_golden_test)
+
+if(AVS_BUILD_AUDIO)
+  add_executable(offscreen_golden_test
+    regression/test_offscreen_golden.cpp)
+  target_link_libraries(offscreen_golden_test PRIVATE avs-offscreen GTest::gtest_main)
+  target_compile_options(offscreen_golden_test PRIVATE -Wall -Wextra -Werror)
+  target_compile_definitions(offscreen_golden_test PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+  add_test(NAME offscreen_golden_test COMMAND offscreen_golden_test)
+endif()
+
+add_executable(runtime_compositing_tests
+  runtime/test_runtime_compositing.cpp)
+target_link_libraries(runtime_compositing_tests PRIVATE avs-core avs-runtime GTest::gtest_main)
+target_compile_options(runtime_compositing_tests PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(runtime_compositing_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(runtime_compositing_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/third_party ${CMAKE_SOURCE_DIR}/src)
+add_test(NAME runtime_compositing_tests COMMAND runtime_compositing_tests)
+
+
 
 add_executable(fb_ops_tests
   presets/fb_ops/test_fb_ops.cpp

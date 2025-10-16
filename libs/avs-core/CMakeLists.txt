@@ -5,6 +5,7 @@ add_library(avs-core STATIC
   src/cpu_features.cpp
   src/registry.cpp
   src/effects_render.cpp
+  src/effects_render_geometry.cpp
   src/effects_trans.cpp
   src/effects_misc.cpp
   src/effects/blur.cpp
@@ -20,6 +21,9 @@ add_library(avs-core STATIC
   src/effects/additive_blend.cpp
   src/effects/composite.cpp
   src/effects/scripted.cpp
+  src/effects/geometry/raster.cpp
+  src/effects/geometry/text_renderer.cpp
+  src/effects/geometry/superscope.cpp
   src/preset.cpp
 )
 target_include_directories(avs-core
@@ -27,6 +31,13 @@ target_include_directories(avs-core
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/libs/avs-platform/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_include_directories(avs-core
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/libs/avs/runtime/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  PRIVATE
+    ${CMAKE_SOURCE_DIR}/libs/third_party)
 target_compile_options(avs-core PRIVATE -Wall -Wextra -Werror)
 target_compile_features(avs-core PUBLIC cxx_std_20)
 target_link_libraries(avs-core PUBLIC ns-eel)

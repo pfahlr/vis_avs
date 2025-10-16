@@ -5,6 +5,18 @@
 
 namespace avs {
 
+std::unique_ptr<IEffect> Registry::create(std::string_view id) const {
+  auto it = by_id_.find(std::string(id));
+  if (it == by_id_.end()) return nullptr;
+  const auto& descriptor = effects_.at(it->second);
+  std::unique_ptr<IEffect> effect = descriptor.factory ? descriptor.factory() : nullptr;
+  if (!effect) return nullptr;
+  if (auto* list = dynamic_cast<EffectListEffect*>(effect.get())) {
+    list->setFactory([this](std::string_view childId) { return this->create(childId); });
+  }
+  return effect;
+}
+
 // Helper macro to register effect with simple factory.
 #define REG(ID, CLS, GRP)       do {         EffectDescriptor d;         d.id = ID;         d.label = #CLS;         d.group = GRP;         d.factory = [](){ return std::make_unique<CLS>(); };         r.register_effect(d);       } while(0)
 

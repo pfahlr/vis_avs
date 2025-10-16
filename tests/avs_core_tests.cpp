@@ -1,6 +1,4 @@
 #include <gtest/gtest.h>
-#include <portaudio.h>
-
 #include <algorithm>
 #include <array>
 #include <cctype>
@@ -17,11 +15,18 @@
 #include <thread>
 #include <vector>
 
-#include "avs/audio_portaudio_internal.hpp"
 #include "avs/effects.hpp"
 #include "avs/engine.hpp"
 #include "avs/fs.hpp"
 #include "avs/preset.hpp"
+#include "avs/registry.hpp"
+
+#if __has_include(<portaudio.h>)
+#include "avs/audio_portaudio_internal.hpp"
+#define AVS_TEST_HAS_PORTAUDIO 1
+#else
+#define AVS_TEST_HAS_PORTAUDIO 0
+#endif
 
 using namespace avs;
 
@@ -390,6 +395,7 @@ TEST(FileWatcher, DetectsModification) {
   std::filesystem::remove(tmp);
 }
 
+#if AVS_TEST_HAS_PORTAUDIO
 TEST(PortAudioCallback, NullInputRaisesUnderflowFlag) {
   std::vector<float> ring(8, 1.0f);
   const size_t mask = ring.size() - 1;
@@ -574,6 +580,7 @@ TEST(PortAudioDeviceSelection, RejectsCapturelessDevice) {
   EXPECT_FALSE(result.error.empty());
   EXPECT_NE(result.error.find("cannot capture audio"), std::string::npos);
 }
+#endif  // AVS_TEST_HAS_PORTAUDIO
 
 namespace {
 

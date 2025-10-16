@@ -14,6 +14,7 @@ add_executable(avs_core_tests avs_core_tests.cpp)
 target_link_libraries(avs_core_tests PRIVATE avs-core avs-platform GTest::gtest_main)
 target_compile_options(avs_core_tests PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(avs_core_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(avs_core_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/third_party ${CMAKE_SOURCE_DIR}/src)
 add_test(NAME avs_core_tests COMMAND avs_core_tests)
 
 add_executable(audio_underflow_tests audio_underflow_tests.cpp)
@@ -72,6 +73,14 @@ add_test(NAME runtime_resource_tests COMMAND runtime_resource_tests)
 if(TARGET avs-resources)
   add_dependencies(runtime_resource_tests avs-resources)
 endif()
+
+add_executable(runtime_compositing_tests
+  runtime/test_runtime_compositing.cpp)
+target_link_libraries(runtime_compositing_tests PRIVATE avs-core avs-runtime GTest::gtest_main)
+target_compile_options(runtime_compositing_tests PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(runtime_compositing_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(runtime_compositing_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/third_party ${CMAKE_SOURCE_DIR}/src)
+add_test(NAME runtime_compositing_tests COMMAND runtime_compositing_tests)
 
 add_executable(offscreen_golden_test
   regression/test_offscreen_golden.cpp)

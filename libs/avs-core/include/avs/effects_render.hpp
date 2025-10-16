@@ -1,5 +1,6 @@
 #pragma once
 #include "effect.hpp"
+#include <vector>
 
 namespace avs {
 
@@ -51,6 +52,16 @@ public:
   std::string_view name() const override { return "Picture"; }
   void process(const ProcessContext& ctx, FrameBufferView& dst) override;
   std::vector<Param> parameters() const override;
+  void set_parameter(std::string_view name, const ParamValue& value) override;
+
+private:
+  bool loadImage();
+
+  std::string path_;
+  std::vector<std::uint8_t> image_;
+  int imageWidth_{0};
+  int imageHeight_{0};
+  bool dirty_{true};
 };
 
 class SuperscopeEffect : public IEffect {

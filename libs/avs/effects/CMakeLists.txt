@@ -2,11 +2,18 @@ add_library(avs-effects-core
   src/Blend.cpp
   src/Clear.cpp
   src/Overlay.cpp
+  src/Text.cpp
   src/RegisterEffects.cpp
   src/Swizzle.cpp
   src/Zoom.cpp
   src/micro_preset_parser.cpp
-  src/effects/blend_ops.cpp)
+  src/effects/blend_ops.cpp
+  src/effects/primitive_dots.cpp
+  src/effects/primitive_lines.cpp
+  src/effects/primitive_rrect.cpp
+  src/effects/primitive_solid.cpp
+  src/effects/primitive_tri.cpp
+  src/text/text_renderer.cpp)
 
 target_link_libraries(avs-effects-core PUBLIC avs-core-runtime)
 

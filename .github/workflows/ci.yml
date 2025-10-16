@@ -119,7 +119,6 @@ jobs:
       - name: Verify PortAudio path
         run: |
          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
-           set -eux pipefail
            test -d "${{ github.workspace }}//external/portaudio/.git"
            ls -la "${{ github.workspace }}//external/portaudio" | head -n 20
          fi

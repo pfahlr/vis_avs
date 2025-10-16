@@ -27,6 +27,69 @@ class PassThroughEffect : public Effect {
   void process(const Framebuffer& in, Framebuffer& out) override { out = in; }
 };
 
+std::string effectNameForId(std::uint32_t effectId) {
+  constexpr std::array<std::string_view, 46> kEffectNames = {
+      "Render / Simple",                     // R_SimpleSpectrum
+      "Render / Dot Plane",                  // R_DotPlane
+      "Render / Oscilliscope Star",          // R_OscStars
+      "Trans / Fadeout",                     // R_FadeOut
+      "Trans / Blitter Feedback",            // R_BlitterFB
+      "Render / OnBeat Clear",               // R_NFClear
+      "Trans / Blur",                        // R_Blur
+      "Render / Bass Spin",                  // R_BSpin
+      "Render / Moving Particle",            // R_Parts
+      "Trans / Roto Blitter",                // R_RotBlit
+      "Render / SVP Loader",                 // R_SVP
+      "Trans / Colorfade",                   // R_ColorFade
+      "Trans / Color Clip",                  // R_ContrastEnhance
+      "Render / Rotating Stars",             // R_RotStar
+      "Render / Ring",                       // R_OscRings
+      "Trans / Movement",                    // R_Trans
+      "Trans / Scatter",                     // R_Scat
+      "Render / Dot Grid",                   // R_DotGrid
+      "Misc / Buffer Save",                  // R_Stack
+      "Render / Dot Fountain",               // R_DotFountain
+      "Trans / Water",                       // R_Water
+      "Misc / Comment",                      // R_Comment
+      "Trans / Brightness",                  // R_Brightness
+      "Trans / Interleave",                  // R_Interleave
+      "Trans / Grain",                       // R_Grain
+      "Render / Clear screen",               // R_Clear
+      "Trans / Mirror",                      // R_Mirror
+      "Render / Starfield",                  // R_StarField
+      "Render / Text",                       // R_Text
+      "Trans / Bump",                        // R_Bump
+      "Trans / Mosaic",                      // R_Mosaic
+      "Trans / Water Bump",                  // R_WaterBump
+      "Render / AVI",                        // R_AVI
+      "Misc / Custom BPM",                   // R_Bpm
+      "Render / Picture",                    // R_Picture
+      "Trans / Dynamic Distance Modifier",   // R_DDM
+      "Render / SuperScope",                 // R_SScope
+      "Trans / Invert",                      // R_Invert
+      "Trans / Unique tone",                 // R_Onetone
+      "Render / Timescope",                  // R_Timescope
+      "Misc / Set render mode",              // R_LineMode
+      "Trans / Interferences",               // R_Interferences
+      "Trans / Dynamic Shift",               // R_Shift
+      "Trans / Dynamic Movement",            // R_DMove
+      "Trans / Fast Brightness",             // R_FastBright
+      "Trans / Color Modifier",              // R_DColorMod
+  };
+  if (effectId < kEffectNames.size()) {
+    return std::string(kEffectNames[effectId]);
+  }
+  return {};
+}
+
+std::string describeEffect(std::uint32_t effectId) {
+  std::string name = effectNameForId(effectId);
+  if (name.empty()) {
+    return std::to_string(effectId);
+  }
+  return std::to_string(effectId) + " (" + name + ")";
+}
+
 constexpr std::string_view kMagicPrefix = "Nullsoft AVS Preset ";
 constexpr char kMagicTerminator = '\x1a';
 constexpr std::array<std::string_view, 2> kKnownMagicVersions = {"0.2", "0.1"};
@@ -247,10 +310,10 @@ bool parseRenderListChunk(Reader& r,
           chain.push_back(std::move(parsedEffect));
         }
       } else {
-        result.warnings.push_back("failed to parse effect index: " + std::to_string(effectId));
+        result.warnings.push_back("failed to parse effect index: " + describeEffect(effectId));
       }
     } else {
-      result.warnings.push_back("unsupported effect index: " + std::to_string(effectId));
+      result.warnings.push_back("unsupported effect index: " + describeEffect(effectId));
       chain.push_back(std::make_unique<PassThroughEffect>());
       result.unknown.push_back("effect:" + std::to_string(effectId));
     }

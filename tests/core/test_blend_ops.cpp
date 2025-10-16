@@ -196,6 +196,17 @@ CHECKBOX extra
   ASSERT_FALSE(parsed.warnings.empty());
 }
 
+TEST(MicroPresetParser, KeepsHashPrefixedHexValues) {
+  const char* text = R"(blend fg=#00ff00 bg=#ff0000 # trailing comment
+)";
+  auto parsed = avs::effects::parseMicroPreset(text);
+  ASSERT_EQ(parsed.commands.size(), 1u);
+  const auto& cmd = parsed.commands.front();
+  EXPECT_EQ(cmd.effectKey, "blend");
+  EXPECT_EQ(cmd.params.getInt("fg", 0), 0x00ff00);
+  EXPECT_EQ(cmd.params.getInt("bg", 0), 0xff0000);
+}
+
 class BlendEffectsTest : public ::testing::Test {
  protected:
   BlendEffectsTest() { avs::effects::registerCoreEffects(registry_); }

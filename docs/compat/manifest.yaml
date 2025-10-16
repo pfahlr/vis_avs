@@ -22,6 +22,16 @@ effects:
     status: implemented
     modes: [rgb, rbg, grb, gbr, brg, bgr]
     notes: "Alpha preserved; permutations applied branchlessly per pixel."
+  framebuffer_ops:
+    status: implemented
+    features:
+      - clear_first_frame
+      - save_restore_slots
+      - wrap_sampling
+      - slide_transitions
+      - crossfade_transition
+      - persistent_overlays
+    notes: "Dual-buffer runtime with 8 named slots and deterministic overlays."
 parser:
   micro_preset:
     status: available

@@ -1,5 +1,6 @@
 add_library(avs-runtime STATIC
-  src/ResourceManager.cpp)
+  src/ResourceManager.cpp
+  src/framebuffers.cpp)
 
 target_include_directories(avs-runtime
   PUBLIC

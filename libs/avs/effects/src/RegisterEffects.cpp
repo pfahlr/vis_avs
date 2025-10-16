@@ -3,8 +3,10 @@
 #include <memory>
 
 #include "avs/effects/AudioOverlays.hpp"
+#include "avs/effects/Bump.hpp"
 #include "avs/effects/Blend.hpp"
 #include "avs/effects/Clear.hpp"
+#include "avs/effects/Globals.hpp"
 #include "avs/effects/Overlay.hpp"
 #include "avs/effects/Primitives.hpp"
 #include "avs/effects/Swizzle.hpp"
@@ -51,6 +53,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("blend", []() { return std::make_unique<Blend>(); });
   registry.registerFactory("overlay", []() { return std::make_unique<Overlay>(); });
   registry.registerFactory("swizzle", []() { return std::make_unique<Swizzle>(); });
+  registry.registerFactory("globals", []() { return std::make_unique<Globals>(); });
+  registry.registerFactory("bump", []() { return std::make_unique<Bump>(); });
   registry.registerFactory("scripted", []() { return std::make_unique<ScriptedEffect>(); });
   registry.registerFactory("transform_affine", []() { return std::make_unique<TransformAffine>(); });
   registry.registerFactory("effect_wave", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Wave); });

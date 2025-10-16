@@ -34,8 +34,10 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/runtime/parser.cpp)
 
 add_library(avs-effects-core
+  src/Bump.cpp
   src/Blend.cpp
   src/Clear.cpp
+  src/Globals.cpp
   src/Overlay.cpp
   src/Text.cpp
   src/RegisterEffects.cpp

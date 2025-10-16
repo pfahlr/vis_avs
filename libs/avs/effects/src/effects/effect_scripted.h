@@ -6,6 +6,7 @@
 #include <string_view>
 
 #include "avs/core/IEffect.hpp"
+#include "avs/runtime/GlobalState.hpp"
 #include "avs/runtime/script/eel_runtime.h"
 
 namespace avs::effects {
@@ -38,6 +39,8 @@ class ScriptedEffect : public avs::core::IEffect {
                int originY,
                std::string_view text,
                const OverlayStyle& style) const;
+  void loadGlobalRegisters(const avs::core::RenderContext& context);
+  void storeGlobalRegisters(avs::core::RenderContext& context) const;
 
   std::unique_ptr<avs::runtime::script::EelRuntime> runtime_;
 
@@ -47,6 +50,8 @@ class ScriptedEffect : public avs::core::IEffect {
   EEL_F *redVar_ = nullptr, *greenVar_ = nullptr, *blueVar_ = nullptr;
   EEL_F *bassVar_ = nullptr, *midVar_ = nullptr, *trebVar_ = nullptr;
   EEL_F* arbValVar_ = nullptr;
+  std::array<avs::runtime::script::EelVarPointer, avs::runtime::GlobalState::kRegisterCount>
+      globalVars_{};
 
   std::string libraryScript_;
   std::string initScript_;

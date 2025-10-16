@@ -1,9 +1,11 @@
 #pragma once
+#include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <variant>
 #include <vector>
-#include <optional>
+
 #include "core.hpp"
 
 namespace avs {
@@ -16,13 +18,9 @@ struct OptionItem {
   std::string label;  // display
 };
 
-using ParamValue = std::variant<
-  bool, int, float, std::string, ColorRGBA8
->;
+using ParamValue = std::variant<bool, int, float, std::string, ColorRGBA8>;
 
-enum class ParamKind : uint8_t {
-  Bool, Int, Float, Color, String, Select, Resource, List
-};
+enum class ParamKind : uint8_t { Bool, Int, Float, Color, String, Select, Resource, List };
 
 struct Param {
   std::string name;
@@ -31,7 +29,21 @@ struct Param {
   // Optional constraints
   std::optional<int> i_min, i_max;
   std::optional<float> f_min, f_max;
-  std::vector<OptionItem> options; // for Select
+  std::vector<OptionItem> options;  // for Select
+
+  Param() = default;
+  Param(std::string name_, ParamKind kind_, ParamValue value_,
+        std::optional<int> i_min_ = std::nullopt, std::optional<int> i_max_ = std::nullopt,
+        std::optional<float> f_min_ = std::nullopt, std::optional<float> f_max_ = std::nullopt,
+        std::vector<OptionItem> options_ = {})
+      : name(std::move(name_)),
+        kind(kind_),
+        value(std::move(value_)),
+        i_min(std::move(i_min_)),
+        i_max(std::move(i_max_)),
+        f_min(std::move(f_min_)),
+        f_max(std::move(f_max_)),
+        options(std::move(options_)) {}
 };
 
 // A list-param can hold children; keep a flat array keyed by prefix paths, or
@@ -40,4 +52,4 @@ struct ParamList {
   std::vector<Param> items;
 };
 
-} // namespace avs
+}  // namespace avs

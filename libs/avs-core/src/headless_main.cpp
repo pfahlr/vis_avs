@@ -1,99 +1,109 @@
-    #include "avs/registry.hpp"
-    #include "avs/core.hpp"
-    #include <vector>
-    #include <cstdio>
-    #include <filesystem>
-    #include <cmath>
-    #include <cstring>
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+#include <filesystem>
+#include <vector>
 
-    using namespace avs;
+#include "avs/core.hpp"
+#include "avs/registry.hpp"
 
-    static void write_ppm(const char* path, const FrameBufferView& fb){
-      FILE* f = std::fopen(path, "wb");
-      if(!f){ std::perror("fopen"); return; }
-      std::fprintf(f, "P6
-%d %d
-255
-", fb.width, fb.height);
-      // strip alpha
-      for(int y=0;y<fb.height;y++){
-        const uint8_t* row = fb.data + y * fb.stride;
-        for(int x=0;x<fb.width;x++){
-          std::fputc(row[x*4+0], f);
-          std::fputc(row[x*4+1], f);
-          std::fputc(row[x*4+2], f);
-        }
-      }
-      std::fclose(f);
+using namespace avs;
+
+namespace {
+
+void writePpm(const char* path, const FrameBufferView& fb) {
+  FILE* f = std::fopen(path, "wb");
+  if (!f) {
+    std::perror("fopen");
+    return;
+  }
+  std::fprintf(f, "P6\n%d %d\n255\n", fb.width, fb.height);
+  for (int y = 0; y < fb.height; ++y) {
+    const uint8_t* row = fb.data + y * fb.stride;
+    for (int x = 0; x < fb.width; ++x) {
+      std::fputc(static_cast<int>(row[x * 4 + 0]), f);
+      std::fputc(static_cast<int>(row[x * 4 + 1]), f);
+      std::fputc(static_cast<int>(row[x * 4 + 2]), f);
     }
+  }
+  std::fclose(f);
+}
 
-    static void gen_audio(AudioFeatures& af, int frame_idx, int sr, int nsamps, float freq){
-      af.oscL.resize(nsamps);
-      af.oscR.resize(nsamps);
-      double t0 = frame_idx * (double)nsamps / (double)sr;
-      for(int i=0;i<nsamps;i++){
-        double t = t0 + i / (double)sr;
-        float s = std::sin(2*M_PI*freq*t);
-        af.oscL[i] = s;
-        af.oscR[i] = s;
-      }
-      af.beat = ((frame_idx % 30) == 0);
-      af.sample_rate = sr;
-    }
+void genAudio(AudioFeatures& af, int frameIdx, int sampleRate, int sampleCount, float freq) {
+  af.oscL.resize(sampleCount);
+  af.oscR.resize(sampleCount);
+  const double baseT =
+      frameIdx * static_cast<double>(sampleCount) / static_cast<double>(sampleRate);
+  constexpr double kTwoPi = 6.28318530717958647692;
+  for (int i = 0; i < sampleCount; ++i) {
+    double t = baseT + static_cast<double>(i) / static_cast<double>(sampleRate);
+    float s = std::sin(kTwoPi * freq * t);
+    af.oscL[i] = s;
+    af.oscR[i] = s;
+  }
+  af.beat = (frameIdx % 30) == 0;
+  af.sample_rate = sampleRate;
+}
 
-    int main(){
-      const int W=640, H=480;
-      std::vector<uint8_t> buf_cur(W*H*4, 0), buf_prev(W*H*4, 0);
-      FrameBufferView fb_cur{buf_cur.data(), W, H, W*4};
-      FrameBufferView fb_prev{buf_prev.data(), W, H, W*4};
-      FrameBuffers fbs{fb_cur, fb_prev};
+}  // namespace
 
-      // Register effects
-      Registry reg;
-      register_builtin_effects(reg);
+int main() {
+  const int width = 640;
+  const int height = 480;
+  std::vector<uint8_t> bufCur(width * height * 4, 0);
+  std::vector<uint8_t> bufPrev(width * height * 4, 0);
+  FrameBufferView fbCur{bufCur.data(), width, height, width * 4};
+  FrameBufferView fbPrev{bufPrev.data(), width, height, width * 4};
+  FrameBuffers frameBuffers{fbCur, fbPrev};
 
-      // Build a tiny pipeline: Clear -> Starfield -> Oscilloscope -> Fadeout
-      auto star = reg.create("starfield");
-      auto osc  = reg.create("oscilloscope");
-      auto fade = reg.create("fadeout");
-      auto clear= std::make_unique<avs::ClearScreenEffect>();
+  Registry registry;
+  register_builtin_effects(registry);
 
-      InitContext ictx{{W,H},{true,false,false,true},true,60};
-      clear->init(ictx); star->init(ictx); osc->init(ictx); fade->init(ictx);
+  auto clear = registry.create("clear_screen");
+  auto star = registry.create("starfield");
+  auto osc = registry.create("oscilloscope");
+  auto fade = registry.create("fadeout");
+  if (!clear || !star || !osc || !fade) {
+    std::fprintf(stderr, "Failed to create required effects\n");
+    return 1;
+  }
 
-      // Timing
-      TimingInfo tm; tm.deterministic = true; tm.fps_hint = 60;
+  InitContext initCtx{{width, height}, {true, false, false, true}, true, 60};
+  clear->init(initCtx);
+  star->init(initCtx);
+  osc->init(initCtx);
+  fade->init(initCtx);
 
-      // Render 120 frames
-      std::filesystem::create_directories("out");
-      const int frames = 120;
-      const int sr = 44100;
-      const int hop = 1024;
+  TimingInfo timing;
+  timing.deterministic = true;
+  timing.fps_hint = 60;
 
-      for(int fi=0; fi<frames; ++fi){
-        tm.frame_index = fi;
-        tm.t_seconds = fi * (double)hop / (double)sr;
-        tm.dt_seconds = (double)hop / (double)sr;
+  std::filesystem::create_directories("out");
+  const int totalFrames = 120;
+  const int sampleRate = 44100;
+  const int hop = 1024;
 
-        // swap buffers: previous <- current
-        std::memcpy(buf_prev.data(), buf_cur.data(), buf_cur.size());
+  for (int fi = 0; fi < totalFrames; ++fi) {
+    timing.frame_index = fi;
+    timing.t_seconds = fi * static_cast<double>(hop) / static_cast<double>(sampleRate);
+    timing.dt_seconds = static_cast<double>(hop) / static_cast<double>(sampleRate);
 
-        // construct process context
-        AudioFeatures af;
-        gen_audio(af, fi, sr, hop, 220.0f);
+    std::memcpy(bufPrev.data(), bufCur.data(), bufCur.size());
 
-        ProcessContext pctx{tm, af, fbs, nullptr, nullptr};
+    AudioFeatures audio;
+    genAudio(audio, fi, sampleRate, hop, 220.0f);
 
-        // Clear, then draw effects into current
-        clear->process(pctx, fbs.current);
-        star->process(pctx, fbs.current);
-        osc->process(pctx, fbs.current);
-        fade->process(pctx, fbs.current);
+    ProcessContext processCtx{timing, audio, frameBuffers, nullptr, nullptr};
 
-        char path[256];
-        std::snprintf(path, sizeof(path), "out/frame_%04d.ppm", fi);
-        write_ppm(path, fbs.current);
-      }
+    clear->process(processCtx, frameBuffers.current);
+    star->process(processCtx, frameBuffers.current);
+    osc->process(processCtx, frameBuffers.current);
+    fade->process(processCtx, frameBuffers.current);
 
-      return 0;
-    }
+    char path[256];
+    std::snprintf(path, sizeof(path), "out/frame_%04d.ppm", fi);
+    writePpm(path, frameBuffers.current);
+  }
+
+  return 0;
+}

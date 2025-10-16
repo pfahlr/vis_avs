@@ -26,6 +26,12 @@ target_link_libraries(audio_device_negotiation_tests PRIVATE avs-audio GTest::gt
 target_compile_options(audio_device_negotiation_tests PRIVATE -Wall -Wextra -Werror)
 add_test(NAME audio_device_negotiation_tests COMMAND audio_device_negotiation_tests)
 
+add_executable(audio_analyzer_tests audio/test_analyzer.cpp)
+target_link_libraries(audio_analyzer_tests PRIVATE avs-platform avs-audio GTest::gtest_main)
+target_compile_options(audio_analyzer_tests PRIVATE -Wall -Wextra -Werror)
+target_include_directories(audio_analyzer_tests PRIVATE ${CMAKE_SOURCE_DIR}/src)
+add_test(NAME audio_analyzer_tests COMMAND audio_analyzer_tests)
+
 add_executable(deterministic_render_test deterministic_render_test.cpp)
 target_link_libraries(deterministic_render_test PRIVATE GTest::gtest_main)
 target_compile_options(deterministic_render_test PRIVATE -Wall -Wextra -Werror)

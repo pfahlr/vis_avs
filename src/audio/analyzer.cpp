@@ -18,7 +18,7 @@ constexpr std::size_t kEnergyWindow = 43;  // ~1s at 1024 hop / 44100 Hz
 constexpr float kMinEnergy = 1e-6f;
 constexpr float kMaxConfidence = 4.0f;
 constexpr float kDampingFactor = 0.6f;
-constexpr float kNoDampingFactor = 1.0f;
+constexpr float kNoDampingFactor = 0.0f;
 
 std::vector<float> makeHannWindow(std::size_t size) {
   constexpr double pi = 3.14159265358979323846;

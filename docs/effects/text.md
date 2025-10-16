@@ -18,7 +18,7 @@ integer-only and therefore fully reproducible across platforms.
 | `valign` | string | `top` | Vertical alignment: `top`, `middle`, `bottom`. |
 | `antialias` | bool/int | `false` | Enables a post-pass box blur to soften edges. |
 | `outlinecolor`, `outlinealpha` | int | `0x000000`, `255` | Stroke colour and opacity. |
-| `outlinesize` | int | `0` | Stroke radius in pixels (0 disables). |
+| `outlinesize` / `outlinewidth` | int | `0` | Stroke radius in pixels (0 disables). |
 | `shadow` | bool/int | `false` | Enables shadow rendering. |
 | `shadowcolor`, `shadowalpha` | int | `0x000000`, `128` | Shadow colour and opacity. |
 | `shadowoffsetx`, `shadowoffsety` | int | `2` | Pixel offsets applied to the shadow mask. |

@@ -31,7 +31,8 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_unique_tone.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_water.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_water_bump.cpp
-  ${CMAKE_SOURCE_DIR}/src/runtime/parser.cpp)
+  ${CMAKE_SOURCE_DIR}/src/runtime/parser.cpp
+  ${CMAKE_SOURCE_DIR}/src/runtime/framebuffers.cpp)
 
 add_library(avs-effects-core
   src/Blend.cpp

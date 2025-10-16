@@ -7,6 +7,11 @@
 #include "avs/core.hpp"
 #include "avs/params.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+#include <cstring>
+
 namespace avs {
 
 // Utility to set a pixel in RGBA8 buffer safely.
@@ -207,5 +212,69 @@ void StarfieldEffect::process(const ProcessContext& ctx, FrameBufferView& dst) {
 // ---------------- Text / Picture / Superscope / Triangles / Shapes / DotGrid ----------------
 std::vector<Param> PictureEffect::parameters() const { return {}; }
 void PictureEffect::process(const ProcessContext&, FrameBufferView&) {}
+
+// Stubs for now.
+std::vector<Param> TextEffect::parameters() const { return {}; }
+void TextEffect::process(const ProcessContext&, FrameBufferView&) {}
+
+std::vector<Param> PictureEffect::parameters() const {
+  return {Param{"path", ParamKind::String, path_}};
+}
+
+void PictureEffect::set_parameter(std::string_view name, const ParamValue& value) {
+  if (name != "path") return;
+  if (std::holds_alternative<std::string>(value)) {
+    path_ = std::get<std::string>(value);
+    dirty_ = true;
+  }
+}
+
+bool PictureEffect::loadImage() {
+  dirty_ = false;
+  image_.clear();
+  imageWidth_ = imageHeight_ = 0;
+  if (path_.empty()) {
+    return false;
+  }
+  int width = 0;
+  int height = 0;
+  int comp = 0;
+  stbi_uc* data = stbi_load(path_.c_str(), &width, &height, &comp, STBI_rgb_alpha);
+  if (!data || width <= 0 || height <= 0) {
+    if (data) {
+      stbi_image_free(data);
+    }
+    return false;
+  }
+  const std::size_t size = static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 4u;
+  image_.assign(data, data + size);
+  stbi_image_free(data);
+  imageWidth_ = width;
+  imageHeight_ = height;
+  return true;
+}
+
+void PictureEffect::process(const ProcessContext&, FrameBufferView& dst) {
+  if (!dst.data || dst.width <= 0 || dst.height <= 0) {
+    return;
+  }
+  if (dirty_) {
+    if (!loadImage()) {
+      return;
+    }
+  }
+  if (image_.empty() || imageWidth_ <= 0 || imageHeight_ <= 0) {
+    return;
+  }
+
+  const int copyWidth = std::min(dst.width, imageWidth_);
+  const int copyHeight = std::min(dst.height, imageHeight_);
+  const int srcStride = imageWidth_ * 4;
+  for (int y = 0; y < copyHeight; ++y) {
+    const std::uint8_t* src = image_.data() + static_cast<std::size_t>(y) * srcStride;
+    std::uint8_t* out = dst.data + static_cast<std::size_t>(y) * dst.stride;
+    std::memcpy(out, src, static_cast<std::size_t>(copyWidth) * 4u);
+  }
+}
 
 }  // namespace avs

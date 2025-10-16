@@ -117,6 +117,7 @@ jobs:
 
       # Prove the path exists before CMake runs (avoids the exact error you hit)
       - name: Verify PortAudio path
+        shell: bash
         run: |
          set -euxo pipefail
          if [ "${{ matrix.distro }}" = "ubuntu" ]; then

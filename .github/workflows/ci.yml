@@ -134,6 +134,7 @@ jobs:
           fetch-depth: 1
 
       - name: Verify googletest path
+        shell: bash
         run: |
           set -euo pipefail
           if [ "${{ matrix.distro }}" = "ubuntu" ]; then

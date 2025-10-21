@@ -147,8 +147,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("render / timescope", []() { return std::make_unique<Effect_RenderTimescope>(); });
   registry.registerFactory("Trans / Blitter Feedback", []() { return std::make_unique<trans::BlitterFeedback>(); });
   registry.registerFactory("trans / blitter feedback", []() { return std::make_unique<trans::BlitterFeedback>(); });
-  registry.registerFactory("Trans / Blur", []() { return std::make_unique<filters::BlurBox>(); });
-  registry.registerFactory("trans / blur", []() { return std::make_unique<filters::BlurBox>(); });
+  registry.registerFactory("Filter / Blur", []() { return std::make_unique<filters::BlurBox>(); });
+  registry.registerFactory("filter / blur", []() { return std::make_unique<filters::BlurBox>(); });
   registry.registerFactory("filter_blur_box", []() { return std::make_unique<filters::BlurBox>(); });
   registry.registerFactory("Trans / Blur", []() { return std::make_unique<trans::R_Blur>(); });
   registry.registerFactory("trans / blur", []() { return std::make_unique<trans::R_Blur>(); });

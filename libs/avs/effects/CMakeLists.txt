@@ -13,7 +13,6 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_dot_fountain.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_dot_plane.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_moving_particle.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_oscilloscope_star.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_ring.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_rotating_stars.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_simple.cpp
@@ -70,6 +69,7 @@ add_library(avs-effects-core
   src/effects/primitive_rrect.cpp
   src/effects/primitive_solid.cpp
   src/effects/primitive_tri.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/render/effect_oscilloscope_star.cpp
   src/text/text_renderer.cpp
   ${AVS_EFFECT_STUB_SOURCES})
 

@@ -31,7 +31,6 @@ const std::unordered_map<std::string, std::string>& stubEffectTokens() {
       {"render / dot fountain", "render / dot fountain"},
       {"render / dot plane", "render / dot plane"},
       {"render / moving particle", "render / moving particle"},
-      {"render / oscilloscope star", "render / oscilloscope star"},
       {"render / ring", "render / ring"},
       {"render / rotating stars", "render / rotating stars"},
       {"render / simple", "render / simple"},

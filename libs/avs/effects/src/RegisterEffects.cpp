@@ -37,7 +37,7 @@
 #include "effects/stubs/effect_render_dot_fountain.h"
 #include "effects/stubs/effect_render_dot_plane.h"
 #include "effects/stubs/effect_render_moving_particle.h"
-#include "effects/stubs/effect_render_oscilloscope_star.h"
+#include "effects/render/effect_oscilloscope_star.h"
 #include "effects/stubs/effect_render_ring.h"
 #include "effects/stubs/effect_render_rotating_stars.h"
 #include "effects/stubs/effect_render_simple.h"
@@ -116,8 +116,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("render / dot plane", []() { return std::make_unique<Effect_RenderDotPlane>(); });
   registry.registerFactory("Render / Moving Particle", []() { return std::make_unique<Effect_RenderMovingParticle>(); });
   registry.registerFactory("render / moving particle", []() { return std::make_unique<Effect_RenderMovingParticle>(); });
-  registry.registerFactory("Render / Oscilloscope Star", []() { return std::make_unique<Effect_RenderOscilloscopeStar>(); });
-  registry.registerFactory("render / oscilloscope star", []() { return std::make_unique<Effect_RenderOscilloscopeStar>(); });
+  registry.registerFactory("Render / Oscilloscope Star", []() { return std::make_unique<render::OscilloscopeStar>(); });
+  registry.registerFactory("render / oscilloscope star", []() { return std::make_unique<render::OscilloscopeStar>(); });
   registry.registerFactory("Render / Ring", []() { return std::make_unique<Effect_RenderRing>(); });
   registry.registerFactory("render / ring", []() { return std::make_unique<Effect_RenderRing>(); });
   registry.registerFactory("Render / Rotating Stars", []() { return std::make_unique<Effect_RenderRotatingStars>(); });

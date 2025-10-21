@@ -8,7 +8,7 @@ All effects operate on the RGBA framebuffer stored in
 `avs::core::RenderContext::framebuffer`. Alpha channels are preserved unless
 explicitly noted.
 
-## `filter_blur_box` (alias: `Trans / Blur`)
+## `filter_blur_box`
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -17,7 +17,10 @@ explicitly noted.
 
 The implementation performs a separable, edge-clamped box blur. The effect uses
 prefix-sum windows to avoid per-tap branching while ensuring deterministic
-results across platforms.
+results across platforms. The render-list effect `Trans / Blur` is implemented
+separately in `src/effects/trans/effect_blur.cpp` to mirror the legacy
+behaviour and to expose additional routing controls (axis isolation and
+strength blending).
 
 ## `filter_grain` (alias: `Trans / Grain`)
 

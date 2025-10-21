@@ -44,7 +44,7 @@
 #include "effects/stubs/effect_render_svp_loader.h"
 #include "effects/stubs/effect_render_timescope.h"
 #include "effects/stubs/effect_trans_blitter_feedback.h"
-#include "effects/stubs/effect_trans_blur.h"
+#include "effects/trans/effect_blur.h"
 #include "effects/stubs/effect_trans_brightness.h"
 #include "effects/stubs/effect_trans_color_clip.h"
 #include "effects/stubs/effect_trans_color_modifier.h"
@@ -131,8 +131,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("Trans / Blitter Feedback", []() { return std::make_unique<Effect_TransBlitterFeedback>(); });
   registry.registerFactory("trans / blitter feedback", []() { return std::make_unique<Effect_TransBlitterFeedback>(); });
   registry.registerFactory("filter_blur_box", []() { return std::make_unique<filters::BlurBox>(); });
-  registry.registerFactory("Trans / Blur", []() { return std::make_unique<filters::BlurBox>(); });
-  registry.registerFactory("trans / blur", []() { return std::make_unique<filters::BlurBox>(); });
+  registry.registerFactory("Trans / Blur", []() { return std::make_unique<trans::R_Blur>(); });
+  registry.registerFactory("trans / blur", []() { return std::make_unique<trans::R_Blur>(); });
   registry.registerFactory("filter_grain", []() { return std::make_unique<filters::Grain>(); });
   registry.registerFactory("Trans / Grain", []() { return std::make_unique<filters::Grain>(); });
   registry.registerFactory("trans / grain", []() { return std::make_unique<filters::Grain>(); });

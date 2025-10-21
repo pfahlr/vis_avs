@@ -2,12 +2,20 @@
 
 ## Setup Commands
 
+* **Provision dependencies (mirrors CI)**
+
+  ```bash
+  # Installs the same packages that CI pulls in, including PortAudio dev files.
+  ./run_setup_dev_environment.sh --platform ubuntu
+  # Use --platform fedora when working inside a Fedora container.
+  ```
+
 * **Clone and configure**
 
-```bash
-git clone https://github.com/pfahlr/vis_avs.git
-cd avs-port
-mkdir build && cd build
+  ```bash
+  git clone https://github.com/pfahlr/vis_avs.git
+  cd avs-port
+  mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Debug
 ```
 
@@ -28,11 +36,16 @@ cmake --build . -j"$(nproc)"
   * Build essentials: `cmake g++ clang-format git`
   * SDL2: `libsdl2-dev`
   * OpenGL: `mesa-common-dev libglu1-mesa-dev`
-  * PortAudio: `portaudio19-dev libportaudio2`
+  * PortAudio: `portaudio19-dev libportaudio2` (Ubuntu) / `portaudio-devel` (Fedora)
   * KissFFT: vendored (no system package required)
   * GoogleTest: `libgtest-dev` (or FetchContent in CMake)
   * ImGui (optional): vendored
   * **Note:** If JACK or ALSA backends are missing, install `libjack-dev` and `libasound2-dev`.
+
+  **Important:** The development container allows installing these packages. Run
+  `./run_setup_dev_environment.sh` before configuring CMake so PortAudio is
+  available; skipping this step will cause `cmake` to fail with a missing
+  PortAudio error.
 
 **All dependencies listed here must be mirrored in `/.github/workflows/ci.yml`.**
 

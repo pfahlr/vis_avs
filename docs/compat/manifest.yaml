@@ -170,8 +170,8 @@ stubs:
     status: stub
     source: vis_avs/r_dcolormod.cpp (R_DColorMod)
   - name: Trans / Colorfade
-    status: stub
-    source: vis_avs/r_colorfade.cpp (R_ColorFade)
+    status: implemented
+    source: src/effects/trans/effect_colorfade.cpp
   - name: Trans / Grain
     status: implemented
     source: src/effects/filters/effect_grain.cpp

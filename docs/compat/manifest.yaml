@@ -24,6 +24,9 @@ effects:
   dots:
     status: implemented
     notes: "Filled circles drawn with midpoint rasterisation."
+  dot_plane:
+    status: implemented
+    notes: "Audio-reactive 3D dot lattice with tilt, rotation, and five-point colour gradient."
   lines:
     status: implemented
     notes: "Bresenham polyline with optional closure and thickness."

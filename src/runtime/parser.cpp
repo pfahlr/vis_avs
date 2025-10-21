@@ -10,9 +10,8 @@ namespace {
 
 std::string toLowerCopy(std::string_view value) {
   std::string result(value);
-  std::transform(result.begin(), result.end(), result.begin(), [](unsigned char ch) {
-    return static_cast<char>(std::tolower(ch));
-  });
+  std::transform(result.begin(), result.end(), result.begin(),
+                 [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
   return result;
 }
 
@@ -28,7 +27,6 @@ const std::unordered_map<std::string, std::string>& stubEffectTokens() {
       {"render / avi", "render / avi"},
       {"render / bass spin", "render / bass spin"},
       {"render / dot fountain", "render / dot fountain"},
-      {"render / dot plane", "render / dot plane"},
       {"render / moving particle", "render / moving particle"},
       {"render / oscilloscope star", "render / oscilloscope star"},
       {"render / ring", "render / ring"},

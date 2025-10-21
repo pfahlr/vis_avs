@@ -113,8 +113,8 @@ stubs:
     status: stub
     source: vis_avs/r_bpm.cpp (R_Bpm)
   - name: Misc / Set render mode
-    status: stub
-    source: vis_avs/r_linemode.cpp (R_LineMode)
+    status: implemented
+    source: src/effects/misc/effect_render_mode.cpp
   - name: Multiplier
     status: stub
     source: vis_avs/rlib.cpp (R_Multiplier)

@@ -3,7 +3,6 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_bass_spin.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_moving_particle.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_oscilloscope_star.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_ring.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_rotating_stars.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_simple.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_svp_loader.cpp
@@ -81,6 +80,7 @@ add_library(avs-effects-core
   src/effects/primitive_rrect.cpp
   src/effects/primitive_solid.cpp
   src/effects/primitive_tri.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/render/effect_ring.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/misc/effect_comment.cpp
   src/text/text_renderer.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_channel_shift.cpp

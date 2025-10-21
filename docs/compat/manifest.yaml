@@ -143,7 +143,7 @@ stubs:
     status: stub
     source: vis_avs/r_oscstar.cpp (R_OscStars)
   - name: Render / Ring
-    status: stub
+    status: implemented
     source: vis_avs/r_oscring.cpp (R_OscRings)
   - name: Render / Rotating Stars
     status: stub

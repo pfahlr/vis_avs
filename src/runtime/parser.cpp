@@ -22,7 +22,6 @@ const std::unordered_map<std::string, std::string>& stubEffectTokens() {
       {"color reduction", "color reduction"},
       {"holden04: video delay", "holden04: video delay"},
       {"holden05: multi delay", "holden05: multi delay"},
-      {"misc / comment", "misc / comment"},
       {"misc / custom bpm", "misc / custom bpm"},
       {"misc / set render mode", "misc / set render mode"},
       {"multiplier", "multiplier"},

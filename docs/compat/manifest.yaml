@@ -36,6 +36,9 @@ effects:
   text:
     status: implemented
     notes: "Deterministic bitmap text with outline, shadow, and anti-alias toggle."
+  misc_comment:
+    status: implemented
+    notes: "Stores preset annotations without changing the framebuffer."
   swizzle:
     status: implemented
     modes: [rgb, rbg, grb, gbr, brg, bgr]
@@ -106,9 +109,6 @@ stubs:
   - name: Holden05: Multi Delay
     status: stub
     source: vis_avs/rlib.cpp (R_MultiDelay)
-  - name: Misc / Comment
-    status: stub
-    source: vis_avs/r_comment.cpp (R_Comment)
   - name: Misc / Custom BPM
     status: stub
     source: vis_avs/r_bpm.cpp (R_Bpm)

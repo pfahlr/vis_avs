@@ -4,7 +4,6 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_color_reduction.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_holden04_video_delay.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_holden05_multi_delay.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_misc_comment.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_misc_custom_bpm.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_misc_set_render_mode.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_multiplier.cpp
@@ -70,6 +69,7 @@ add_library(avs-effects-core
   src/effects/primitive_rrect.cpp
   src/effects/primitive_solid.cpp
   src/effects/primitive_tri.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/misc/effect_comment.cpp
   src/text/text_renderer.cpp
   ${AVS_EFFECT_STUB_SOURCES})
 

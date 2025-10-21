@@ -179,8 +179,8 @@ stubs:
     status: implemented
     source: src/effects/filters/effect_interferences.cpp
   - name: Trans / Mosaic
-    status: stub
-    source: vis_avs/r_mosaic.cpp (R_Mosaic)
+    status: implemented
+    source: src/effects/trans/effect_mosaic.cpp
   - name: Trans / Roto Blitter
     status: stub
     source: vis_avs/r_rotblit.cpp (R_RotBlit)

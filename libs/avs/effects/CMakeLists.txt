@@ -12,7 +12,6 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_color_modifier.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_colorfade.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_mosaic.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_roto_blitter.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_scatter.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_unique_tone.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_water.cpp
@@ -66,6 +65,7 @@ add_library(avs-effects-core
   ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_fast_brightness.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_grain.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_interferences.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_roto_blitter.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_mosaic.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_colorfade.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_color_clip.cpp

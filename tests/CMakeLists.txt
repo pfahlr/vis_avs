@@ -60,6 +60,7 @@ add_executable(core_effects_tests
   core/test_transform_affine.cpp
   core/test_gating.cpp
   core/test_primitives.cpp
+  core/test_multi_delay.cpp
   core/test_video_delay.cpp)
 
 target_link_libraries(core_effects_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)

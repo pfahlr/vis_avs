@@ -164,6 +164,9 @@ stubs:
   - name: Trans / Fast Brightness
     status: implemented
     source: src/effects/filters/effect_fast_brightness.cpp
+  - name: Holden04: Video Delay
+    status: implemented
+    source: src/effects/trans/effect_video_delay.cpp
   - name: Trans / Color Clip
     status: stub
     source: vis_avs/r_colorreplace.cpp (R_ContrastEnhance)

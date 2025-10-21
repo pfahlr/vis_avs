@@ -92,7 +92,7 @@ entries return `C_RBASE2` instances that advertise SMP support.
 | 18 | `R_Stack` | Misc / Buffer Save | No |
 | 19 | `R_DotFountain` | Render / Dot Fountain | No |
 | 20 | `R_Water` | Trans / Water | Yes |
-| 21 | `R_Comment` | Misc / Comment | No |
+| 21 | `R_Comment` | Misc / Comment | Yes |
 | 22 | `R_Brightness` | Trans / Brightness | Yes |
 | 23 | `R_Interleave` | Trans / Interleave | No |
 | 24 | `R_Grain` | Trans / Grain | No |

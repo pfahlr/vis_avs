@@ -73,7 +73,15 @@ if(AVS_BUILD_AUDIO)
   target_compile_options(audio_vis_tests PRIVATE -Wall -Wextra -Werror)
   target_compile_definitions(audio_vis_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
   add_test(NAME audio_vis_tests COMMAND audio_vis_tests)
+
 endif()
+
+add_executable(render_effects_tests
+  presets/render/test_render_bass_spin.cpp)
+target_link_libraries(render_effects_tests PRIVATE avs-effects-core avs-core-runtime GTest::gtest_main)
+target_compile_options(render_effects_tests PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(render_effects_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+add_test(NAME render_effects_tests COMMAND render_effects_tests)
 
 add_executable(dynamic_effects_tests
   presets/dynamic/test_dynamic.cpp

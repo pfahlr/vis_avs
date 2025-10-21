@@ -122,7 +122,7 @@ stubs:
     status: stub
     source: vis_avs/r_avi.cpp (R_AVI)
   - name: Render / Bass Spin
-    status: stub
+    status: implemented
     source: vis_avs/r_bspin.cpp (R_BSpin)
   - name: Render / Dot Fountain
     status: stub

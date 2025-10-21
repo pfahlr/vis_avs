@@ -33,7 +33,7 @@
 #include "effects/stubs/effect_misc_set_render_mode.h"
 #include "effects/stubs/effect_multiplier.h"
 #include "effects/stubs/effect_render_avi.h"
-#include "effects/stubs/effect_render_bass_spin.h"
+#include "effects/render/effect_bass_spin.h"
 #include "effects/stubs/effect_render_dot_fountain.h"
 #include "effects/stubs/effect_render_dot_plane.h"
 #include "effects/stubs/effect_render_moving_particle.h"
@@ -108,8 +108,10 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("multiplier", []() { return std::make_unique<Effect_Multiplier>(); });
   registry.registerFactory("Render / AVI", []() { return std::make_unique<Effect_RenderAvi>(); });
   registry.registerFactory("render / avi", []() { return std::make_unique<Effect_RenderAvi>(); });
-  registry.registerFactory("Render / Bass Spin", []() { return std::make_unique<Effect_RenderBassSpin>(); });
-  registry.registerFactory("render / bass spin", []() { return std::make_unique<Effect_RenderBassSpin>(); });
+  registry.registerFactory("Render / Bass Spin",
+                           []() { return std::make_unique<avs::effects::render::BassSpin>(); });
+  registry.registerFactory("render / bass spin",
+                           []() { return std::make_unique<avs::effects::render::BassSpin>(); });
   registry.registerFactory("Render / Dot Fountain", []() { return std::make_unique<Effect_RenderDotFountain>(); });
   registry.registerFactory("render / dot fountain", []() { return std::make_unique<Effect_RenderDotFountain>(); });
   registry.registerFactory("Render / Dot Plane", []() { return std::make_unique<Effect_RenderDotPlane>(); });

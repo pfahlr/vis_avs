@@ -6,7 +6,7 @@ set(AVS_EFFECT_STUB_SOURCES
 #  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_ring.cpp
 #  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_rotating_stars.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_simple.cpp
-#  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_avi.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_avi.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_svp_loader.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_timescope.cpp
 #  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_blitter_feedback.cpp

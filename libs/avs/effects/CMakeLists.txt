@@ -7,7 +7,6 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_misc_comment.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_misc_custom_bpm.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_misc_set_render_mode.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_multiplier.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_avi.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_bass_spin.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_dot_fountain.cpp
@@ -65,6 +64,7 @@ add_library(avs-effects-core
   ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_fast_brightness.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_grain.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_interferences.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_multiplier.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_multi_delay.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_video_delay.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_color_reduction.cpp

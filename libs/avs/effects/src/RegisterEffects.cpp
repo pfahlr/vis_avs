@@ -32,7 +32,7 @@
 #include "effects/stubs/effect_misc_comment.h"
 #include "effects/stubs/effect_misc_custom_bpm.h"
 #include "effects/stubs/effect_misc_set_render_mode.h"
-#include "effects/stubs/effect_multiplier.h"
+#include "effects/trans/effect_multiplier.h"
 #include "effects/stubs/effect_render_avi.h"
 #include "effects/stubs/effect_render_bass_spin.h"
 #include "effects/stubs/effect_render_dot_fountain.h"
@@ -106,8 +106,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("misc / custom bpm", []() { return std::make_unique<Effect_MiscCustomBpm>(); });
   registry.registerFactory("Misc / Set render mode", []() { return std::make_unique<Effect_MiscSetRenderMode>(); });
   registry.registerFactory("misc / set render mode", []() { return std::make_unique<Effect_MiscSetRenderMode>(); });
-  registry.registerFactory("Multiplier", []() { return std::make_unique<Effect_Multiplier>(); });
-  registry.registerFactory("multiplier", []() { return std::make_unique<Effect_Multiplier>(); });
+  registry.registerFactory("Multiplier", []() { return std::make_unique<trans::Multiplier>(); });
+  registry.registerFactory("multiplier", []() { return std::make_unique<trans::Multiplier>(); });
   registry.registerFactory("Render / AVI", []() { return std::make_unique<Effect_RenderAvi>(); });
   registry.registerFactory("render / avi", []() { return std::make_unique<Effect_RenderAvi>(); });
   registry.registerFactory("Render / Bass Spin", []() { return std::make_unique<Effect_RenderBassSpin>(); });

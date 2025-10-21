@@ -30,7 +30,6 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_scatter.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_unique_tone.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_water.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_water_bump.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/dynamic/frame_warp.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/dynamic/dynamic_shader.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/dynamic/dyn_movement.cpp
@@ -71,6 +70,7 @@ add_library(avs-effects-core
   src/effects/primitive_solid.cpp
   src/effects/primitive_tri.cpp
   src/text/text_renderer.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_water_bump.cpp
   ${AVS_EFFECT_STUB_SOURCES})
 
 

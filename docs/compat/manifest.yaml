@@ -194,5 +194,5 @@ stubs:
     status: stub
     source: vis_avs/r_water.cpp (R_Water)
   - name: Trans / Water Bump
-    status: stub
-    source: vis_avs/r_waterbump.cpp (R_WaterBump)
+    status: implemented
+    source: src/effects/trans/effect_water_bump.cpp

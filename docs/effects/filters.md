@@ -15,6 +15,8 @@ explicitly noted.
 | `radius` | int | `1` | Radius of the box filter in pixels. Values are clamped to the range `[0, 32]`. |
 | `preserve_alpha` | bool | `true` | When enabled, the original alpha channel is copied back after blurring the RGB channels. |
 
+Legacy presets may also reference this effect as `Filter / Blur` (case-insensitive).
+
 The implementation performs a separable, edge-clamped box blur. The effect uses
 prefix-sum windows to avoid per-tap branching while ensuring deterministic
 results across platforms. The render-list effect `Trans / Blur` is implemented

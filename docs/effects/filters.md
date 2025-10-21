@@ -64,6 +64,17 @@ assignment follows 8-bit wraparound semantics, matching the original AVS plug-
 in. When both `amount` equals `1.0` and `bias` equals `0.0`, the pass is
 skipped.
 
+## `color_reduction` (alias: `Color Reduction`)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `levels` | int | `7` | Number of high-order bits preserved per channel. Values outside `[1, 8]` are clamped. |
+| `bits` | int | inherits `levels` | Legacy alias accepted during preset import. |
+
+The pass truncates each RGB channel to the requested bit depth by masking the
+low-order bits, exactly mirroring the rounding performed by the original AVS
+module. Alpha data is preserved.
+
 ## `filter_color_map`
 
 | Parameter | Type | Default | Description |

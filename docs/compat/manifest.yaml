@@ -95,8 +95,8 @@ goldens:
     update_command: ./tools/update_goldens.sh
 stubs:
   - name: Color Reduction
-    status: stub
-    source: vis_avs/rlib.cpp (R_ColorReduction)
+    status: implemented
+    source: src/effects/trans/effect_color_reduction.cpp
   - name: Holden04: Video Delay
     status: stub
     source: vis_avs/rlib.cpp (R_VideoDelay)

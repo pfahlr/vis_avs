@@ -37,7 +37,6 @@ const std::unordered_map<std::string, std::string>& stubEffectTokens() {
       {"trans / blitter feedback", "trans / blitter feedback"},
       {"trans / blur", "trans / blur"},
       {"trans / brightness", "trans / brightness"},
-      {"trans / color clip", "trans / color clip"},
       {"trans / color modifier", "trans / color modifier"},
       {"trans / colorfade", "trans / colorfade"},
       {"trans / mosaic", "trans / mosaic"},

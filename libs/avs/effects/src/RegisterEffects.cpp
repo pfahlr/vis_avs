@@ -3,8 +3,8 @@
 #include <memory>
 
 #include "avs/effects/AudioOverlays.hpp"
-#include "avs/effects/Bump.hpp"
 #include "avs/effects/Blend.hpp"
+#include "avs/effects/Bump.hpp"
 #include "avs/effects/Clear.hpp"
 #include "avs/effects/Globals.hpp"
 #include "avs/effects/Overlay.hpp"
@@ -12,6 +12,12 @@
 #include "avs/effects/Swizzle.hpp"
 #include "avs/effects/TransformAffine.hpp"
 #include "avs/effects/Zoom.hpp"
+#include "effects/dynamic/dyn_distance.h"
+#include "effects/dynamic/dyn_movement.h"
+#include "effects/dynamic/dyn_shift.h"
+#include "effects/dynamic/movement.h"
+#include "effects/dynamic/zoom_rotate.h"
+#include "effects/effect_scripted.h"
 #include "effects/filters/effect_blur_box.h"
 #include "effects/filters/effect_color_map.h"
 #include "effects/filters/effect_conv3x3.h"
@@ -33,18 +39,12 @@
 #include "effects/trans/effect_multiplier.h"
 #include "effects/stubs/effect_render_avi.h"
 #include "effects/stubs/effect_render_bass_spin.h"
-
 #include "effects/render/effect_dot_plane.h"
-
 #include "effects/render/effect_dot_fountain.h"
-
 #include "effects/stubs/effect_render_moving_particle.h"
 #include "effects/stubs/effect_render_oscilloscope_star.h"
-
 #include "effects/render/effect_rotating_stars.h"
-
 #include "effects/render/effect_ring.h"
-
 #include "effects/stubs/effect_render_simple.h"
 #include "effects/stubs/effect_render_svp_loader.h"
 #include "effects/stubs/effect_render_timescope.h"
@@ -58,9 +58,10 @@
 #include "effects/trans/effect_colorfade.h"
 #include "effects/stubs/effect_trans_scatter.h"
 #include "effects/stubs/effect_trans_unique_tone.h"
-#include "effects/stubs/effect_trans_water.h"
 #include "effects/stubs/effect_trans_water_bump.h"
+#include "effects/trans/effect_water.h"
 #include "effects/trans/effect_color_reduction.h"
+
 
 namespace avs::effects {
 
@@ -73,17 +74,27 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("globals", []() { return std::make_unique<Globals>(); });
   registry.registerFactory("bump", []() { return std::make_unique<Bump>(); });
   registry.registerFactory("scripted", []() { return std::make_unique<ScriptedEffect>(); });
-  registry.registerFactory("transform_affine", []() { return std::make_unique<TransformAffine>(); });
+  registry.registerFactory("transform_affine",
+                           []() { return std::make_unique<TransformAffine>(); });
   registry.registerFactory("movement", []() { return std::make_unique<MovementEffect>(); });
-  registry.registerFactory("dyn_movement", []() { return std::make_unique<DynamicMovementEffect>(); });
-  registry.registerFactory("dyn_distance", []() { return std::make_unique<DynamicDistanceModifierEffect>(); });
+  registry.registerFactory("dyn_movement",
+                           []() { return std::make_unique<DynamicMovementEffect>(); });
+  registry.registerFactory("dyn_distance",
+                           []() { return std::make_unique<DynamicDistanceModifierEffect>(); });
   registry.registerFactory("dyn_shift", []() { return std::make_unique<DynamicShiftEffect>(); });
   registry.registerFactory("zoom_rotate", []() { return std::make_unique<ZoomRotateEffect>(); });
-  registry.registerFactory("effect_wave", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Wave); });
-  registry.registerFactory("effect_spec", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Spectrum);});
-  registry.registerFactory("effect_bands", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Bands); });
-  registry.registerFactory("effect_leveltext", []() {return std::make_unique<AudioOverlay>(AudioOverlay::Mode::LevelText);});
-  registry.registerFactory("effect_bandtxt", []() {return std::make_unique<AudioOverlay>(AudioOverlay::Mode::BandText);});
+  registry.registerFactory(
+      "effect_wave", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Wave); });
+  registry.registerFactory(
+      "effect_spec", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Spectrum); });
+  registry.registerFactory(
+      "effect_bands", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Bands); });
+  registry.registerFactory("effect_leveltext", []() {
+    return std::make_unique<AudioOverlay>(AudioOverlay::Mode::LevelText);
+  });
+  registry.registerFactory("effect_bandtxt", []() {
+    return std::make_unique<AudioOverlay>(AudioOverlay::Mode::BandText);
+  });
   registry.registerFactory("solid", []() { return std::make_unique<PrimitiveSolid>(); });
   registry.registerFactory("dot", []() { return std::make_unique<PrimitiveDots>(); });
   registry.registerFactory("dots", []() { return std::make_unique<PrimitiveDots>(); });
@@ -136,6 +147,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("render / timescope", []() { return std::make_unique<Effect_RenderTimescope>(); });
   registry.registerFactory("Trans / Blitter Feedback", []() { return std::make_unique<trans::BlitterFeedback>(); });
   registry.registerFactory("trans / blitter feedback", []() { return std::make_unique<trans::BlitterFeedback>(); });
+  registry.registerFactory("Trans / Blur", []() { return std::make_unique<filters::BlurBox>(); });
+  registry.registerFactory("trans / blur", []() { return std::make_unique<filters::BlurBox>(); });
   registry.registerFactory("filter_blur_box", []() { return std::make_unique<filters::BlurBox>(); });
   registry.registerFactory("Trans / Blur", []() { return std::make_unique<trans::R_Blur>(); });
   registry.registerFactory("trans / blur", []() { return std::make_unique<trans::R_Blur>(); });
@@ -170,11 +183,11 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("trans / scatter", []() { return std::make_unique<Effect_TransScatter>(); });
   registry.registerFactory("Trans / Unique tone", []() { return std::make_unique<Effect_TransUniqueTone>(); });
   registry.registerFactory("trans / unique tone", []() { return std::make_unique<Effect_TransUniqueTone>(); });
-  registry.registerFactory("Trans / Water", []() { return std::make_unique<Effect_TransWater>(); });
-  registry.registerFactory("trans / water", []() { return std::make_unique<Effect_TransWater>(); });
+  registry.registerFactory("Trans / Water", []() { return std::make_unique<trans::Water>(); });
+  registry.registerFactory("trans / water", []() { return std::make_unique<trans::Water>(); });
   registry.registerFactory("Trans / Water Bump", []() { return std::make_unique<Effect_TransWaterBump>(); });
   registry.registerFactory("trans / water bump", []() { return std::make_unique<Effect_TransWaterBump>(); });
-
+  
 }
 
 }  // namespace avs::effects

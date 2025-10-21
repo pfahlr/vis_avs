@@ -19,7 +19,9 @@
 #include "avs/effects/RegisterEffects.hpp"
 #include "avs/offscreen/Md5.hpp"
 #include "effects/filters/effect_fast_brightness.h"
+#include "effects/trans/effect_water.h"
 #include "effects/trans/effect_color_reduction.h"
+
 
 namespace {
 
@@ -33,10 +35,12 @@ struct FrameHashResult {
 };
 
 std::vector<std::uint8_t> makeBasePattern() {
-  std::vector<std::uint8_t> pixels(static_cast<std::size_t>(kWidth) * static_cast<std::size_t>(kHeight) * 4u);
+  std::vector<std::uint8_t> pixels(static_cast<std::size_t>(kWidth) *
+                                   static_cast<std::size_t>(kHeight) * 4u);
   for (int y = 0; y < kHeight; ++y) {
     for (int x = 0; x < kWidth; ++x) {
-      const std::size_t index = (static_cast<std::size_t>(y) * kWidth + static_cast<std::size_t>(x)) * 4u;
+      const std::size_t index =
+          (static_cast<std::size_t>(y) * kWidth + static_cast<std::size_t>(x)) * 4u;
       const int r = (x * 37 + y * 13) & 0xFF;
       const int g = (x * 11 + y * 59 + 17) & 0xFF;
       const int b = (x * 23 + y * 7 + 91) & 0xFF;
@@ -287,6 +291,67 @@ TEST_F(FilterEffectTests, Conv3x3Golden) {
   expectGolden("conv3x3", result.hashes);
 }
 
+TEST(WaterEffect, SimulatesIntegerRipplePropagation) {
+  avs::effects::trans::Water effect;
+
+  std::array<std::uint8_t, 3 * 3 * 4> pixels{};
+  auto setPixel = [&](int x, int y, std::uint8_t r) {
+    const std::size_t index = (static_cast<std::size_t>(y) * 3 + static_cast<std::size_t>(x)) * 4u;
+    pixels[index + 0] = r;
+    pixels[index + 1] = 0u;
+    pixels[index + 2] = 0u;
+    pixels[index + 3] = 255u;
+  };
+
+  setPixel(0, 0, 0u);
+  setPixel(1, 0, 64u);
+  setPixel(2, 0, 128u);
+  setPixel(0, 1, 32u);
+  setPixel(1, 1, 96u);
+  setPixel(2, 1, 160u);
+  setPixel(0, 2, 64u);
+  setPixel(1, 2, 128u);
+  setPixel(2, 2, 192u);
+
+  avs::core::RenderContext context{};
+  context.width = 3;
+  context.height = 3;
+  context.framebuffer = {pixels.data(), pixels.size()};
+
+  ASSERT_TRUE(effect.render(context));
+
+  const std::array<std::uint8_t, 9> expectedFirstFrame = {96u,  112u, 224u, 80u, 192u,
+                                                          208u, 160u, 176u, 255u};
+  for (int y = 0; y < 3; ++y) {
+    for (int x = 0; x < 3; ++x) {
+      const std::size_t index =
+          (static_cast<std::size_t>(y) * 3 + static_cast<std::size_t>(x)) * 4u;
+      const std::size_t flat = static_cast<std::size_t>(y) * 3u + static_cast<std::size_t>(x);
+      EXPECT_EQ(pixels[index + 0], expectedFirstFrame[flat])
+          << "Mismatch at (" << x << ", " << y << ")";
+      EXPECT_EQ(pixels[index + 1], 0u);
+      EXPECT_EQ(pixels[index + 2], 0u);
+      EXPECT_EQ(pixels[index + 3], 255u);
+    }
+  }
+
+  for (std::size_t i = 0; i < pixels.size(); i += 4) {
+    pixels[i + 0] = 0u;
+    pixels[i + 1] = 0u;
+    pixels[i + 2] = 0u;
+    pixels[i + 3] = 255u;
+  }
+
+  ASSERT_TRUE(effect.render(context));
+
+  for (std::size_t i = 0; i < pixels.size(); i += 4) {
+    EXPECT_EQ(pixels[i + 0], 0u);
+    EXPECT_EQ(pixels[i + 1], 0u);
+    EXPECT_EQ(pixels[i + 2], 0u);
+    EXPECT_EQ(pixels[i + 3], 255u);
+  }
+}
+
 TEST(ColorReductionEffect, MasksRgbChannelsToRequestedDepth) {
   avs::effects::trans::ColorReduction effect;
   avs::core::ParamBlock params;
@@ -336,4 +401,5 @@ TEST(ColorReductionEffect, ClampsLevelsAndSupportsBitAlias) {
   EXPECT_EQ(pixel[2], 64u);
   EXPECT_EQ(pixel[3], 78u);
 }
+
 

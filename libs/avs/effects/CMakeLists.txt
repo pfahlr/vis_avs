@@ -65,12 +65,14 @@ add_library(avs-effects-core
   ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_grain.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_interferences.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_video_delay.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_color_reduction.cpp
   src/effects/primitive_dots.cpp
   src/effects/primitive_lines.cpp
   src/effects/primitive_rrect.cpp
   src/effects/primitive_solid.cpp
   src/effects/primitive_tri.cpp
   src/text/text_renderer.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_channel_shift.cpp
   ${AVS_EFFECT_STUB_SOURCES})
 
 

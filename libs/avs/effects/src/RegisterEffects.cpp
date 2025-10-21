@@ -48,9 +48,9 @@
 #include "effects/stubs/effect_render_simple.h"
 #include "effects/stubs/effect_render_svp_loader.h"
 #include "effects/stubs/effect_render_timescope.h"
+#include "effects/trans/effect_brightness.h"
 #include "effects/trans/effect_blur.h"
 #include "effects/trans/effect_blitter_feedback.h"
-#include "effects/stubs/effect_trans_brightness.h"
 #include "effects/stubs/effect_trans_color_clip.h"
 #include "effects/stubs/effect_trans_color_modifier.h"
 #include "effects/stubs/effect_trans_colorfade.h"
@@ -124,13 +124,10 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("render / moving particle", []() { return std::make_unique<Effect_RenderMovingParticle>(); });
   registry.registerFactory("Render / Oscilloscope Star", []() { return std::make_unique<Effect_RenderOscilloscopeStar>(); });
   registry.registerFactory("render / oscilloscope star", []() { return std::make_unique<Effect_RenderOscilloscopeStar>(); });
-
   registry.registerFactory("Render / Ring", []() { return std::make_unique<render::Ring>(); });
   registry.registerFactory("render / ring", []() { return std::make_unique<render::Ring>(); });
-
   registry.registerFactory("Render / Rotating Stars", []() { return std::make_unique<render::RotatingStars>(); });
   registry.registerFactory("render / rotating stars", []() { return std::make_unique<render::RotatingStars>(); });
-
   registry.registerFactory("Render / Simple", []() { return std::make_unique<Effect_RenderSimple>(); });
   registry.registerFactory("render / simple", []() { return std::make_unique<Effect_RenderSimple>(); });
   registry.registerFactory("Render / SVP Loader", []() { return std::make_unique<Effect_RenderSvpLoader>(); });
@@ -157,8 +154,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("filter_conv3x3", []() { return std::make_unique<filters::Convolution3x3>(); });
   registry.registerFactory("Filter / Convolution", []() { return std::make_unique<filters::Convolution3x3>(); });
   registry.registerFactory("filter / convolution", []() { return std::make_unique<filters::Convolution3x3>(); });
-  registry.registerFactory("Trans / Brightness", []() { return std::make_unique<Effect_TransBrightness>(); });
-  registry.registerFactory("trans / brightness", []() { return std::make_unique<Effect_TransBrightness>(); });
+  registry.registerFactory("Trans / Brightness", []() { return std::make_unique<trans::Brightness>(); });
+  registry.registerFactory("trans / brightness", []() { return std::make_unique<trans::Brightness>(); });
   registry.registerFactory("Trans / Color Clip", []() { return std::make_unique<Effect_TransColorClip>(); });
   registry.registerFactory("trans / color clip", []() { return std::make_unique<Effect_TransColorClip>(); });
   registry.registerFactory("Trans / Color Modifier", []() { return std::make_unique<Effect_TransColorModifier>(); });

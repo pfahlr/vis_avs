@@ -171,8 +171,8 @@ stubs:
     source: src/effects/trans/effect_channel_shift.cpp
     notes: "Permutes RGB channels with optional beat-triggered randomisation."
   - name: Trans / Brightness
-    status: stub
-    source: vis_avs/r_bright.cpp (R_Brightness)
+    status: implemented
+    source: src/effects/trans/effect_brightness.cpp
   - name: Trans / Fast Brightness
     status: implemented
     source: src/effects/filters/effect_fast_brightness.cpp

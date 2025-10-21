@@ -36,6 +36,9 @@ effects:
   text:
     status: implemented
     notes: "Deterministic bitmap text with outline, shadow, and anti-alias toggle."
+  misc_comment:
+    status: implemented
+    notes: "Stores preset annotations without changing the framebuffer."
   holden05_multi_delay:
     status: implemented
     notes: "Six shared delay buffers with beat-synchronised frame timing."
@@ -103,6 +106,9 @@ stubs:
   - name: Holden04: Video Delay
     status: stub
     source: vis_avs/rlib.cpp (R_VideoDelay)
+  - name: Holden05: Multi Delay
+    status: stub
+    source: vis_avs/rlib.cpp (R_MultiDelay)
   - name: Misc / Comment
     status: stub
     source: vis_avs/r_comment.cpp (R_Comment)

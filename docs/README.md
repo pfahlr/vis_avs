@@ -7,9 +7,17 @@ portable engine and tooling.
 
 ## Prerequisites
 
-Ensure the following packages are installed:
+Ensure the following packages are installed. The helper script mirrors the CI
+environment and pulls in the PortAudio development headers automatically.
 
 ```bash
+# Ubuntu container
+./run_setup_dev_environment.sh --platform ubuntu
+
+# Fedora container
+./run_setup_dev_environment.sh --platform fedora
+
+# Manual apt invocation (Ubuntu) if you prefer running the commands yourself
 sudo apt-get install cmake g++ clang-format git pkg-config \
   libsdl2-dev mesa-common-dev libglu1-mesa-dev \
   portaudio19-dev libportaudio2 libgtest-dev libsamplerate0-dev \

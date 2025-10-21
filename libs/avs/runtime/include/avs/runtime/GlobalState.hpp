@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -20,15 +21,27 @@ struct Heightmap {
   }
 };
 
+struct LegacyRenderState {
+  std::uint32_t lineBlendMode = 0;
+  bool lineBlendModeActive = false;
+
+  void reset() {
+    lineBlendMode = 0;
+    lineBlendModeActive = false;
+  }
+};
+
 struct GlobalState {
   static constexpr std::size_t kRegisterCount = 64;
 
   std::array<double, kRegisterCount> registers{};
   std::unordered_map<std::string, Heightmap> heightmaps;
+  LegacyRenderState legacyRender{};
 
   void reset() {
     registers.fill(0.0);
     heightmaps.clear();
+    legacyRender.reset();
   }
 };
 

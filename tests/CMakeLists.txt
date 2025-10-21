@@ -91,6 +91,13 @@ target_compile_options(filter_effects_tests PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(filter_effects_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 add_test(NAME filter_effects_tests COMMAND filter_effects_tests)
 
+add_executable(simple_spectrum_tests
+  presets/render/test_simple_spectrum.cpp)
+target_link_libraries(simple_spectrum_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
+target_compile_options(simple_spectrum_tests PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(simple_spectrum_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+add_test(NAME simple_spectrum_tests COMMAND simple_spectrum_tests)
+
 add_executable(runtime_resource_tests
   runtime/test_resources.cpp)
 target_link_libraries(runtime_resource_tests PRIVATE avs-runtime GTest::gtest_main)

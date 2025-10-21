@@ -40,7 +40,7 @@
 #include "effects/stubs/effect_render_oscilloscope_star.h"
 #include "effects/stubs/effect_render_ring.h"
 #include "effects/stubs/effect_render_rotating_stars.h"
-#include "effects/stubs/effect_render_simple.h"
+#include "effects/render/effect_simple_spectrum.h"
 #include "effects/stubs/effect_render_svp_loader.h"
 #include "effects/stubs/effect_render_timescope.h"
 #include "effects/stubs/effect_trans_blitter_feedback.h"

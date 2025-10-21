@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
@@ -19,6 +20,7 @@
 #include "avs/effects/RegisterEffects.hpp"
 #include "avs/offscreen/Md5.hpp"
 #include "effects/filters/effect_fast_brightness.h"
+#include "effects/trans/effect_scatter.h"
 
 namespace {
 
@@ -32,10 +34,12 @@ struct FrameHashResult {
 };
 
 std::vector<std::uint8_t> makeBasePattern() {
-  std::vector<std::uint8_t> pixels(static_cast<std::size_t>(kWidth) * static_cast<std::size_t>(kHeight) * 4u);
+  std::vector<std::uint8_t> pixels(static_cast<std::size_t>(kWidth) *
+                                   static_cast<std::size_t>(kHeight) * 4u);
   for (int y = 0; y < kHeight; ++y) {
     for (int x = 0; x < kWidth; ++x) {
-      const std::size_t index = (static_cast<std::size_t>(y) * kWidth + static_cast<std::size_t>(x)) * 4u;
+      const std::size_t index =
+          (static_cast<std::size_t>(y) * kWidth + static_cast<std::size_t>(x)) * 4u;
       const int r = (x * 37 + y * 13) & 0xFF;
       const int g = (x * 11 + y * 59 + 17) & 0xFF;
       const int b = (x * 23 + y * 7 + 91) & 0xFF;
@@ -168,6 +172,81 @@ TEST_F(FilterEffectTests, FastBrightnessGolden) {
   expectGolden("fast_brightness", result.hashes);
 }
 
+TEST(ScatterEffect, DeterministicAcrossRuns) {
+  auto runSequence = [](std::uint64_t seed) {
+    avs::effects::trans::Scatter effect;
+    avs::core::ParamBlock params;
+    params.setBool("enabled", true);
+    effect.setParams(params);
+
+    std::vector<std::uint8_t> base = makeBasePattern();
+    std::vector<std::uint8_t> working = base;
+    std::vector<std::uint8_t> captured;
+    captured.reserve(static_cast<std::size_t>(kFrames) * working.size());
+
+    avs::core::RenderContext context{};
+    context.width = kWidth;
+    context.height = kHeight;
+    context.deltaSeconds = 1.0 / 60.0;
+    context.framebuffer = {working.data(), working.size()};
+    context.rng = avs::core::DeterministicRng(seed);
+
+    for (int frame = 0; frame < kFrames; ++frame) {
+      std::copy(base.begin(), base.end(), working.begin());
+      context.frameIndex = static_cast<std::uint64_t>(frame);
+      context.rng.reseed(context.frameIndex);
+      EXPECT_TRUE(effect.render(context));
+      captured.insert(captured.end(), working.begin(), working.end());
+    }
+
+    return captured;
+  };
+
+  const auto first = runSequence(123456u);
+  const auto second = runSequence(123456u);
+  EXPECT_EQ(first, second);
+
+  const auto third = runSequence(654321u);
+  EXPECT_NE(first, third);
+}
+
+TEST(ScatterEffect, PreservesBorderRows) {
+  avs::effects::trans::Scatter effect;
+  std::vector<std::uint8_t> base = makeBasePattern();
+  std::vector<std::uint8_t> working = base;
+
+  avs::core::RenderContext context{};
+  context.width = kWidth;
+  context.height = kHeight;
+  context.deltaSeconds = 1.0 / 60.0;
+  context.framebuffer = {working.data(), working.size()};
+  context.frameIndex = 0;
+  context.rng = avs::core::DeterministicRng(98765u);
+  context.rng.reseed(context.frameIndex);
+
+  ASSERT_TRUE(effect.render(context));
+  EXPECT_NE(working, base);
+
+  constexpr int kBorderRows = 4;
+  const std::size_t rowStride = static_cast<std::size_t>(kWidth) * 4u;
+  for (int y = 0; y < kBorderRows; ++y) {
+    const std::size_t offset = static_cast<std::size_t>(y) * rowStride;
+    EXPECT_TRUE(std::equal(base.begin() + static_cast<std::ptrdiff_t>(offset),
+                           base.begin() + static_cast<std::ptrdiff_t>(offset + rowStride),
+                           working.begin() + static_cast<std::ptrdiff_t>(offset)))
+        << "Row " << y << " was modified";
+  }
+
+  for (int i = 0; i < kBorderRows; ++i) {
+    const int y = kHeight - 1 - i;
+    const std::size_t offset = static_cast<std::size_t>(y) * rowStride;
+    EXPECT_TRUE(std::equal(base.begin() + static_cast<std::ptrdiff_t>(offset),
+                           base.begin() + static_cast<std::ptrdiff_t>(offset + rowStride),
+                           working.begin() + static_cast<std::ptrdiff_t>(offset)))
+        << "Row " << y << " was modified";
+  }
+}
+
 TEST(FastBrightnessEffect, HonorsClampOutputModes) {
   {
     avs::effects::filters::FastBrightness effect;
@@ -285,4 +364,3 @@ TEST_F(FilterEffectTests, Conv3x3Golden) {
   const auto result = renderEffect("filter_conv3x3", params);
   expectGolden("conv3x3", result.hashes);
 }
-

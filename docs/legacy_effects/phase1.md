@@ -101,7 +101,7 @@ entries return `C_RBASE2` instances that advertise SMP support.
 | 27 | `R_StarField` | Render / Starfield | No |
 | 28 | `R_Text` | Render / Text | No |
 | 29 | `R_Bump` | Trans / Bump | No |
-| 30 | `R_Mosaic` | Trans / Mosaic | No |
+| 30 | `R_Mosaic` | Trans / Mosaic | Yes |
 | 31 | `R_WaterBump` | Trans / Water Bump | No |
 | 32 | `R_AVI` | Render / AVI | No |
 | 33 | `R_Bpm` | Misc / Custom BPM | No |

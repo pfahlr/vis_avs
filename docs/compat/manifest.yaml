@@ -128,8 +128,8 @@ stubs:
     status: stub
     source: vis_avs/r_bspin.cpp (R_BSpin)
   - name: Render / Dot Fountain
-    status: stub
-    source: vis_avs/r_dotfnt.cpp (R_DotFountain)
+    status: implemented
+    source: src/effects/render/effect_dot_fountain.cpp
   - name: Render / Dot Plane
     status: stub
     source: vis_avs/r_dotpln.cpp (R_DotPlane)

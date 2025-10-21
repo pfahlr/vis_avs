@@ -54,12 +54,21 @@ add_executable(core_effects_tests
   core/test_effect_registry.cpp
   core/test_pipeline.cpp
   core/test_blend_ops.cpp
+  core/test_channel_shift.cpp
   core/test_scripted_effect.cpp
   core/test_globals_and_bump.cpp
+  core/test_misc_custom_bpm.cpp
   core/test_transform_affine.cpp
   core/test_gating.cpp
   core/test_primitives.cpp
-  core/test_render_ring.cpp)
+  core/test_render_ring.cpp
+  core/test_render_dot_fountain.cpp
+  core/test_render_mode.cpp
+  core/test_misc_comment.cpp
+  core/test_trans_multiplier.cpp
+  core/test_multi_delay.cpp
+  core/test_video_delay.cpp)
+
 
 target_link_libraries(core_effects_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
 target_compile_options(core_effects_tests PRIVATE -Wall -Wextra -Werror)

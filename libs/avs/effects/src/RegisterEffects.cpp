@@ -25,7 +25,6 @@
 #include "effects/dynamic/movement.h"
 #include "effects/dynamic/zoom_rotate.h"
 #include "effects/stubs/effect_channel_shift.h"
-#include "effects/stubs/effect_color_reduction.h"
 #include "effects/stubs/effect_holden04_video_delay.h"
 #include "effects/stubs/effect_holden05_multi_delay.h"
 #include "effects/stubs/effect_misc_comment.h"
@@ -55,6 +54,7 @@
 #include "effects/stubs/effect_trans_unique_tone.h"
 #include "effects/stubs/effect_trans_water.h"
 #include "effects/stubs/effect_trans_water_bump.h"
+#include "effects/trans/effect_color_reduction.h"
 
 namespace avs::effects {
 
@@ -92,8 +92,9 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
 
   registry.registerFactory("Channel Shift", []() { return std::make_unique<Effect_ChannelShift>(); });
   registry.registerFactory("channel shift", []() { return std::make_unique<Effect_ChannelShift>(); });
-  registry.registerFactory("Color Reduction", []() { return std::make_unique<Effect_ColorReduction>(); });
-  registry.registerFactory("color reduction", []() { return std::make_unique<Effect_ColorReduction>(); });
+  registry.registerFactory("color_reduction", []() { return std::make_unique<trans::ColorReduction>(); });
+  registry.registerFactory("Color Reduction", []() { return std::make_unique<trans::ColorReduction>(); });
+  registry.registerFactory("color reduction", []() { return std::make_unique<trans::ColorReduction>(); });
   registry.registerFactory("Holden04: Video Delay", []() { return std::make_unique<Effect_Holden04VideoDelay>(); });
   registry.registerFactory("holden04: video delay", []() { return std::make_unique<Effect_Holden04VideoDelay>(); });
   registry.registerFactory("Holden05: Multi Delay", []() { return std::make_unique<Effect_Holden05MultiDelay>(); });

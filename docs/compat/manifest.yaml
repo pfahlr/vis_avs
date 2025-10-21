@@ -24,6 +24,9 @@ effects:
   dots:
     status: implemented
     notes: "Filled circles drawn with midpoint rasterisation."
+  dot_plane:
+    status: implemented
+    notes: "Audio-reactive 3D dot lattice with tilt, rotation, and five-point colour gradient."
   lines:
     status: implemented
     notes: "Bresenham polyline with optional closure and thickness."
@@ -36,6 +39,12 @@ effects:
   text:
     status: implemented
     notes: "Deterministic bitmap text with outline, shadow, and anti-alias toggle."
+  misc_comment:
+    status: implemented
+    notes: "Stores preset annotations without changing the framebuffer."
+  holden05_multi_delay:
+    status: implemented
+    notes: "Six shared delay buffers with beat-synchronised frame timing."
   swizzle:
     status: implemented
     modes: [rgb, rbg, grb, gbr, brg, bgr]
@@ -94,12 +103,9 @@ goldens:
     file: tests/golden/micro_blend_md5.txt
     update_command: ./tools/update_goldens.sh
 stubs:
-  - name: Channel Shift
-    status: stub
-    source: vis_avs/rlib.cpp (R_ChannelShift)
   - name: Color Reduction
-    status: stub
-    source: vis_avs/rlib.cpp (R_ColorReduction)
+    status: implemented
+    source: src/effects/trans/effect_color_reduction.cpp
   - name: Holden04: Video Delay
     status: stub
     source: vis_avs/rlib.cpp (R_VideoDelay)
@@ -110,14 +116,14 @@ stubs:
     status: stub
     source: vis_avs/r_comment.cpp (R_Comment)
   - name: Misc / Custom BPM
-    status: stub
+    status: implemented
     source: vis_avs/r_bpm.cpp (R_Bpm)
   - name: Misc / Set render mode
-    status: stub
-    source: vis_avs/r_linemode.cpp (R_LineMode)
+    status: implemented
+    source: src/effects/misc/effect_render_mode.cpp
   - name: Multiplier
-    status: stub
-    source: vis_avs/rlib.cpp (R_Multiplier)
+    status: implemented
+    source: src/effects/trans/effect_multiplier.cpp
   - name: Render / AVI
     status: stub
     source: vis_avs/r_avi.cpp (R_AVI)
@@ -125,8 +131,8 @@ stubs:
     status: stub
     source: vis_avs/r_bspin.cpp (R_BSpin)
   - name: Render / Dot Fountain
-    status: stub
-    source: vis_avs/r_dotfnt.cpp (R_DotFountain)
+    status: implemented
+    source: src/effects/render/effect_dot_fountain.cpp
   - name: Render / Dot Plane
     status: stub
     source: vis_avs/r_dotpln.cpp (R_DotPlane)
@@ -137,10 +143,10 @@ stubs:
     status: stub
     source: vis_avs/r_oscstar.cpp (R_OscStars)
   - name: Render / Ring
-    status: stub
+    status: implemented
     source: vis_avs/r_oscring.cpp (R_OscRings)
   - name: Render / Rotating Stars
-    status: stub
+    status: implemented
     source: vis_avs/r_rotstar.cpp (R_RotStar)
   - name: Render / Simple
     status: stub
@@ -152,17 +158,27 @@ stubs:
     status: stub
     source: vis_avs/r_timescope.cpp (R_Timescope)
   - name: Trans / Blitter Feedback
-    status: stub
+    status: partial
     source: vis_avs/r_blit.cpp (R_BlitterFB)
   - name: Trans / Blur
     status: implemented
+    source: src/effects/trans/effect_blur.cpp
+  - name: Trans / Blur Box
+    status: implemented
     source: src/effects/filters/effect_blur_box.cpp
+  - name: Trans / Channel Shift
+    status: implemented
+    source: src/effects/trans/effect_channel_shift.cpp
+    notes: "Permutes RGB channels with optional beat-triggered randomisation."
   - name: Trans / Brightness
     status: implemented
     source: src/effects/trans/effect_brightness.cpp
   - name: Trans / Fast Brightness
     status: implemented
     source: src/effects/filters/effect_fast_brightness.cpp
+  - name: Holden04: Video Delay
+    status: implemented
+    source: src/effects/trans/effect_video_delay.cpp
   - name: Trans / Color Clip
     status: stub
     source: vis_avs/r_colorreplace.cpp (R_ContrastEnhance)

@@ -23,7 +23,16 @@ void PrimitiveLines::setParams(const avs::core::ParamBlock& params) {
     }
   }
   closed_ = params.getBool("closed", closed_);
-  width_ = std::max(1, params.getInt("width", params.getInt("thickness", width_)));
+  widthExplicit_ = false;
+  int requestedWidth = width_;
+  if (params.contains("width")) {
+    requestedWidth = params.getInt("width", width_);
+    widthExplicit_ = true;
+  } else if (params.contains("thickness")) {
+    requestedWidth = params.getInt("thickness", width_);
+    widthExplicit_ = true;
+  }
+  width_ = std::max(1, requestedWidth);
   color_ = params.getInt("color", color_);
   alpha_ = params.getInt("alpha", alpha_);
 }
@@ -36,15 +45,21 @@ bool PrimitiveLines::render(avs::core::RenderContext& context) {
     return true;
   }
   const detail::RGBA color = detail::colorFromInt(color_, detail::clampByte(alpha_));
+  int effectiveWidth = width_;
+  if (!widthExplicit_) {
+    if (auto overrideWidth = detail::legacyLineWidthOverride(context)) {
+      effectiveWidth = std::max(1, *overrideWidth);
+    }
+  }
   for (std::size_t i = 1; i < points_.size(); ++i) {
     const auto& a = points_[i - 1];
     const auto& b = points_[i];
-    detail::drawThickLine(context, a.first, a.second, b.first, b.second, width_, color);
+    detail::drawThickLine(context, a.first, a.second, b.first, b.second, effectiveWidth, color);
   }
   if (closed_ && points_.size() > 2) {
     const auto& first = points_.front();
     const auto& last = points_.back();
-    detail::drawThickLine(context, last.first, last.second, first.first, first.second, width_, color);
+    detail::drawThickLine(context, last.first, last.second, first.first, first.second, effectiveWidth, color);
   }
   return true;
 }

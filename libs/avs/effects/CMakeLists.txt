@@ -23,7 +23,6 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_blur.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_brightness.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_color_clip.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_color_modifier.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_colorfade.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_mosaic.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_roto_blitter.cpp
@@ -65,6 +64,7 @@ add_library(avs-effects-core
   ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_fast_brightness.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_grain.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_interferences.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_color_modifier.cpp
   src/effects/primitive_dots.cpp
   src/effects/primitive_lines.cpp
   src/effects/primitive_rrect.cpp

@@ -12,7 +12,7 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_bass_spin.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_dot_fountain.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_dot_plane.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_moving_particle.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/render/effect_moving_particle.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_oscilloscope_star.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_ring.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_rotating_stars.cpp

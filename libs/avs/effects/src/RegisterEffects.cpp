@@ -36,7 +36,7 @@
 #include "effects/stubs/effect_render_bass_spin.h"
 #include "effects/stubs/effect_render_dot_fountain.h"
 #include "effects/stubs/effect_render_dot_plane.h"
-#include "effects/stubs/effect_render_moving_particle.h"
+#include "effects/render/effect_moving_particle.h"
 #include "effects/stubs/effect_render_oscilloscope_star.h"
 #include "effects/stubs/effect_render_ring.h"
 #include "effects/stubs/effect_render_rotating_stars.h"

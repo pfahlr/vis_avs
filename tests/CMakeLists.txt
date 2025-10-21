@@ -50,15 +50,16 @@ if(TARGET avs-player)
   add_dependencies(deterministic_render_test avs-player)
 endif()
 
-add_executable(core_effects_tests
-  core/test_effect_registry.cpp
-  core/test_pipeline.cpp
-  core/test_blend_ops.cpp
-  core/test_scripted_effect.cpp
-  core/test_globals_and_bump.cpp
-  core/test_transform_affine.cpp
-  core/test_gating.cpp
-  core/test_primitives.cpp)
+  add_executable(core_effects_tests
+    core/test_effect_registry.cpp
+    core/test_pipeline.cpp
+    core/test_blend_ops.cpp
+    core/test_scripted_effect.cpp
+    core/test_globals_and_bump.cpp
+    core/test_transform_affine.cpp
+    core/test_gating.cpp
+    core/test_primitives.cpp
+    core/test_render_moving_particle.cpp)
 
 target_link_libraries(core_effects_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
 target_compile_options(core_effects_tests PRIVATE -Wall -Wextra -Werror)

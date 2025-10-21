@@ -61,6 +61,7 @@ add_executable(core_effects_tests
   core/test_transform_affine.cpp
   core/test_gating.cpp
   core/test_primitives.cpp
+  core/test_render_mode.cpp
   core/test_misc_comment.cpp
   core/test_trans_multiplier.cpp
   core/test_multi_delay.cpp

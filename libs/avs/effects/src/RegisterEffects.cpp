@@ -29,8 +29,8 @@
 #include "effects/trans/effect_multi_delay.h"
 #include "effects/trans/effect_video_delay.h"
 #include "effects/stubs/effect_misc_comment.h"
+#include "effects/misc/effect_render_mode.h"
 #include "effects/misc/effect_custom_bpm.h"
-#include "effects/stubs/effect_misc_set_render_mode.h"
 #include "effects/trans/effect_multiplier.h"
 #include "effects/stubs/effect_render_avi.h"
 #include "effects/stubs/effect_render_bass_spin.h"
@@ -103,8 +103,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("misc_comment", []() { return std::make_unique<misc::Comment>(); });
   registry.registerFactory("Misc / Custom BPM", []() { return std::make_unique<misc::CustomBpmEffect>(); });
   registry.registerFactory("misc / custom bpm", []() { return std::make_unique<misc::CustomBpmEffect>(); });
-  registry.registerFactory("Misc / Set render mode", []() { return std::make_unique<Effect_MiscSetRenderMode>(); });
-  registry.registerFactory("misc / set render mode", []() { return std::make_unique<Effect_MiscSetRenderMode>(); });
+  registry.registerFactory("Misc / Set render mode", []() { return std::make_unique<avs::effects::misc::RenderMode>(); });
+  registry.registerFactory("misc / set render mode", []() { return std::make_unique<avs::effects::misc::RenderMode>(); });
   registry.registerFactory("Multiplier", []() { return std::make_unique<trans::Multiplier>(); });
   registry.registerFactory("multiplier", []() { return std::make_unique<trans::Multiplier>(); });
   registry.registerFactory("Render / AVI", []() { return std::make_unique<Effect_RenderAvi>(); });

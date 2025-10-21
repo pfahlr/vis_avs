@@ -116,8 +116,8 @@ stubs:
     status: stub
     source: vis_avs/r_linemode.cpp (R_LineMode)
   - name: Multiplier
-    status: stub
-    source: vis_avs/rlib.cpp (R_Multiplier)
+    status: implemented
+    source: src/effects/trans/effect_multiplier.cpp
   - name: Render / AVI
     status: stub
     source: vis_avs/r_avi.cpp (R_AVI)

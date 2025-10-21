@@ -6,7 +6,6 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_holden05_multi_delay.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_misc_comment.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_misc_set_render_mode.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_multiplier.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_avi.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_bass_spin.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_dot_fountain.cpp
@@ -65,12 +64,18 @@ add_library(avs-effects-core
   ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_grain.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_interferences.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/misc/effect_custom_bpm.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_multiplier.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_multi_delay.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_video_delay.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_color_reduction.cpp
   src/effects/primitive_dots.cpp
   src/effects/primitive_lines.cpp
   src/effects/primitive_rrect.cpp
   src/effects/primitive_solid.cpp
   src/effects/primitive_tri.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/misc/effect_comment.cpp
   src/text/text_renderer.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_channel_shift.cpp
   ${AVS_EFFECT_STUB_SOURCES})
 
 

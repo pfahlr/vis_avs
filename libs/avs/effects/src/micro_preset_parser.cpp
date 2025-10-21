@@ -221,16 +221,74 @@ MicroPreset parseMicroPreset(std::string_view text) {
     }
     MicroEffectCommand command;
     command.effectKey = avs::runtime::parser::normalizeEffectToken(effectToken);
+    const bool isCommentEffect =
+        command.effectKey == "misc_comment" || command.effectKey == "misc / comment";
+    auto isCommentKey = [](const std::string& key) {
+      return key == "comment" || key == "text" || key == "message" || key == "msg";
+    };
+    std::string explicitComment;
+    std::string inlineComment;
+    bool commentKeySeen = false;
+    bool awaitingCommentValue = false;
     for (std::size_t i = 1; i < tokens.size(); ++i) {
       const std::string& token = tokens[i];
+      if (isCommentEffect && awaitingCommentValue) {
+        if (!explicitComment.empty()) {
+          explicitComment.push_back(' ');
+        }
+        explicitComment += token;
+        awaitingCommentValue = false;
+        continue;
+      }
       const auto eqPos = token.find('=');
       if (eqPos == std::string::npos) {
-        command.params.setBool(toLower(token), true);
+        if (isCommentEffect) {
+          if (!inlineComment.empty()) {
+            inlineComment.push_back(' ');
+          }
+          inlineComment += token;
+        } else {
+          command.params.setBool(toLower(token), true);
+        }
         continue;
       }
       std::string key = toLower(token.substr(0, eqPos));
       std::string value = token.substr(eqPos + 1);
+      if (isCommentEffect) {
+        if (isCommentKey(key)) {
+          commentKeySeen = true;
+          if (!value.empty()) {
+            if (!explicitComment.empty()) {
+              explicitComment.push_back(' ');
+            }
+            explicitComment += value;
+          } else {
+            awaitingCommentValue = true;
+          }
+          continue;
+        }
+        if (!inlineComment.empty()) {
+          inlineComment.push_back(' ');
+        }
+        inlineComment += token;
+        continue;
+      }
       assignValue(command.params, key, value);
+    }
+    if (isCommentEffect) {
+      std::string combined = explicitComment;
+      if (awaitingCommentValue && commentKeySeen && combined.empty()) {
+        combined.clear();
+      }
+      if (!inlineComment.empty()) {
+        if (!combined.empty()) {
+          combined.push_back(' ');
+        }
+        combined += inlineComment;
+      }
+      if (commentKeySeen || !combined.empty()) {
+        command.params.setString("comment", combined);
+      }
     }
     preset.commands.push_back(std::move(command));
   }

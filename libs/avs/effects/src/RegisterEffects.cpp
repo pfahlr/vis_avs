@@ -39,7 +39,7 @@
 #include "effects/stubs/effect_render_moving_particle.h"
 #include "effects/stubs/effect_render_oscilloscope_star.h"
 #include "effects/stubs/effect_render_ring.h"
-#include "effects/stubs/effect_render_rotating_stars.h"
+#include "effects/render/effect_rotating_stars.h"
 #include "effects/stubs/effect_render_simple.h"
 #include "effects/stubs/effect_render_svp_loader.h"
 #include "effects/stubs/effect_render_timescope.h"
@@ -120,8 +120,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("render / oscilloscope star", []() { return std::make_unique<Effect_RenderOscilloscopeStar>(); });
   registry.registerFactory("Render / Ring", []() { return std::make_unique<Effect_RenderRing>(); });
   registry.registerFactory("render / ring", []() { return std::make_unique<Effect_RenderRing>(); });
-  registry.registerFactory("Render / Rotating Stars", []() { return std::make_unique<Effect_RenderRotatingStars>(); });
-  registry.registerFactory("render / rotating stars", []() { return std::make_unique<Effect_RenderRotatingStars>(); });
+  registry.registerFactory("Render / Rotating Stars", []() { return std::make_unique<render::RotatingStars>(); });
+  registry.registerFactory("render / rotating stars", []() { return std::make_unique<render::RotatingStars>(); });
   registry.registerFactory("Render / Simple", []() { return std::make_unique<Effect_RenderSimple>(); });
   registry.registerFactory("render / simple", []() { return std::make_unique<Effect_RenderSimple>(); });
   registry.registerFactory("Render / SVP Loader", []() { return std::make_unique<Effect_RenderSvpLoader>(); });

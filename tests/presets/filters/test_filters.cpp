@@ -19,6 +19,7 @@
 #include "avs/effects/RegisterEffects.hpp"
 #include "avs/offscreen/Md5.hpp"
 #include "effects/filters/effect_fast_brightness.h"
+#include "effects/trans/effect_unique_tone.h"
 
 namespace {
 
@@ -32,10 +33,12 @@ struct FrameHashResult {
 };
 
 std::vector<std::uint8_t> makeBasePattern() {
-  std::vector<std::uint8_t> pixels(static_cast<std::size_t>(kWidth) * static_cast<std::size_t>(kHeight) * 4u);
+  std::vector<std::uint8_t> pixels(static_cast<std::size_t>(kWidth) *
+                                   static_cast<std::size_t>(kHeight) * 4u);
   for (int y = 0; y < kHeight; ++y) {
     for (int x = 0; x < kWidth; ++x) {
-      const std::size_t index = (static_cast<std::size_t>(y) * kWidth + static_cast<std::size_t>(x)) * 4u;
+      const std::size_t index =
+          (static_cast<std::size_t>(y) * kWidth + static_cast<std::size_t>(x)) * 4u;
       const int r = (x * 37 + y * 13) & 0xFF;
       const int g = (x * 11 + y * 59 + 17) & 0xFF;
       const int b = (x * 23 + y * 7 + 91) & 0xFF;
@@ -168,6 +171,15 @@ TEST_F(FilterEffectTests, FastBrightnessGolden) {
   expectGolden("fast_brightness", result.hashes);
 }
 
+TEST_F(FilterEffectTests, UniqueToneGolden) {
+  avs::core::ParamBlock params;
+  params.setInt("color", 0x6A38FF);
+  params.setBool("invert", true);
+  params.setString("mode", "replace");
+  const auto result = renderEffect("filter_unique_tone", params);
+  expectGolden("unique_tone", result.hashes);
+}
+
 TEST(FastBrightnessEffect, HonorsClampOutputModes) {
   {
     avs::effects::filters::FastBrightness effect;
@@ -254,6 +266,47 @@ TEST(FastBrightnessEffect, HonorsClampOutputModes) {
   }
 }
 
+TEST(UniqueToneEffect, PreservesLuminanceAndBlendModes) {
+  avs::effects::trans::UniqueTone effect;
+  avs::core::ParamBlock params;
+  params.setInt("color", 0x4080FF);
+  params.setBool("invert", false);
+  params.setString("mode", "replace");
+  effect.setParams(params);
+
+  std::array<std::uint8_t, 4> pixel{120u, 200u, 40u, 255u};
+  avs::core::RenderContext context{};
+  context.width = 1;
+  context.height = 1;
+  context.framebuffer = {pixel.data(), pixel.size()};
+
+  ASSERT_TRUE(effect.render(context));
+  const float originalLuma = 0.2126f * 120.0f + 0.7152f * 200.0f + 0.0722f * 40.0f;
+  const float tintedLuma = 0.2126f * static_cast<float>(pixel[0]) +
+                           0.7152f * static_cast<float>(pixel[1]) +
+                           0.0722f * static_cast<float>(pixel[2]);
+  EXPECT_NEAR(tintedLuma, originalLuma, 8.0f);
+
+  params.setBool("invert", true);
+  params.setBool("blend", true);
+  effect.setParams(params);
+  pixel = {20u, 40u, 60u, 200u};
+  ASSERT_TRUE(effect.render(context));
+  EXPECT_GT(pixel[0], 20u);
+  EXPECT_GT(pixel[1], 40u);
+  EXPECT_GT(pixel[2], 60u);
+
+  params.setBool("blend", false);
+  params.setBool("blendavg", true);
+  effect.setParams(params);
+  pixel = {250u, 5u, 125u, 180u};
+  ASSERT_TRUE(effect.render(context));
+  EXPECT_LT(pixel[0], 250u);
+  EXPECT_GT(pixel[1], 5u);
+  EXPECT_NEAR(pixel[0], pixel[2], 30u);
+  EXPECT_EQ(pixel[3], 180u);
+}
+
 TEST_F(FilterEffectTests, ColorMapGolden) {
   std::ostringstream table;
   table << std::hex << std::setfill('0');
@@ -285,4 +338,3 @@ TEST_F(FilterEffectTests, Conv3x3Golden) {
   const auto result = renderEffect("filter_conv3x3", params);
   expectGolden("conv3x3", result.hashes);
 }
-

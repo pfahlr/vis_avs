@@ -64,6 +64,25 @@ assignment follows 8-bit wraparound semantics, matching the original AVS plug-
 in. When both `amount` equals `1.0` and `bias` equals `0.0`, the pass is
 skipped.
 
+## `filter_unique_tone` (alias: `Trans / Unique tone`)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `color` | int | `0xFFFFFF` | Target tint in `0xRRGGBB` format. |
+| `color_r` / `color_g` / `color_b` | int | derived from `color` | Override individual RGB components (0–255). |
+| `invert` | bool | `false` | Flips the sampled luminance before mapping it to the tone. |
+| `mode` / `blend_mode` | string | `"replace"` | Blending strategy: `replace`, `add`/`additive`, or `avg`/`average`/`5050`. |
+| `blend` | bool | `false` | Legacy toggle for additive mode. Takes precedence over `mode` when provided. |
+| `blendavg` | bool | `false` | Legacy toggle for 50/50 averaging mode. |
+| `enabled` | bool | `true` | Bypasses the effect when set to `false`. |
+
+The effect collapses each pixel to a single tone while preserving its relative
+luminance. A linear RGB luma estimate (`0.2126·R + 0.7152·G + 0.0722·B`) drives
+the tone intensity. The computed brightness is scaled along the chosen tint,
+ensuring neutral whites remain white while coloured tints keep their perceived
+brightness. Additive and averaged blend modes mirror the legacy behaviour from
+the original plug-in.
+
 ## `filter_color_map`
 
 | Parameter | Type | Default | Description |

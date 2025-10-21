@@ -113,7 +113,7 @@ stubs:
     status: stub
     source: vis_avs/r_comment.cpp (R_Comment)
   - name: Misc / Custom BPM
-    status: stub
+    status: implemented
     source: vis_avs/r_bpm.cpp (R_Bpm)
   - name: Misc / Set render mode
     status: stub

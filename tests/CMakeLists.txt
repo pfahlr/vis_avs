@@ -57,6 +57,7 @@ add_executable(core_effects_tests
   core/test_channel_shift.cpp
   core/test_scripted_effect.cpp
   core/test_globals_and_bump.cpp
+  core/test_misc_custom_bpm.cpp
   core/test_transform_affine.cpp
   core/test_gating.cpp
   core/test_primitives.cpp

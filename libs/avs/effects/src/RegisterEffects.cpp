@@ -28,7 +28,6 @@
 #include "effects/trans/effect_channel_shift.h"
 #include "effects/trans/effect_multi_delay.h"
 #include "effects/trans/effect_video_delay.h"
-#include "effects/stubs/effect_misc_comment.h"
 #include "effects/misc/effect_render_mode.h"
 #include "effects/misc/effect_custom_bpm.h"
 #include "effects/trans/effect_multiplier.h"

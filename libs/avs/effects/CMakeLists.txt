@@ -40,6 +40,20 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/runtime/framebuffers.cpp
 )
 
+# Some stub sources are still TODO in the repository.  Filter out any entries
+# that are referenced here but do not exist locally so CMake does not fail when
+# new environments (like the Codespace container) have not generated them yet.
+set(_avs_effect_stubs_filtered "")
+foreach(_avs_effect_stub ${AVS_EFFECT_STUB_SOURCES})
+  if(EXISTS "${_avs_effect_stub}")
+    list(APPEND _avs_effect_stubs_filtered "${_avs_effect_stub}")
+  else()
+    message(STATUS "Skipping missing AVS effect stub: ${_avs_effect_stub}")
+  endif()
+endforeach()
+set(AVS_EFFECT_STUB_SOURCES ${_avs_effect_stubs_filtered})
+unset(_avs_effect_stubs_filtered)
+
 add_library(avs-effects-core
   src/Bump.cpp
   src/Blend.cpp

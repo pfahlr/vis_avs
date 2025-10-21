@@ -29,7 +29,7 @@
 #include "effects/stubs/effect_holden04_video_delay.h"
 #include "effects/stubs/effect_holden05_multi_delay.h"
 #include "effects/stubs/effect_misc_comment.h"
-#include "effects/stubs/effect_misc_custom_bpm.h"
+#include "effects/misc/effect_custom_bpm.h"
 #include "effects/stubs/effect_misc_set_render_mode.h"
 #include "effects/stubs/effect_multiplier.h"
 #include "effects/stubs/effect_render_avi.h"
@@ -100,8 +100,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("holden05: multi delay", []() { return std::make_unique<Effect_Holden05MultiDelay>(); });
   registry.registerFactory("Misc / Comment", []() { return std::make_unique<Effect_MiscComment>(); });
   registry.registerFactory("misc / comment", []() { return std::make_unique<Effect_MiscComment>(); });
-  registry.registerFactory("Misc / Custom BPM", []() { return std::make_unique<Effect_MiscCustomBpm>(); });
-  registry.registerFactory("misc / custom bpm", []() { return std::make_unique<Effect_MiscCustomBpm>(); });
+  registry.registerFactory("Misc / Custom BPM", []() { return std::make_unique<misc::CustomBpmEffect>(); });
+  registry.registerFactory("misc / custom bpm", []() { return std::make_unique<misc::CustomBpmEffect>(); });
   registry.registerFactory("Misc / Set render mode", []() { return std::make_unique<Effect_MiscSetRenderMode>(); });
   registry.registerFactory("misc / set render mode", []() { return std::make_unique<Effect_MiscSetRenderMode>(); });
   registry.registerFactory("Multiplier", []() { return std::make_unique<Effect_Multiplier>(); });

@@ -162,6 +162,9 @@ stubs:
     source: vis_avs/r_blit.cpp (R_BlitterFB)
   - name: Trans / Blur
     status: implemented
+    source: src/effects/trans/effect_blur.cpp
+  - name: Trans / Blur Box
+    status: implemented
     source: src/effects/filters/effect_blur_box.cpp
   - name: Trans / Channel Shift
     status: implemented

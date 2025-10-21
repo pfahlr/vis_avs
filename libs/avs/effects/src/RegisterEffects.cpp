@@ -32,7 +32,7 @@
 #include "effects/stubs/effect_misc_custom_bpm.h"
 #include "effects/stubs/effect_misc_set_render_mode.h"
 #include "effects/stubs/effect_multiplier.h"
-#include "effects/stubs/effect_render_avi.h"
+#include "effects/render/effect_avi.h"
 #include "effects/stubs/effect_render_bass_spin.h"
 #include "effects/stubs/effect_render_dot_fountain.h"
 #include "effects/stubs/effect_render_dot_plane.h"

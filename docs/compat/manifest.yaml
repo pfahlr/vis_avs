@@ -121,6 +121,7 @@ stubs:
   - name: Render / AVI
     status: stub
     source: vis_avs/r_avi.cpp (R_AVI)
+    notes: "Draws placeholder or PNG/JPEG thumbnail until AVI decoding is implemented."
   - name: Render / Bass Spin
     status: stub
     source: vis_avs/r_bspin.cpp (R_BSpin)

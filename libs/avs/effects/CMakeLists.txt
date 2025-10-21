@@ -8,7 +8,7 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_misc_custom_bpm.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_misc_set_render_mode.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_multiplier.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_avi.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/render/effect_avi.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_bass_spin.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_dot_fountain.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_dot_plane.cpp

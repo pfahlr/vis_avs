@@ -8,7 +8,7 @@ All effects operate on the RGBA framebuffer stored in
 `avs::core::RenderContext::framebuffer`. Alpha channels are preserved unless
 explicitly noted.
 
-## `filter_blur_box` (alias: `Trans / Blur`)
+## `filter_blur_box`
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -17,7 +17,10 @@ explicitly noted.
 
 The implementation performs a separable, edge-clamped box blur. The effect uses
 prefix-sum windows to avoid per-tap branching while ensuring deterministic
-results across platforms.
+results across platforms. The render-list effect `Trans / Blur` is implemented
+separately in `src/effects/trans/effect_blur.cpp` to mirror the legacy
+behaviour and to expose additional routing controls (axis isolation and
+strength blending).
 
 ## `filter_grain` (alias: `Trans / Grain`)
 
@@ -63,6 +66,17 @@ an offset, and stores the rounded result. With clamping disabled the final
 assignment follows 8-bit wraparound semantics, matching the original AVS plug-
 in. When both `amount` equals `1.0` and `bias` equals `0.0`, the pass is
 skipped.
+
+## `color_reduction` (alias: `Color Reduction`)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `levels` | int | `7` | Number of high-order bits preserved per channel. Values outside `[1, 8]` are clamped. |
+| `bits` | int | inherits `levels` | Legacy alias accepted during preset import. |
+
+The pass truncates each RGB channel to the requested bit depth by masking the
+low-order bits, exactly mirroring the rounding performed by the original AVS
+module. Alpha data is preserved.
 
 ## `filter_color_map`
 

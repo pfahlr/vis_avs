@@ -52,6 +52,7 @@ class PrimitiveLines : public avs::core::IEffect {
   std::vector<std::pair<int, int>> points_{};
   bool closed_{false};
   int width_{1};
+  bool widthExplicit_{false};
   int color_{0xFFFFFF};
   int alpha_{255};
 };

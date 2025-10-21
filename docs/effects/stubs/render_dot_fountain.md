@@ -1,3 +1,0 @@
-# Render / Dot Fountain
-
-This is a stub for compatibility with legacy AVS presets. No functional rendering is implemented yet.

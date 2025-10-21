@@ -94,9 +94,6 @@ goldens:
     file: tests/golden/micro_blend_md5.txt
     update_command: ./tools/update_goldens.sh
 stubs:
-  - name: Channel Shift
-    status: stub
-    source: vis_avs/rlib.cpp (R_ChannelShift)
   - name: Color Reduction
     status: implemented
     source: src/effects/trans/effect_color_reduction.cpp
@@ -157,6 +154,10 @@ stubs:
   - name: Trans / Blur
     status: implemented
     source: src/effects/filters/effect_blur_box.cpp
+  - name: Trans / Channel Shift
+    status: implemented
+    source: src/effects/trans/effect_channel_shift.cpp
+    notes: "Permutes RGB channels with optional beat-triggered randomisation."
   - name: Trans / Brightness
     status: stub
     source: vis_avs/r_bright.cpp (R_Brightness)

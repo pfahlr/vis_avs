@@ -164,7 +164,7 @@ stubs:
     status: implemented
     source: src/effects/filters/effect_fast_brightness.cpp
   - name: Trans / Color Clip
-    status: stub
+    status: implemented
     source: vis_avs/r_colorreplace.cpp (R_ContrastEnhance)
   - name: Trans / Color Modifier
     status: stub

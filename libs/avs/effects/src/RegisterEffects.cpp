@@ -46,7 +46,7 @@
 #include "effects/stubs/effect_trans_blitter_feedback.h"
 #include "effects/stubs/effect_trans_blur.h"
 #include "effects/stubs/effect_trans_brightness.h"
-#include "effects/stubs/effect_trans_color_clip.h"
+#include "effects/trans/effect_color_clip.h"
 #include "effects/stubs/effect_trans_color_modifier.h"
 #include "effects/stubs/effect_trans_colorfade.h"
 #include "effects/stubs/effect_trans_mosaic.h"
@@ -150,8 +150,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("filter / convolution", []() { return std::make_unique<filters::Convolution3x3>(); });
   registry.registerFactory("Trans / Brightness", []() { return std::make_unique<Effect_TransBrightness>(); });
   registry.registerFactory("trans / brightness", []() { return std::make_unique<Effect_TransBrightness>(); });
-  registry.registerFactory("Trans / Color Clip", []() { return std::make_unique<Effect_TransColorClip>(); });
-  registry.registerFactory("trans / color clip", []() { return std::make_unique<Effect_TransColorClip>(); });
+  registry.registerFactory("Trans / Color Clip", []() { return std::make_unique<avs::effects::trans::ColorClip>(); });
+  registry.registerFactory("trans / color clip", []() { return std::make_unique<avs::effects::trans::ColorClip>(); });
   registry.registerFactory("Trans / Color Modifier", []() { return std::make_unique<Effect_TransColorModifier>(); });
   registry.registerFactory("trans / color modifier", []() { return std::make_unique<Effect_TransColorModifier>(); });
   registry.registerFactory("Trans / Colorfade", []() { return std::make_unique<Effect_TransColorfade>(); });

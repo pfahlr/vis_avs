@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "avs/core/RenderContext.hpp"
+#include "avs/runtime/GlobalState.hpp"
 
 namespace avs::effects::detail {
 
@@ -32,8 +33,59 @@ inline std::uint8_t clampByte(int value) {
   return static_cast<std::uint8_t>(std::clamp(value, 0, 255));
 }
 
+inline std::uint8_t scaleChannel(std::uint8_t value, std::uint8_t alpha) {
+  return static_cast<std::uint8_t>((static_cast<int>(value) * static_cast<int>(alpha) + 127) / 255);
+}
+
 inline bool inBounds(const avs::core::RenderContext& ctx, int x, int y) {
   return x >= 0 && y >= 0 && x < ctx.width && y < ctx.height;
+}
+
+inline std::uint8_t saturatingAdd(std::uint8_t a, std::uint8_t b) {
+  const std::uint16_t sum = static_cast<std::uint16_t>(a) + static_cast<std::uint16_t>(b);
+  return static_cast<std::uint8_t>(std::min<std::uint16_t>(sum, 255u));
+}
+
+inline std::uint8_t channelMax(std::uint8_t a, std::uint8_t b) {
+  return std::max(a, b);
+}
+
+inline std::uint8_t channelMin(std::uint8_t a, std::uint8_t b) {
+  return std::min(a, b);
+}
+
+inline std::uint8_t subtractClamp(std::uint8_t a, std::uint8_t b) {
+  return static_cast<std::uint8_t>(a > b ? a - b : 0u);
+}
+
+inline std::uint8_t averageChannel(std::uint8_t a, std::uint8_t b) {
+  return static_cast<std::uint8_t>((static_cast<int>(a) + static_cast<int>(b) + 1) / 2);
+}
+
+inline std::uint8_t multiplyChannel(std::uint8_t a, std::uint8_t b) {
+  return static_cast<std::uint8_t>((static_cast<int>(a) * static_cast<int>(b) + 127) / 255);
+}
+
+inline std::uint8_t blendAdjustChannel(std::uint8_t dst, std::uint8_t src, std::uint8_t alpha) {
+  const std::uint8_t inv = static_cast<std::uint8_t>(255u - alpha);
+  return static_cast<std::uint8_t>((static_cast<int>(dst) * inv + static_cast<int>(src) * alpha + 127) / 255);
+}
+
+inline const avs::runtime::LegacyRenderState* legacyRenderState(const avs::core::RenderContext& ctx) {
+  if (ctx.globals && ctx.globals->legacyRender.lineBlendModeActive) {
+    return &ctx.globals->legacyRender;
+  }
+  return nullptr;
+}
+
+inline std::optional<int> legacyLineWidthOverride(const avs::core::RenderContext& ctx) {
+  if (const auto* legacy = legacyRenderState(ctx)) {
+    const int width = static_cast<int>((legacy->lineBlendMode >> 16) & 0xFFu);
+    if (width > 0) {
+      return width;
+    }
+  }
+  return std::nullopt;
 }
 
 inline void blendPixel(const avs::core::RenderContext& ctx,
@@ -45,15 +97,96 @@ inline void blendPixel(const avs::core::RenderContext& ctx,
     return;
   }
   auto* pixel = ctx.framebuffer.data + (static_cast<std::size_t>(y) * ctx.width + x) * 4;
-  const std::uint8_t alpha = static_cast<std::uint8_t>((static_cast<int>(coverage) * color.a + 127) / 255);
-  if (alpha == 0) {
+  const std::uint8_t effectiveAlpha = static_cast<std::uint8_t>((static_cast<int>(coverage) * color.a + 127) / 255);
+  if (effectiveAlpha == 0) {
     return;
   }
-  const int inv = 255 - alpha;
-  pixel[0] = static_cast<std::uint8_t>((pixel[0] * inv + color.r * alpha + 127) / 255);
-  pixel[1] = static_cast<std::uint8_t>((pixel[1] * inv + color.g * alpha + 127) / 255);
-  pixel[2] = static_cast<std::uint8_t>((pixel[2] * inv + color.b * alpha + 127) / 255);
-  pixel[3] = static_cast<std::uint8_t>(std::min(255, static_cast<int>(pixel[3]) + alpha));
+  const auto* legacy = legacyRenderState(ctx);
+  if (!legacy) {
+    const int inv = 255 - effectiveAlpha;
+    pixel[0] = static_cast<std::uint8_t>((pixel[0] * inv + color.r * effectiveAlpha + 127) / 255);
+    pixel[1] = static_cast<std::uint8_t>((pixel[1] * inv + color.g * effectiveAlpha + 127) / 255);
+    pixel[2] = static_cast<std::uint8_t>((pixel[2] * inv + color.b * effectiveAlpha + 127) / 255);
+    pixel[3] = static_cast<std::uint8_t>(std::min(255, static_cast<int>(pixel[3]) + effectiveAlpha));
+    return;
+  }
+
+  const std::uint8_t mode = static_cast<std::uint8_t>(legacy->lineBlendMode & 0xFFu);
+  std::array<std::uint8_t, 4> source = {scaleChannel(color.r, effectiveAlpha),
+                                        scaleChannel(color.g, effectiveAlpha),
+                                        scaleChannel(color.b, effectiveAlpha),
+                                        effectiveAlpha};
+
+  switch (mode) {
+    case 0:  // Replace
+      pixel[0] = source[0];
+      pixel[1] = source[1];
+      pixel[2] = source[2];
+      pixel[3] = source[3];
+      break;
+    case 1:  // Additive
+      pixel[0] = saturatingAdd(pixel[0], source[0]);
+      pixel[1] = saturatingAdd(pixel[1], source[1]);
+      pixel[2] = saturatingAdd(pixel[2], source[2]);
+      pixel[3] = saturatingAdd(pixel[3], source[3]);
+      break;
+    case 2:  // Maximum
+      pixel[0] = channelMax(pixel[0], source[0]);
+      pixel[1] = channelMax(pixel[1], source[1]);
+      pixel[2] = channelMax(pixel[2], source[2]);
+      pixel[3] = channelMax(pixel[3], source[3]);
+      break;
+    case 3:  // 50/50 blend
+      pixel[0] = averageChannel(pixel[0], source[0]);
+      pixel[1] = averageChannel(pixel[1], source[1]);
+      pixel[2] = averageChannel(pixel[2], source[2]);
+      pixel[3] = averageChannel(pixel[3], source[3]);
+      break;
+    case 4:  // Subtractive 1
+      pixel[0] = subtractClamp(pixel[0], source[0]);
+      pixel[1] = subtractClamp(pixel[1], source[1]);
+      pixel[2] = subtractClamp(pixel[2], source[2]);
+      pixel[3] = subtractClamp(pixel[3], source[3]);
+      break;
+    case 5:  // Subtractive 2
+      pixel[0] = subtractClamp(source[0], pixel[0]);
+      pixel[1] = subtractClamp(source[1], pixel[1]);
+      pixel[2] = subtractClamp(source[2], pixel[2]);
+      pixel[3] = subtractClamp(source[3], pixel[3]);
+      break;
+    case 6:  // Multiply
+      pixel[0] = multiplyChannel(pixel[0], source[0]);
+      pixel[1] = multiplyChannel(pixel[1], source[1]);
+      pixel[2] = multiplyChannel(pixel[2], source[2]);
+      pixel[3] = multiplyChannel(pixel[3], source[3]);
+      break;
+    case 7:  // Adjustable blend
+      pixel[0] = blendAdjustChannel(pixel[0], source[0], static_cast<std::uint8_t>((legacy->lineBlendMode >> 8) & 0xFFu));
+      pixel[1] = blendAdjustChannel(pixel[1], source[1], static_cast<std::uint8_t>((legacy->lineBlendMode >> 8) & 0xFFu));
+      pixel[2] = blendAdjustChannel(pixel[2], source[2], static_cast<std::uint8_t>((legacy->lineBlendMode >> 8) & 0xFFu));
+      pixel[3] = blendAdjustChannel(pixel[3], source[3], static_cast<std::uint8_t>((legacy->lineBlendMode >> 8) & 0xFFu));
+      break;
+    case 8:  // XOR
+      pixel[0] ^= source[0];
+      pixel[1] ^= source[1];
+      pixel[2] ^= source[2];
+      pixel[3] ^= source[3];
+      break;
+    case 9:  // Minimum
+      pixel[0] = channelMin(pixel[0], source[0]);
+      pixel[1] = channelMin(pixel[1], source[1]);
+      pixel[2] = channelMin(pixel[2], source[2]);
+      pixel[3] = channelMin(pixel[3], source[3]);
+      break;
+    default:
+      // Fallback to alpha blend when mode is unknown
+      const int inv = 255 - effectiveAlpha;
+      pixel[0] = static_cast<std::uint8_t>((pixel[0] * inv + color.r * effectiveAlpha + 127) / 255);
+      pixel[1] = static_cast<std::uint8_t>((pixel[1] * inv + color.g * effectiveAlpha + 127) / 255);
+      pixel[2] = static_cast<std::uint8_t>((pixel[2] * inv + color.b * effectiveAlpha + 127) / 255);
+      pixel[3] = static_cast<std::uint8_t>(std::min(255, static_cast<int>(pixel[3]) + effectiveAlpha));
+      break;
+  }
 }
 
 struct Point {

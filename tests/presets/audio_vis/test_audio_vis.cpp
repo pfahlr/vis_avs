@@ -185,3 +185,15 @@ TEST(AudioOverlayGoldenTest, BandTextGolden) {
   const auto frame = renderEffect("effect_bandtxt", params);
   expectGolden(frame, golden);
 }
+
+TEST(AudioVisRenderEffectGolden, DotPlaneGolden) {
+  avs::core::ParamBlock params;
+  params.setInt("rotvel", 14);
+  params.setInt("angle", -25);
+  params.setInt("color2", 0x7A2F2F);
+  params.setInt("color3", 0xD450A0);
+  const auto golden =
+      std::filesystem::path(SOURCE_DIR) / "tests/presets/audio_vis/golden/dot_plane.txt";
+  const auto frame = renderEffect("render / dot plane", params);
+  expectGolden(frame, golden);
+}

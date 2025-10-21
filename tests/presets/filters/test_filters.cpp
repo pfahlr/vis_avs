@@ -20,6 +20,8 @@
 #include "avs/offscreen/Md5.hpp"
 #include "effects/filters/effect_fast_brightness.h"
 #include "effects/trans/effect_water.h"
+#include "effects/trans/effect_color_reduction.h"
+
 
 namespace {
 
@@ -349,3 +351,55 @@ TEST(WaterEffect, SimulatesIntegerRipplePropagation) {
     EXPECT_EQ(pixels[i + 3], 255u);
   }
 }
+
+TEST(ColorReductionEffect, MasksRgbChannelsToRequestedDepth) {
+  avs::effects::trans::ColorReduction effect;
+  avs::core::ParamBlock params;
+  params.setInt("levels", 5);
+  effect.setParams(params);
+
+  std::array<std::uint8_t, 4> pixel{0b10110110u, 0b01101101u, 0b11110000u, 0xAAu};
+  avs::core::RenderContext context{};
+  context.width = 1;
+  context.height = 1;
+  context.framebuffer = {pixel.data(), pixel.size()};
+
+  ASSERT_TRUE(effect.render(context));
+  EXPECT_EQ(pixel[0], 0b10110000u);
+  EXPECT_EQ(pixel[1], 0b01101000u);
+  EXPECT_EQ(pixel[2], 0b11110000u);
+  EXPECT_EQ(pixel[3], 0xAAu);
+}
+
+TEST(ColorReductionEffect, ClampsLevelsAndSupportsBitAlias) {
+  avs::effects::trans::ColorReduction effect;
+  avs::core::ParamBlock params;
+  params.setInt("levels", 9);  // clamps to 8
+  effect.setParams(params);
+
+  std::array<std::uint8_t, 4> pixel{12u, 34u, 56u, 78u};
+  avs::core::RenderContext context{};
+  context.width = 1;
+  context.height = 1;
+  context.framebuffer = {pixel.data(), pixel.size()};
+
+  ASSERT_TRUE(effect.render(context));
+  EXPECT_EQ(pixel[0], 12u);
+  EXPECT_EQ(pixel[1], 34u);
+  EXPECT_EQ(pixel[2], 56u);
+  EXPECT_EQ(pixel[3], 78u);
+
+  pixel = {200u, 150u, 90u, 78u};
+  context.framebuffer = {pixel.data(), pixel.size()};
+  params = avs::core::ParamBlock{};
+  params.setInt("bits", 2);
+  effect.setParams(params);
+
+  ASSERT_TRUE(effect.render(context));
+  EXPECT_EQ(pixel[0], 192u);
+  EXPECT_EQ(pixel[1], 128u);
+  EXPECT_EQ(pixel[2], 64u);
+  EXPECT_EQ(pixel[3], 78u);
+}
+
+

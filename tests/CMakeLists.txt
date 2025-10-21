@@ -84,6 +84,13 @@ target_compile_definitions(dynamic_effects_tests PRIVATE BUILD_DIR="${CMAKE_BINA
 target_include_directories(dynamic_effects_tests PRIVATE ${CMAKE_SOURCE_DIR}/tests/presets/fb_ops)
 add_test(NAME dynamic_effects_tests COMMAND dynamic_effects_tests)
 
+add_executable(trans_effects_tests
+  presets/trans/test_blitter_feedback.cpp)
+target_link_libraries(trans_effects_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
+target_compile_options(trans_effects_tests PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(trans_effects_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+add_test(NAME trans_effects_tests COMMAND trans_effects_tests)
+
 add_executable(filter_effects_tests
   presets/filters/test_filters.cpp)
 target_link_libraries(filter_effects_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)

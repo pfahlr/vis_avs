@@ -19,7 +19,6 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_simple.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_svp_loader.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_timescope.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_blitter_feedback.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_blur.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_brightness.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_color_clip.cpp
@@ -38,6 +37,7 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/dynamic/dyn_shift.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/dynamic/movement.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/dynamic/zoom_rotate.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_blitter_feedback.cpp
   ${CMAKE_SOURCE_DIR}/src/runtime/parser.cpp
   ${CMAKE_SOURCE_DIR}/src/runtime/framebuffers.cpp
 )

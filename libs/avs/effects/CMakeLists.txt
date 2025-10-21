@@ -1,6 +1,5 @@
 set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/effect.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_channel_shift.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_color_reduction.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_holden04_video_delay.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_holden05_multi_delay.cpp

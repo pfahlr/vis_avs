@@ -115,7 +115,8 @@ add_test(NAME filter_effects_tests COMMAND $<TARGET_FILE:filter_effects_tests>)
 add_executable(trans_effects_tests
   presets/trans/test_blitter_feedback.cpp
   presets/trans/test_trans.cpp
-  presets/trans/test_trans_blur.cpp)
+  presets/trans/test_trans_blur.cpp
+  presets/trans/test_trans_water_bump.cpp)
 
 target_link_libraries(trans_effects_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
 target_compile_options(trans_effects_tests PRIVATE -Wall -Wextra -Werror)

@@ -207,8 +207,8 @@ stubs:
     status: implemented
     source: src/effects/trans/effect_unique_tone.cpp
   - name: Trans / Water
-    status: stub
-    source: vis_avs/r_water.cpp (R_Water)
+    status: implemented
+    source: src/effects/trans/effect_water.cpp
   - name: Trans / Water Bump
-    status: stub
-    source: vis_avs/r_waterbump.cpp (R_WaterBump)
+    status: implemented
+    source: src/effects/trans/effect_water_bump.cpp

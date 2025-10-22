@@ -12,6 +12,8 @@ namespace avs::effects::trans {
 namespace {
 
 constexpr std::size_t kBufferCount = 6u;
+// Matches the historical cap used by VideoDelay to keep allocations bounded.
+constexpr std::size_t kMaxHistoryFrames = 400u;
 
 struct BufferSettings {
   bool useBeat = false;
@@ -77,12 +79,14 @@ class SharedState {
           continue;
         }
         const int value = params.getInt(key, settings_[i].delayFrames);
-        settings_[i].delayFrames = std::max(value, 0);
+        settings_[i].delayFrames =
+            std::clamp(value, 0, static_cast<int>(kMaxHistoryFrames));
         goto parsedDelay;
       }
       if (params.contains("delay")) {
         const int value = params.getInt("delay", settings_[i].delayFrames);
-        settings_[i].delayFrames = std::max(value, 0);
+        settings_[i].delayFrames =
+            std::clamp(value, 0, static_cast<int>(kMaxHistoryFrames));
       }
     parsedDelay:
       continue;
@@ -189,18 +193,22 @@ class SharedState {
 
   void updateBeatCounters(bool beat) {
     if (beat) {
-      framesPerBeat_ = framesSinceBeat_;
+      framesPerBeat_ = std::min(framesSinceBeat_, kMaxHistoryFrames);
       framesSinceBeat_ = 0;
     }
-    framesSinceBeat_++;
+    if (framesSinceBeat_ < kMaxHistoryFrames) {
+      ++framesSinceBeat_;
+    }
   }
 
   void configureBuffers(std::size_t frameStride, bool forceReset) {
     for (std::size_t i = 0; i < kBufferCount; ++i) {
       const auto& settings = settings_[i];
-      const std::size_t baseDelay =
-          settings.useBeat ? framesPerBeat_ : static_cast<std::size_t>(settings.delayFrames);
-      const std::size_t frameCount = baseDelay + 1u;
+      const std::size_t baseDelay = settings.useBeat
+                                        ? framesPerBeat_
+                                        : static_cast<std::size_t>(settings.delayFrames);
+      const std::size_t clampedDelay = std::min(baseDelay, kMaxHistoryFrames);
+      const std::size_t frameCount = clampedDelay + 1u;
       configureBuffer(i, frameStride, frameCount, forceReset);
     }
   }
@@ -216,6 +224,15 @@ class SharedState {
         buffer.readIndex = 0;
         buffer.writeIndex = 0;
       }
+      return;
+    }
+
+    if (frameCount > std::numeric_limits<std::size_t>::max() / frameStride) {
+      buffer.storage.clear();
+      buffer.frameStride = 0;
+      buffer.frameCount = 0;
+      buffer.readIndex = 0;
+      buffer.writeIndex = 0;
       return;
     }
 

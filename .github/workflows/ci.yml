@@ -12,7 +12,7 @@ env:
 
 jobs:
   build:
-    name: Build and test (${{ matrix.distro }})
+    name: Build (${{ matrix.distro }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -200,10 +200,170 @@ jobs:
             -DCMAKE_INSTALL_PREFIX="${PWD}/install"
           fi
       - name: Build
-        run: cmake --build build
+        run: cmake --build build -- -k 0
 
-      - name: Test
-        run: ctest --output-on-failure --test-dir build
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.distro }}
+          include-hidden-files: true
+          path: |
+            build
+            !build/**/*.o
+            !build/**/*.a
 
       - name: Install
         run: cmake --install build --prefix "${PWD}/install"
+
+  tests:
+    name: Tests (${{ matrix.distro }} shard ${{ matrix.shard }} of ${{ matrix.total_shards }})
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - distro: ubuntu
+            container: ubuntu:22.04
+            pkg_cache: /var/cache/apt
+            shard: 0
+            total_shards: 2
+          - distro: ubuntu
+            container: ubuntu:22.04
+            pkg_cache: /var/cache/apt
+            shard: 1
+            total_shards: 2
+          - distro: fedora
+            container: fedora:39
+            pkg_cache: /var/cache/dnf
+            shard: 0
+            total_shards: 2
+          - distro: fedora
+            container: fedora:39
+            pkg_cache: /var/cache/dnf
+            shard: 1
+            total_shards: 2
+    container: ${{ matrix.container }}
+
+    steps:
+      - name: Detect available cores
+        id: cores
+        run: echo "cores=$(nproc)" >> "$GITHUB_OUTPUT"
+
+      - name: Export parallel build level
+        run: echo "CMAKE_BUILD_PARALLEL_LEVEL=${{ steps.cores.outputs.cores }}" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v4
+
+      - name: Prepare cache directories
+        run: |
+          mkdir -p .ccache
+          mkdir -p "$HOME/.cache/fetchcontent"
+          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
+            mkdir -p /var/cache/apt
+          else
+            mkdir -p /var/cache/dnf
+          fi
+
+      - name: Cache package manager artifacts
+        uses: actions/cache@v4
+        with:
+          path: ${{ matrix.pkg_cache }}
+          key: ${{ runner.os }}-${{ matrix.distro }}-pkg-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.distro }}-pkg-
+
+      - name: Install runtime dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update
+            apt-get install -y --no-install-recommends \
+              cmake \
+              git \
+              libasound2-dev \
+              libgl1-mesa-dev \
+              libglu1-mesa-dev \
+              libjack-dev \
+              libportaudio2 \
+              libsdl2-dev \
+              libsamplerate0-dev \
+              libfftw3-dev \
+              python3
+          else
+            dnf -y makecache
+            dnf -y install \
+              cmake \
+              SDL2-devel \
+              alsa-lib-devel \
+              fftw-devel \
+              git \
+              jack-audio-connection-kit-devel \
+              libsamplerate-devel \
+              mesa-libGL-devel \
+              mesa-libGLU-devel \
+              portaudio-devel \
+              python3
+          fi
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-${{ matrix.distro }}
+          path: .
+
+      - name: Run tests
+        env:
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_TOTAL: ${{ matrix.total_shards }}
+        run: |
+          set -euo pipefail
+          if [ "${SHARD_TOTAL}" -le 1 ]; then
+            ctest --test-dir build --output-on-failure --parallel "${CMAKE_BUILD_PARALLEL_LEVEL}"
+            exit 0
+          fi
+          python3 - <<'PY'
+import os
+import re
+import subprocess
+import sys
+
+shard_index = int(os.environ["SHARD_INDEX"])
+shard_total = int(os.environ["SHARD_TOTAL"])
+
+ctest_list = subprocess.check_output(["ctest", "--test-dir", "build", "-N"], text=True)
+tests = []
+for line in ctest_list.splitlines():
+    line = line.strip()
+    if line.startswith("Test #"):
+        parts = line.split(": ", 1)
+        if len(parts) == 2:
+            tests.append(parts[1].strip())
+
+if not tests:
+    print("No tests discovered; exiting shard early.")
+    sys.exit(0)
+
+tests.sort()
+shard_tests = tests[shard_index::shard_total]
+
+if not shard_tests:
+    print("Shard has no tests to run; exiting.")
+    sys.exit(0)
+
+pattern = "^(%s)$" % "|".join(re.escape(t) for t in shard_tests)
+cmd = [
+    "ctest",
+    "--test-dir", "build",
+    "--output-on-failure",
+    "--parallel", os.environ.get("CMAKE_BUILD_PARALLEL_LEVEL", "1"),
+    "--tests-regex", pattern,
+]
+
+print("Running:", " ".join(cmd))
+sys.stdout.flush()
+result = subprocess.call(cmd)
+sys.exit(result)
+PY

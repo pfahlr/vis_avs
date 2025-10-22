@@ -501,7 +501,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 ```--tags origin || git fetch --prune --tags --depth=50 origin;
 ---
 
-[ ] - 11. Holden05: Multi Delay
+[x] - 11. Holden05: Multi Delay
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.

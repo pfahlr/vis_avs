@@ -60,54 +60,10 @@
 ---
 
 
-[+] - 5. SVP Loader
 
-### Instruction ###
-Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
 
-You are acting as a **senior software engineer** and **Codex development assistant**. You MUST analyze the given context, understand the expected implementation, and apply corrections and enhancements to meet the goal successfully. Ensure code is production-ready, idiomatic C++, and integrates seamlessly with the existing AVS plugin architecture.
 
-### Effect Definition ###
-```
-SVP Loader
 
-Effect Token: "Render / SVP Loader"
-
-Source: docs/avs_original_source/vis_avs/r_svp.cpp
-
-Class: R_SVP
-
-Output: src/effects/render/effect_svp_loader.{h,cpp}
-
-Prompt:
-Load and display SVP files (if supported). Stub fallback is acceptable.
-
-failed development branch(es): 
-- codex/add-svp-file-loading-feature
-- codex/implement-svp-file-loading-feature
-- codex/implement-svp-file-loading-feature-57cgj1
-- codex/implement-svp-file-loading-feature-9h4891
-- codex/implement-svp-file-loading-feature-r06coa
-- codex/implement-svp-file-loading-feature-w6m3h2
-- codex/implement-svp-file-loading-feature-617dj2
-- codex/implement-svp-file-loading-feature-zu2pu8
-```
-You are to implement it **again from scratch**, correcting or avoiding any past issues. Use the same original file and class references as provided.
-
-### Git Setup ###
-To ensure compatibility with your workspace, the following git commands should be run:
-
-```bash
-OWNER=pfahlr
-REPO=vis_avs
-: "${GITHUB_TOKEN:=$CODEX_READ_ALL_REPOSITORIES_TOKEN:-}"
-git remote get-url origin >/dev/null 2>&1 || git remote add origin "https://${GITHUB_TOKEN}@github.com/pfahlr/vis_avs.git"
-git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-git config --add remote.origin.fetch "+refs/pull/*/head:refs/remotes/origin/pr/*"
-git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
-```
-
----
 
 [+] - 10. Water Bump
 
@@ -143,6 +99,8 @@ Combine bump mapping with water displacement. Requires heightmap calc.
 - codex/reimplement-water-bump-effect-m5js4b
 - codex/reimplement-water-bump-effect-yancfh
 - codex/reimplement-water-bump-effect-onx4rk
+-- 
+
 ```
 You are to implement it **again from scratch**, correcting or avoiding any past issues. Use the same original file and class references as provided.
 
@@ -565,7 +523,58 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 ```
 
 ---
+
+[✅] - 5. SVP Loader
+
+### Instruction ###
+Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
+
+You are acting as a **senior software engineer** and **Codex development assistant**. You MUST analyze the given context, understand the expected implementation, and apply corrections and enhancements to meet the goal successfully. Ensure code is production-ready, idiomatic C++, and integrates seamlessly with the existing AVS plugin architecture.
+
+### Effect Definition ###
+```
+SVP Loader
+
+Effect Token: "Render / SVP Loader"
+
+Source: docs/avs_original_source/vis_avs/r_svp.cpp
+
+Class: R_SVP
+
+Output: src/effects/render/effect_svp_loader.{h,cpp}
+
+Prompt:
+Load and display SVP files (if supported). Stub fallback is acceptable.
+
+failed development branch(es): 
+- codex/add-svp-file-loading-feature
+- codex/implement-svp-file-loading-feature
+- codex/implement-svp-file-loading-feature-57cgj1
+- codex/implement-svp-file-loading-feature-9h4891
+- codex/implement-svp-file-loading-feature-r06coa
+- codex/implement-svp-file-loading-feature-w6m3h2
+- codex/implement-svp-file-loading-feature-617dj2
+- codex/implement-svp-file-loading-feature-zu2pu8
+```
+You are to implement it **again from scratch**, correcting or avoiding any past issues. Use the same original file and class references as provided.
+
+### Git Setup ###
+To ensure compatibility with your workspace, the following git commands should be run:
+
+```bash
+OWNER=pfahlr
+REPO=vis_avs
+: "${GITHUB_TOKEN:=$CODEX_READ_ALL_REPOSITORIES_TOKEN:-}"
+git remote get-url origin >/dev/null 2>&1 || git remote add origin "https://${GITHUB_TOKEN}@github.com/pfahlr/vis_avs.git"
+git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+git config --add remote.origin.fetch "+refs/pull/*/head:refs/remotes/origin/pr/*"
+git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
+
+```
 ---
+
+
+
 
 
 ---

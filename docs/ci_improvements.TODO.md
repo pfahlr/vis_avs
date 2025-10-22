@@ -1,25 +1,26 @@
 # Ways to improve `ci.yml`
 
 Nice—those three cover the biggest wins. What’s *left* (ordered by impact):
-
-1. Split build & tests into separate jobs (parallelize wall time)
+<strike>
+[x] - 1. Split build & tests into separate jobs (parallelize wall time)
 
 * Build once → upload artifact (binaries + CMake/Ninja metadata, exclude `*.o`/`*.a`).
 * Fan out multiple `tests` jobs that download the artifact and run shards in parallel.
 * Build step: `cmake --build build -- -k 0`
 * Test step: `ctest --test-dir build --output-on-failure --parallel ${{ env.CMAKE_BUILD_PARALLEL_LEVEL }}`
+</strike>
 
-2. Gate Fedora to main/nightly
+[ ] - 2. Gate Fedora to main/nightly
 
 * Keep PRs on Ubuntu for speed.
 * Add `if: github.ref == 'refs/heads/main' || github.event_name == 'schedule'` to Fedora job, or move Fedora to a nightly workflow (`on: schedule`).
 
-3. Pre-baked CI images (big cold-start win)
+[ ] - 3. Pre-baked CI images (big cold-start win)
 
 * Build & push `ghcr.io/<owner>/<repo>-ci:ubuntu-22.04` and `:fedora-39` with cmake/ninja/ccache preinstalled.
 * Switch jobs to `container: ghcr.io/...` and remove apt/dnf steps.
 
-4. Make ctest explicitly parallel (if you haven’t already)
+[ ] - 4. Make ctest explicitly parallel (if you haven’t already)
 
 * You set `CMAKE_BUILD_PARALLEL_LEVEL`, but ensure tests use it:
 

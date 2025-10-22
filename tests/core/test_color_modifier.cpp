@@ -4,8 +4,8 @@
 #include <cstdint>
 #include <numbers>
 
-#include "avs/core/ParamBlock.hpp"
-#include "avs/core/RenderContext.hpp"
+#include <avs/core/ParamBlock.hpp>
+#include <avs/core/RenderContext.hpp>
 #include "effects/trans/effect_color_modifier.h"
 #include "gtest/gtest.h"
 

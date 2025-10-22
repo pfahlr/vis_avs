@@ -4,9 +4,9 @@
 #include <array>
 #include <cstdint>
 
-#include "avs/core/ParamBlock.hpp"
-#include "avs/core/RenderContext.hpp"
-#include "avs/core/DeterministicRng.hpp"
+#include <avs/core/ParamBlock.hpp>
+#include <avs/core/RenderContext.hpp>
+#include <avs/core/DeterministicRng.hpp>
 #include "effects/trans/effect_colorfade.h"
 
 namespace {

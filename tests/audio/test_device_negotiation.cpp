@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "avs/audio/AudioEngine.hpp"
-#include "avs/audio/DeviceInfo.hpp"
+#include <avs/audio/AudioEngine.hpp>
+#include <avs/audio/DeviceInfo.hpp>
 
 namespace {
 

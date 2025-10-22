@@ -3,10 +3,10 @@
 #include <memory>
 #include <string>
 
-#include "avs/core/EffectRegistry.hpp"
-#include "avs/core/IEffect.hpp"
-#include "avs/core/ParamBlock.hpp"
-#include "avs/core/RenderContext.hpp"
+#include <avs/core/EffectRegistry.hpp>
+#include <avs/core/IEffect.hpp>
+#include <avs/core/ParamBlock.hpp>
+#include <avs/core/RenderContext.hpp>
 
 namespace {
 

@@ -20,18 +20,18 @@
 #include <vector>
 
 #if AVS_BUILD_AUDIO
-#include "avs/audio_portaudio_internal.hpp"
+#include <avs/audio_portaudio_internal.hpp>
 #endif
 
-#include "avs/effects.hpp"
-#include "avs/effects_render.hpp"
-#include "avs/engine.hpp"
-#include "avs/fs.hpp"
-#include "avs/preset.hpp"
-#include "avs/registry.hpp"
+#include <avs/effects.hpp>
+#include <avs/effects_render.hpp>
+#include <avs/engine.hpp>
+#include <avs/fs.hpp>
+#include <avs/preset.hpp>
+#include <avs/registry.hpp>
 
 #if __has_include(<portaudio.h>)
-#include "avs/audio_portaudio_internal.hpp"
+#include <avs/audio_portaudio_internal.hpp>
 #define AVS_TEST_HAS_PORTAUDIO 1
 #else
 #define AVS_TEST_HAS_PORTAUDIO 0

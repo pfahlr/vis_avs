@@ -11,13 +11,13 @@
 #include <unordered_map>
 #include <vector>
 
-#include "avs/core/EffectRegistry.hpp"
-#include "avs/core/ParamBlock.hpp"
-#include "avs/core/Pipeline.hpp"
-#include "avs/core/RenderContext.hpp"
-#include "avs/effects/RegisterEffects.hpp"
-#include "avs/effects/micro_preset_parser.hpp"
-#include "avs/offscreen/Md5.hpp"
+#include <avs/core/EffectRegistry.hpp>
+#include <avs/core/ParamBlock.hpp>
+#include <avs/core/Pipeline.hpp>
+#include <avs/core/RenderContext.hpp>
+#include <avs/effects/RegisterEffects.hpp>
+#include <avs/effects/micro_preset_parser.hpp>
+#include <avs/offscreen/Md5.hpp>
 
 namespace {
 

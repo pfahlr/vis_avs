@@ -11,12 +11,12 @@
 #include <string_view>
 #include <vector>
 
-#include "avs/core/EffectRegistry.hpp"
-#include "avs/core/ParamBlock.hpp"
-#include "avs/core/Pipeline.hpp"
-#include "avs/core/RenderContext.hpp"
-#include "avs/effects/RegisterEffects.hpp"
-#include "avs/offscreen/Md5.hpp"
+#include <avs/core/EffectRegistry.hpp>
+#include <avs/core/ParamBlock.hpp>
+#include <avs/core/Pipeline.hpp>
+#include <avs/core/RenderContext.hpp>
+#include <avs/effects/RegisterEffects.hpp>
+#include <avs/offscreen/Md5.hpp>
 #include "effects/trans/effect_blur.h"
 
 namespace {

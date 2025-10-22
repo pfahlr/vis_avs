@@ -5,8 +5,8 @@
 #include <cstdint>
 #include <vector>
 
-#include "audio/analyzer.h"
-#include "avs/core/RenderContext.hpp"
+#include <avs/audio/analyzer.h>
+#include <avs/core/RenderContext.hpp>
 #include "effects/render/effect_oscilloscope_star.h"
 
 namespace {

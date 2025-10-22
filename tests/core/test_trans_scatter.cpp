@@ -5,9 +5,9 @@
 #include <cstdint>
 #include <vector>
 
-#include "avs/core/DeterministicRng.hpp"
-#include "avs/core/ParamBlock.hpp"
-#include "avs/core/RenderContext.hpp"
+#include <avs/core/DeterministicRng.hpp>
+#include <avs/core/ParamBlock.hpp>
+#include <avs/core/RenderContext.hpp>
 #include "effects/trans/effect_scatter.h"
 
 namespace {

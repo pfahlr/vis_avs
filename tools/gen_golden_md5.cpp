@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "avs/offscreen/Md5.hpp"
-#include "avs/offscreen/OffscreenRenderer.hpp"
+#include <avs/offscreen/Md5.hpp>
+#include <avs/offscreen/OffscreenRenderer.hpp>
 
 namespace {
 

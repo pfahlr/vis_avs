@@ -3,9 +3,9 @@
 #include <cstdint>
 #include <vector>
 
-#include "audio/analyzer.h"
-#include "avs/core/ParamBlock.hpp"
-#include "avs/core/RenderContext.hpp"
+#include <avs/audio/analyzer.h>
+#include <avs/core/ParamBlock.hpp>
+#include <avs/core/RenderContext.hpp>
 #include "effects/render/effect_simple_spectrum.h"
 
 namespace {

@@ -1,8 +1,8 @@
 #include <array>
 #include <cstdint>
 
-#include "avs/core/ParamBlock.hpp"
-#include "avs/core/RenderContext.hpp"
+#include <avs/core/ParamBlock.hpp>
+#include <avs/core/RenderContext.hpp>
 #include "effects/trans/effect_video_delay.h"
 #include "gtest/gtest.h"
 

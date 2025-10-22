@@ -4,9 +4,9 @@
 #include <cstdint>
 #include <vector>
 
-#include "avs/core/ParamBlock.hpp"
-#include "avs/core/RenderContext.hpp"
-#include "avs/effects/Primitives.hpp"
+#include <avs/core/ParamBlock.hpp>
+#include <avs/core/RenderContext.hpp>
+#include <avs/effects/Primitives.hpp>
 
 namespace {
 

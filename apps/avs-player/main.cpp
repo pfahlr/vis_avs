@@ -30,16 +30,16 @@ extern "C" {
 #include "sha256.h"
 }
 
-#include "avs/audio.hpp"
-#include "avs/audio/AudioEngine.hpp"
-#include "avs/audio/DeviceInfo.hpp"
-#include "avs/effects.hpp"
-#include "avs/engine.hpp"
-#include "avs/fft.hpp"
-#include "avs/fs.hpp"
-#include "avs/preset.hpp"
-#include "avs/runtime/ResourceManager.hpp"
-#include "avs/window.hpp"
+#include <avs/audio.hpp>
+#include <avs/audio/AudioEngine.hpp>
+#include <avs/audio/DeviceInfo.hpp>
+#include <avs/effects.hpp>
+#include <avs/engine.hpp>
+#include <avs/fft.hpp>
+#include <avs/fs.hpp>
+#include <avs/preset.hpp>
+#include <avs/runtime/ResourceManager.hpp>
+#include <avs/window.hpp>
 
 namespace {
 

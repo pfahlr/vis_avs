@@ -11,16 +11,16 @@ from collections import defaultdict
 
 repo = pathlib.Path(os.environ["REPO_ROOT"])
 
-registry_path = repo / "libs/avs-core/src/registry.cpp"
+registry_path = repo / "libs/avs-compat/src/registry.cpp"
 source_paths = [
-    repo / "libs/avs-core/src/effects_render.cpp",
-    repo / "libs/avs-core/src/effects_trans.cpp",
-    repo / "libs/avs-core/src/effects_misc.cpp",
+    repo / "libs/avs-compat/src/effects_render.cpp",
+    repo / "libs/avs-compat/src/effects_trans.cpp",
+    repo / "libs/avs-compat/src/effects_misc.cpp",
 ]
 header_paths = [
-    repo / "libs/avs-core/include/avs/effects_render.hpp",
-    repo / "libs/avs-core/include/avs/effects_trans.hpp",
-    repo / "libs/avs-core/include/avs/effects_misc.hpp",
+    repo / "libs/avs-compat/include/avs/compat/effects_render.hpp",
+    repo / "libs/avs-compat/include/avs/compat/effects_trans.hpp",
+    repo / "libs/avs-compat/include/avs/compat/effects_misc.hpp",
 ]
 
 original_root = repo / "docs/avs_original_source/vis_avs"

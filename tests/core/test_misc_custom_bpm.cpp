@@ -5,10 +5,10 @@
 #include <cstdint>
 #include <vector>
 
-#include "avs/core/ParamBlock.hpp"
-#include "avs/core/RenderContext.hpp"
-#include "avs/runtime/GlobalState.hpp"
-#include "audio/analyzer.h"
+#include <avs/core/ParamBlock.hpp>
+#include <avs/core/RenderContext.hpp>
+#include <avs/runtime/GlobalState.hpp>
+#include <avs/audio/analyzer.h>
 
 using avs::effects::misc::CustomBpmEffect;
 

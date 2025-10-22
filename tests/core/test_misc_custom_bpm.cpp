@@ -176,3 +176,61 @@ TEST(CustomBpmEffectTest, GateRegistersReflectHoldState) {
   EXPECT_EQ(renderHistory[5], 0);
   EXPECT_EQ(flagHistory[5], 0);
 }
+
+TEST(CustomBpmEffectTest, OverrideBeatReflectsGateHoldInAudioBeat) {
+  CustomBpmEffect effect;
+  avs::core::ParamBlock params;
+  params.setBool("arbitrary", true);
+  params.setFloat("bpm", 60.0f);
+  params.setInt("gate_hold", 2);
+  effect.setParams(params);
+
+  avs::core::RenderContext ctx = makeContext();
+  std::vector<bool> pulses;
+  for (int i = 0; i < 6; ++i) {
+    ctx.frameIndex = static_cast<std::uint64_t>(i);
+    ctx.audioBeat = false;
+    analysisFor(ctx).beat = false;
+    effect.render(ctx);
+    pulses.push_back(ctx.audioBeat);
+  }
+
+  ASSERT_EQ(pulses.size(), 6u);
+  EXPECT_FALSE(pulses[0]);
+  EXPECT_FALSE(pulses[1]);
+  EXPECT_FALSE(pulses[2]);
+  EXPECT_TRUE(pulses[3]);
+  EXPECT_TRUE(pulses[4]);
+  EXPECT_FALSE(pulses[5]);
+}
+
+TEST(CustomBpmEffectTest, OverrideBeatReflectsStickyLatchInAudioBeat) {
+  CustomBpmEffect effect;
+  avs::core::ParamBlock params;
+  params.setBool("arbitrary", true);
+  params.setFloat("bpm", 60.0f);
+  params.setBool("gate_sticky", true);
+  effect.setParams(params);
+
+  avs::core::RenderContext ctx = makeContext();
+  std::vector<bool> pulses;
+  for (int i = 0; i < 10; ++i) {
+    ctx.frameIndex = static_cast<std::uint64_t>(i);
+    ctx.audioBeat = false;
+    analysisFor(ctx).beat = false;
+    effect.render(ctx);
+    pulses.push_back(ctx.audioBeat);
+  }
+
+  ASSERT_EQ(pulses.size(), 10u);
+  EXPECT_FALSE(pulses[0]);
+  EXPECT_FALSE(pulses[1]);
+  EXPECT_FALSE(pulses[2]);
+  EXPECT_TRUE(pulses[3]);
+  EXPECT_TRUE(pulses[4]);
+  EXPECT_TRUE(pulses[5]);
+  EXPECT_TRUE(pulses[6]);
+  EXPECT_TRUE(pulses[7]);
+  EXPECT_FALSE(pulses[8]);
+  EXPECT_FALSE(pulses[9]);
+}

@@ -170,7 +170,6 @@ bool CustomBpmEffect::render(avs::core::RenderContext& context) {
 
   bool overrideBeat = false;
   bool eventPulse = baseBeat;
-  BeatAction action = BeatAction::None;
 
   if (mode_ == Mode::Arbitrary) {
     overrideBeat = true;
@@ -184,7 +183,6 @@ bool CustomBpmEffect::render(avs::core::RenderContext& context) {
       }
     }
     eventPulse = emit;
-    action = emit ? BeatAction::Set : BeatAction::Clear;
   } else {
     if (baseBeat) {
       ++beatsSeen_;
@@ -192,7 +190,6 @@ bool CustomBpmEffect::render(avs::core::RenderContext& context) {
     if (skipFirstCount_ > 0 && baseBeat && beatsSeen_ <= skipFirstCount_) {
       overrideBeat = true;
       eventPulse = false;
-      action = BeatAction::Clear;
     } else if (mode_ == Mode::Skip) {
       overrideBeat = true;
       if (baseBeat) {
@@ -200,22 +197,17 @@ bool CustomBpmEffect::render(avs::core::RenderContext& context) {
         if (skipCounter_ >= skipInterval_) {
           skipCounter_ = 0;
           eventPulse = true;
-          action = BeatAction::Set;
         } else {
           eventPulse = false;
-          action = BeatAction::Clear;
         }
       } else {
         eventPulse = false;
-        action = BeatAction::Clear;
       }
     } else if (mode_ == Mode::Invert) {
       overrideBeat = true;
       eventPulse = !baseBeat;
-      action = eventPulse ? BeatAction::Set : BeatAction::Clear;
     } else {
       eventPulse = baseBeat;
-      action = BeatAction::None;
     }
   }
 
@@ -223,11 +215,7 @@ bool CustomBpmEffect::render(avs::core::RenderContext& context) {
   writeGateRegisters(context, gate);
 
   if (overrideBeat) {
-    if (action == BeatAction::Set) {
-      context.audioBeat = (gate.flag == avs::effects::GateFlag::Beat);
-    } else if (action == BeatAction::Clear) {
-      context.audioBeat = false;
-    }
+    context.audioBeat = gate.render;
   } else {
     // When passing through, keep the gate in sync with the upstream beat but do not alter it.
     context.audioBeat = (gate.flag == avs::effects::GateFlag::Beat) ? true : baseBeat;

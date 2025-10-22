@@ -242,11 +242,17 @@ class SharedState {
     }
   }
 
+  enum class HistoryMode {
+    Preserve,
+    Reset,
+  };
+
   void beginFrame(const avs::core::RenderContext& context) {
     const std::size_t frameStride = computeFrameStride(context);
     const bool resolutionChanged = context.width != lastWidth_ || context.height != lastHeight_;
     const bool firstFrame = !haveFrame_;
     const bool newFrame = firstFrame || context.frameIndex != lastFrameIndex_;
+    const bool configChanged = configDirty_;
 
     if (newFrame) {
       if (!firstFrame) {
@@ -258,7 +264,13 @@ class SharedState {
       lastHeight_ = context.height;
       lastFrameStride_ = frameStride;
       updateBeatCounters(context.audioBeat);
-      reconfigureBuffers(frameStride, resolutionChanged || configDirty_);
+      if (resolutionChanged) {
+        reconfigureBuffers(frameStride, true, HistoryMode::Reset);
+      } else if (configChanged) {
+        reconfigureBuffers(frameStride, true, HistoryMode::Preserve);
+      } else {
+        reconfigureBuffers(frameStride, false, HistoryMode::Preserve);
+      }
       configDirty_ = false;
       return;
     }
@@ -267,13 +279,13 @@ class SharedState {
       lastWidth_ = context.width;
       lastHeight_ = context.height;
       lastFrameStride_ = frameStride;
-      reconfigureBuffers(frameStride, true);
+      reconfigureBuffers(frameStride, true, HistoryMode::Reset);
       configDirty_ = false;
       return;
     }
 
     if (configDirty_) {
-      reconfigureBuffers(lastFrameStride_, true);
+      reconfigureBuffers(lastFrameStride_, true, HistoryMode::Preserve);
       configDirty_ = false;
     }
   }
@@ -393,17 +405,21 @@ class SharedState {
     }
   }
 
-  void reconfigureBuffers(std::size_t frameStride, bool forceRecreate) {
+  void reconfigureBuffers(std::size_t frameStride, bool forceRecreate, HistoryMode historyMode) {
     for (std::size_t i = 0; i < kBufferCount; ++i) {
       const BufferConfig& cfg = configs_[i];
       const std::size_t delay = cfg.useBeat ? framesPerBeat_ : static_cast<std::size_t>(cfg.delayFrames);
       const std::size_t clampedDelay = std::min<std::size_t>(delay, kMaxHistoryFrames);
       const std::size_t frameCount = clampedDelay + 1u;
-      configureBuffer(i, frameStride, frameCount, forceRecreate);
+      configureBuffer(i, frameStride, frameCount, forceRecreate, historyMode);
     }
   }
 
-  void configureBuffer(std::size_t index, std::size_t frameStride, std::size_t frameCount, bool forceRecreate) {
+  void configureBuffer(std::size_t index,
+                       std::size_t frameStride,
+                       std::size_t frameCount,
+                       bool forceRecreate,
+                       HistoryMode historyMode) {
     BufferRuntime& buffer = buffers_[index];
 
     if (frameStride == 0 || frameCount <= 1u) {
@@ -440,7 +456,8 @@ class SharedState {
     }
 
     std::vector<std::uint8_t> newStorage(requiredSize, 0);
-    if (!buffer.storage.empty() && buffer.frameCount > 0 && buffer.frameStride > 0) {
+    if (historyMode == HistoryMode::Preserve && !buffer.storage.empty() && buffer.frameCount > 0 &&
+        buffer.frameStride > 0) {
       const std::size_t framesToCopy = std::min(buffer.frameCount, frameCount);
       const std::size_t bytesToCopy = std::min(buffer.frameStride, frameStride);
       for (std::size_t i = 0; i < framesToCopy; ++i) {

@@ -5,7 +5,7 @@
 
 #include <avs/core/ParamBlock.hpp>
 #include <avs/core/RenderContext.hpp>
-#include "effects/trans/effect_brightness.h"
+#include <avs/effects/legacy/trans/effect_brightness.h>
 
 namespace {
 

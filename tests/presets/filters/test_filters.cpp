@@ -18,10 +18,10 @@
 #include <avs/core/RenderContext.hpp>
 #include <avs/effects/RegisterEffects.hpp>
 #include <avs/offscreen/Md5.hpp>
-#include "effects/filters/effect_conv3x3.h"
-#include "effects/filters/effect_fast_brightness.h"
-#include "effects/trans/effect_water.h"
-#include "effects/trans/effect_color_reduction.h"
+#include <avs/effects/legacy/filters/effect_conv3x3.h>
+#include <avs/effects/legacy/filters/effect_fast_brightness.h>
+#include <avs/effects/legacy/trans/effect_water.h>
+#include <avs/effects/legacy/trans/effect_color_reduction.h>
 
 
 namespace {

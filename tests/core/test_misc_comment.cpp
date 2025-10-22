@@ -8,7 +8,7 @@
 #include <avs/core/ParamBlock.hpp>
 #include <avs/core/RenderContext.hpp>
 #include <avs/effects/micro_preset_parser.hpp>
-#include "effects/misc/effect_comment.h"
+#include <avs/effects/legacy/misc/effect_comment.h>
 
 namespace {
 

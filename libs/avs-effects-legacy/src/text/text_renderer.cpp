@@ -4,7 +4,7 @@
 #include <cstddef>
 #include <iterator>
 
-#include "../effects/primitive_common.hpp"
+#include <avs/effects/legacy/primitives/primitive_common.hpp>
 
 namespace avs::effects::text {
 

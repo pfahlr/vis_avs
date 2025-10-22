@@ -5,7 +5,7 @@
 
 #include <avs/core/DeterministicRng.hpp>
 #include <avs/core/RenderContext.hpp>
-#include "effects/trans/effect_channel_shift.h"
+#include <avs/effects/legacy/trans/effect_channel_shift.h>
 
 namespace {
 

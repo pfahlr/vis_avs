@@ -67,8 +67,11 @@ add_executable(core_effects_tests
   core/test_colorfade.cpp
   core/test_rotating_stars.cpp
   core/test_simple_spectrum.cpp
+  core/test_oscilloscope_star.cpp
   core/test_render_ring.cpp
   core/test_render_dot_fountain.cpp
+  core/test_render_bass_spin.cpp
+  core/test_render_moving_particle.cpp
   core/test_render_mode.cpp
   core/test_misc_comment.cpp
   core/test_trans_multiplier.cpp

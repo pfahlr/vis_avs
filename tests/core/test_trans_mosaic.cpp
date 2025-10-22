@@ -35,6 +35,60 @@ std::vector<std::uint8_t> makeSequentialPattern(int width, int height) {
   return pixels;
 }
 
+std::vector<std::uint8_t> runReferenceMosaic(const std::vector<std::uint8_t>& base,
+                                             int width,
+                                             int height,
+                                             int quality) {
+  constexpr int kOne = 1 << 16;
+  std::vector<std::uint8_t> result = base;
+  const auto* source = reinterpret_cast<const std::uint32_t*>(base.data());
+  auto* dst = reinterpret_cast<std::uint32_t*>(result.data());
+
+  const int sXInc = (width * 65536) / quality;
+  const int sYInc = (height * 65536) / quality;
+  int ypos = sYInc >> 17;
+  int dypos = 0;
+
+  for (int y = 0; y < height; ++y) {
+    if (ypos >= height) {
+      break;
+    }
+    const int sampleRow = ypos * width;
+    int dpos = 0;
+    int xpos = sXInc >> 17;
+    if (xpos >= width) {
+      xpos = width - 1;
+    }
+    std::uint32_t sample = source[sampleRow + xpos];
+    for (int x = 0; x < width; ++x) {
+      dst[static_cast<std::size_t>(y) * static_cast<std::size_t>(width) +
+          static_cast<std::size_t>(x)] = sample;
+      dpos += sXInc;
+      if (dpos >= kOne) {
+        const int advance = dpos >> 16;
+        xpos += advance;
+        if (xpos >= width) {
+          break;
+        }
+        sample = source[sampleRow + xpos];
+        dpos -= advance * kOne;
+      }
+    }
+
+    dypos += sYInc;
+    if (dypos >= kOne) {
+      const int advance = dypos >> 16;
+      ypos += advance;
+      if (ypos >= height) {
+        break;
+      }
+      dypos -= advance * kOne;
+    }
+  }
+
+  return result;
+}
+
 TEST(MosaicEffect, ReplaceModeUsesBlockSample) {
   constexpr int kWidth = 4;
   constexpr int kHeight = 4;
@@ -118,6 +172,28 @@ TEST(MosaicEffect, BeatLatchMatchesLegacyStepDown) {
 
     EXPECT_EQ(working, expected) << "frame " << frame;
   }
+}
+
+TEST(MosaicEffect, HighQualityProcessesEntireFrame) {
+  constexpr int kWidth = 10;
+  constexpr int kHeight = 6;
+  constexpr int kQuality = 20;
+
+  auto base = makeSequentialPattern(kWidth, kHeight);
+  auto working = base;
+
+  avs::effects::trans::Mosaic effect;
+  avs::core::ParamBlock params;
+  params.setBool("enabled", true);
+  params.setInt("quality", kQuality);
+  effect.setParams(params);
+
+  auto context = makeContext(working, kWidth, kHeight);
+  ASSERT_TRUE(effect.render(context));
+
+  auto expected = runReferenceMosaic(base, kWidth, kHeight, kQuality);
+
+  EXPECT_EQ(working, expected);
 }
 
 }  // namespace

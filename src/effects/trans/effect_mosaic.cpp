@@ -118,6 +118,8 @@ bool Mosaic::render(avs::core::RenderContext& context) {
 
     const int sXInc = (width * 65536) / effectiveQuality;
     const int sYInc = (height * 65536) / effectiveQuality;
+    const bool subPixelX = sXInc < kOne;
+    const bool subPixelY = sYInc < kOne;
     int ypos = sYInc >> 17;
     int dypos = 0;
 
@@ -146,24 +148,51 @@ bool Mosaic::render(avs::core::RenderContext& context) {
         }
         dst[index] = result;
 
-        dpos += kOne;
-        if (dpos >= sXInc) {
-          xpos += dpos >> 16;
-          if (xpos >= width) {
-            break;
+        if (subPixelX) {
+          dpos += sXInc;
+          if (dpos >= kOne) {
+            const int advance = dpos >> 16;
+            xpos += advance;
+            if (xpos >= width) {
+              break;
+            }
+            srcPixel = source[sampleRow + xpos];
+            dpos -= advance * kOne;
           }
-          srcPixel = source[sampleRow + xpos];
-          dpos -= sXInc;
+        } else {
+          dpos += kOne;
+          if (dpos >= sXInc) {
+            const int advance = dpos >> 16;
+            xpos += advance;
+            if (xpos >= width) {
+              break;
+            }
+            srcPixel = source[sampleRow + xpos];
+            dpos -= sXInc;
+          }
         }
       }
 
-      dypos += kOne;
-      if (dypos >= sYInc) {
-        ypos += dypos >> 16;
-        if (ypos >= height) {
-          break;
+      if (subPixelY) {
+        dypos += sYInc;
+        if (dypos >= kOne) {
+          const int advance = dypos >> 16;
+          ypos += advance;
+          if (ypos >= height) {
+            break;
+          }
+          dypos -= advance * kOne;
         }
-        dypos -= sYInc;
+      } else {
+        dypos += kOne;
+        if (dypos >= sYInc) {
+          const int advance = dypos >> 16;
+          ypos += advance;
+          if (ypos >= height) {
+            break;
+          }
+          dypos -= sYInc;
+        }
       }
     }
   }

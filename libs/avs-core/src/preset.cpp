@@ -313,7 +313,12 @@ bool parseRenderListChunk(Reader& r,
         result.warnings.push_back("failed to parse effect index: " + describeEffect(effectId));
       }
     } else {
-      result.warnings.push_back("unsupported effect index: " + describeEffect(effectId));
+      if (!effectNameForId(effectId).empty()) {
+        result.warnings.push_back("preset loader does not yet decode effect: " +
+                                  describeEffect(effectId));
+      } else {
+        result.warnings.push_back("unsupported effect index: " + describeEffect(effectId));
+      }
       chain.push_back(std::make_unique<PassThroughEffect>());
       result.unknown.push_back("effect:" + std::to_string(effectId));
     }

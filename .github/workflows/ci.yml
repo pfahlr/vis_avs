@@ -211,7 +211,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-${{ matrix.distro }}
-          path: .
+          path: build-${{ matrix.distro }}
 
       - name: Normalize build directory
         shell: bash

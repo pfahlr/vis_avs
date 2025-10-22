@@ -5,17 +5,19 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cctype>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
-#include <iterator>
 #include <iomanip>
+#include <iterator>
 #include <map>
 #include <optional>
 #include <sstream>
+#include <system_error>
 #include <thread>
 #include <vector>
 
@@ -27,6 +29,7 @@
 #include "avs/effects_render.hpp"
 #include "avs/engine.hpp"
 #include "avs/fs.hpp"
+#include "avs/legacy_effects.hpp"
 #include "avs/preset.hpp"
 #include "avs/registry.hpp"
 
@@ -38,6 +41,60 @@
 #endif
 
 using namespace avs;
+
+namespace {
+
+void appendU32(std::vector<std::uint8_t>& out, std::uint32_t value) {
+  out.push_back(static_cast<std::uint8_t>(value & 0xFFu));
+  out.push_back(static_cast<std::uint8_t>((value >> 8) & 0xFFu));
+  out.push_back(static_cast<std::uint8_t>((value >> 16) & 0xFFu));
+  out.push_back(static_cast<std::uint8_t>((value >> 24) & 0xFFu));
+}
+
+std::vector<std::uint8_t> buildBinaryPreset(std::uint32_t effectId,
+                                            const std::vector<std::uint8_t>& payload) {
+  std::vector<std::uint8_t> data;
+  constexpr std::string_view kMagic = "Nullsoft AVS Preset ";
+  data.insert(data.end(), kMagic.begin(), kMagic.end());
+  data.push_back('0');
+  data.push_back('.');
+  data.push_back('2');
+  data.push_back(0x1A);
+  data.push_back(0x00);  // render list mode (no flags set)
+  appendU32(data, effectId);
+  appendU32(data, static_cast<std::uint32_t>(payload.size()));
+  data.insert(data.end(), payload.begin(), payload.end());
+  return data;
+}
+
+std::filesystem::path writePresetFile(const std::vector<std::uint8_t>& bytes) {
+  namespace fs = std::filesystem;
+  static std::atomic<uint64_t> counter{0};
+  auto stamp =
+      static_cast<unsigned long long>(std::chrono::steady_clock::now().time_since_epoch().count());
+  auto index = counter.fetch_add(1, std::memory_order_relaxed);
+  fs::path tempPath = fs::temp_directory_path() / ("avs-preset-" + std::to_string(stamp) + "-" +
+                                                   std::to_string(index) + ".avs");
+  std::ofstream out(tempPath, std::ios::binary);
+  out.write(reinterpret_cast<const char*>(bytes.data()),
+            static_cast<std::streamsize>(bytes.size()));
+  return tempPath;
+}
+
+class TempPresetFile {
+ public:
+  explicit TempPresetFile(std::vector<std::uint8_t> bytes) : path(writePresetFile(bytes)) {}
+  ~TempPresetFile() {
+    std::error_code ec;
+    std::filesystem::remove(path, ec);
+  }
+  const std::filesystem::path& get() const { return path; }
+
+ private:
+  std::filesystem::path path;
+};
+
+}  // namespace
 
 TEST(BlurEffect, SpreadsLight) {
   Framebuffer in;
@@ -361,12 +418,183 @@ TEST(PresetParser, ParsesLegacyBinaryPreset) {
 }
 
 TEST(PresetParser, WarnsWhenEffectIsUndecodedButRecognized) {
-  namespace fs = std::filesystem;
-  auto preset = avs::parsePreset(fs::path(SOURCE_DIR) / "tests/data/phase1/fadeout_color.avs");
+  std::vector<std::uint8_t> payload;
+  TempPresetFile temp(buildBinaryPreset(1u, payload));
+  auto preset = avs::parsePreset(temp.get());
   ASSERT_FALSE(preset.warnings.empty());
   const std::string& warning = preset.warnings.front();
-  EXPECT_NE(warning.find("preset loader does not yet decode effect: 3 (Trans / Fadeout)"),
+  EXPECT_NE(warning.find("preset loader does not yet decode effect: 1 (Render / Dot Plane)"),
             std::string::npos);
+}
+
+TEST(PresetParser, ParsesLegacySimpleSpectrumEffect) {
+  std::vector<std::uint8_t> payload;
+  appendU32(payload, 0x00000005u);
+  appendU32(payload, 2u);
+  appendU32(payload, 0x00FF0000u);
+  appendU32(payload, 0x0000FF00u);
+  TempPresetFile temp(buildBinaryPreset(0u, payload));
+  auto preset = avs::parsePreset(temp.get());
+  EXPECT_TRUE(preset.warnings.empty());
+  EXPECT_TRUE(preset.unknown.empty());
+  ASSERT_EQ(preset.chain.size(), 1u);
+  auto* effect = dynamic_cast<LegacySimpleSpectrumEffect*>(preset.chain[0].get());
+  ASSERT_NE(effect, nullptr);
+  EXPECT_EQ(effect->config().effectBits, 0x00000005u);
+  ASSERT_EQ(effect->config().palette.size(), 2u);
+  EXPECT_EQ(effect->config().palette[0], 0x00FF0000u);
+  EXPECT_EQ(effect->config().palette[1], 0x0000FF00u);
+}
+
+TEST(PresetParser, ParsesLegacyFadeoutEffect) {
+  std::vector<std::uint8_t> payload;
+  appendU32(payload, 48u);
+  appendU32(payload, 0x003366CCu);
+  TempPresetFile temp(buildBinaryPreset(3u, payload));
+  auto preset = avs::parsePreset(temp.get());
+  EXPECT_TRUE(preset.warnings.empty());
+  EXPECT_TRUE(preset.unknown.empty());
+  ASSERT_EQ(preset.chain.size(), 1u);
+  auto* effect = dynamic_cast<LegacyFadeoutEffect*>(preset.chain[0].get());
+  ASSERT_NE(effect, nullptr);
+  EXPECT_EQ(effect->config().fadeLength, 48u);
+  EXPECT_EQ(effect->config().targetColor, 0x003366CCu);
+}
+
+TEST(PresetParser, ParsesLegacyBlurEffect) {
+  std::vector<std::uint8_t> payload;
+  appendU32(payload, 2u);
+  appendU32(payload, 1u);
+  TempPresetFile temp(buildBinaryPreset(6u, payload));
+  auto preset = avs::parsePreset(temp.get());
+  EXPECT_TRUE(preset.warnings.empty());
+  EXPECT_TRUE(preset.unknown.empty());
+  ASSERT_EQ(preset.chain.size(), 1u);
+  auto* effect = dynamic_cast<LegacyBlurEffect*>(preset.chain[0].get());
+  ASSERT_NE(effect, nullptr);
+  EXPECT_EQ(effect->config().mode, 2u);
+  EXPECT_EQ(effect->config().roundMode, 1u);
+}
+
+TEST(PresetParser, ParsesLegacyMovingParticleEffect) {
+  std::vector<std::uint8_t> payload;
+  appendU32(payload, 3u);           // enabled flags
+  appendU32(payload, 0x0000FFFFu);  // color
+  appendU32(payload, 24u);          // maxdist
+  appendU32(payload, 12u);          // size
+  appendU32(payload, 8u);           // secondary size
+  appendU32(payload, 1u);           // blend
+  TempPresetFile temp(buildBinaryPreset(8u, payload));
+  auto preset = avs::parsePreset(temp.get());
+  EXPECT_TRUE(preset.warnings.empty());
+  EXPECT_TRUE(preset.unknown.empty());
+  ASSERT_EQ(preset.chain.size(), 1u);
+  auto* effect = dynamic_cast<LegacyMovingParticleEffect*>(preset.chain[0].get());
+  ASSERT_NE(effect, nullptr);
+  EXPECT_EQ(effect->config().enabled, 3u);
+  EXPECT_EQ(effect->config().color, 0x0000FFFFu);
+  EXPECT_EQ(effect->config().maxDistance, 24u);
+  EXPECT_EQ(effect->config().size, 12u);
+  EXPECT_EQ(effect->config().secondarySize, 8u);
+  EXPECT_EQ(effect->config().blendMode, 1u);
+}
+
+TEST(PresetParser, ParsesLegacyRingEffect) {
+  std::vector<std::uint8_t> payload;
+  appendU32(payload, 0x00000002u);
+  appendU32(payload, 3u);
+  appendU32(payload, 0x000000FFu);
+  appendU32(payload, 0x0000FF00u);
+  appendU32(payload, 0x00FF0000u);
+  appendU32(payload, 10u);
+  appendU32(payload, 1u);
+  TempPresetFile temp(buildBinaryPreset(14u, payload));
+  auto preset = avs::parsePreset(temp.get());
+  EXPECT_TRUE(preset.warnings.empty());
+  EXPECT_TRUE(preset.unknown.empty());
+  ASSERT_EQ(preset.chain.size(), 1u);
+  auto* effect = dynamic_cast<LegacyRingEffect*>(preset.chain[0].get());
+  ASSERT_NE(effect, nullptr);
+  EXPECT_EQ(effect->config().effectBits, 0x00000002u);
+  ASSERT_EQ(effect->config().palette.size(), 3u);
+  EXPECT_EQ(effect->config().palette[0], 0x000000FFu);
+  EXPECT_EQ(effect->config().palette[1], 0x0000FF00u);
+  EXPECT_EQ(effect->config().palette[2], 0x00FF0000u);
+  EXPECT_EQ(effect->config().size, 10u);
+  EXPECT_EQ(effect->config().sourceChannel, 1u);
+}
+
+TEST(PresetParser, ParsesLegacyMovementEffect) {
+  std::vector<std::uint8_t> payload;
+  appendU32(payload, 32767u);
+  payload.push_back(1u);
+  std::string script = "d=d*0.5;";
+  script.push_back('\0');
+  appendU32(payload, static_cast<std::uint32_t>(script.size()));
+  payload.insert(payload.end(), script.begin(), script.end());
+  appendU32(payload, 2u);  // blend
+  appendU32(payload, 1u);  // source mapped
+  appendU32(payload, 0u);  // rectangular
+  appendU32(payload, 1u);  // subpixel
+  appendU32(payload, 0u);  // wrap
+  TempPresetFile temp(buildBinaryPreset(15u, payload));
+  auto preset = avs::parsePreset(temp.get());
+  EXPECT_TRUE(preset.warnings.empty());
+  EXPECT_TRUE(preset.unknown.empty());
+  ASSERT_EQ(preset.chain.size(), 1u);
+  auto* effect = dynamic_cast<LegacyMovementEffect*>(preset.chain[0].get());
+  ASSERT_NE(effect, nullptr);
+  EXPECT_EQ(effect->config().effect, 32767);
+  EXPECT_EQ(effect->config().blend, 2);
+  EXPECT_EQ(effect->config().sourceMapped, 1);
+  EXPECT_EQ(effect->config().rectangular, 0);
+  EXPECT_EQ(effect->config().subpixel, 1);
+  EXPECT_EQ(effect->config().wrap, 0);
+  EXPECT_EQ(effect->config().scriptEncoding, MovementConfig::ScriptEncoding::Tagged);
+  EXPECT_EQ(effect->config().script, "d=d*0.5;");
+}
+
+TEST(PresetParser, ParsesLegacyDotFountainEffect) {
+  std::vector<std::uint8_t> payload;
+  appendU32(payload, 32u);  // rotation velocity
+  appendU32(payload, 0x00000000u);
+  appendU32(payload, 0x00000011u);
+  appendU32(payload, 0x00000022u);
+  appendU32(payload, 0x00000033u);
+  appendU32(payload, 0x00000044u);
+  appendU32(payload, 90u);
+  appendU32(payload, 64u);  // radius encoded as 2.0
+  TempPresetFile temp(buildBinaryPreset(19u, payload));
+  auto preset = avs::parsePreset(temp.get());
+  EXPECT_TRUE(preset.warnings.empty());
+  EXPECT_TRUE(preset.unknown.empty());
+  ASSERT_EQ(preset.chain.size(), 1u);
+  auto* effect = dynamic_cast<LegacyDotFountainEffect*>(preset.chain[0].get());
+  ASSERT_NE(effect, nullptr);
+  EXPECT_EQ(effect->config().rotationVelocity, 32);
+  EXPECT_EQ(effect->config().angle, 90);
+  EXPECT_FLOAT_EQ(effect->config().radius, 2.0f);
+  EXPECT_EQ(effect->config().colors[3], 0x00000033u);
+}
+
+TEST(PresetParser, ParsesLegacyMirrorEffect) {
+  std::vector<std::uint8_t> payload;
+  appendU32(payload, 1u);
+  appendU32(payload, 2u);
+  appendU32(payload, 0u);
+  appendU32(payload, 1u);
+  appendU32(payload, 4u);
+  TempPresetFile temp(buildBinaryPreset(26u, payload));
+  auto preset = avs::parsePreset(temp.get());
+  EXPECT_TRUE(preset.warnings.empty());
+  EXPECT_TRUE(preset.unknown.empty());
+  ASSERT_EQ(preset.chain.size(), 1u);
+  auto* effect = dynamic_cast<LegacyMirrorEffect*>(preset.chain[0].get());
+  ASSERT_NE(effect, nullptr);
+  EXPECT_EQ(effect->config().enabled, 1u);
+  EXPECT_EQ(effect->config().mode, 2u);
+  EXPECT_EQ(effect->config().smooth, 1u);
+  EXPECT_EQ(effect->config().slower, 4u);
 }
 
 TEST(PresetParser, ParsesNestedRenderLists) {
@@ -460,7 +688,6 @@ TEST(FileWatcher, DetectsModification) {
   std::filesystem::remove(tmp);
 }
 #endif  // AVS_BUILD_PLATFORM
-
 
 #if AVS_TEST_HAS_PORTAUDIO
 
@@ -932,7 +1159,9 @@ TEST(RenderGeometryEffects, SuperscopeSineWaveSnapshot) {
   RenderFixture fixture(frame.view, prev.view);
   SuperscopeEffect effect;
   effect.set_parameter("init", ParamValue(std::string("n=64; linesize=2; drawmode=1;")));
-  effect.set_parameter("point", ParamValue(std::string("x=cos(i*6.2831853); y=sin(i*6.2831853); red=0.6; green=0.8; blue=0.2;")));
+  effect.set_parameter(
+      "point", ParamValue(std::string(
+                   "x=cos(i*6.2831853); y=sin(i*6.2831853); red=0.6; green=0.8; blue=0.2;")));
   InitContext initCtx;
   initCtx.frame_size = FrameSize{frame.view.width, frame.view.height};
   initCtx.deterministic = true;
@@ -940,4 +1169,3 @@ TEST(RenderGeometryEffects, SuperscopeSineWaveSnapshot) {
   effect.process(fixture.ctx, frame.view);
   EXPECT_EQ(hashBytes(frame.data), "a7ea528ce862219f");
 }
-

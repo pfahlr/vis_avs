@@ -7,29 +7,37 @@ import subprocess
 import sys
 
 
+def _is_ctest_binary_dir(path: str) -> bool:
+    """Return True if *path* looks like a CTest binary directory."""
+
+    return os.path.isfile(os.path.join(path, "CTestTestfile.cmake"))
+
+
 def resolve_build_dir() -> str:
     """Return the path to the CTest binary directory."""
+
     env_dir = os.environ.get("CTEST_BINARY_DIRECTORY")
     if env_dir:
-        if os.path.isdir(env_dir):
+        if _is_ctest_binary_dir(env_dir):
             return env_dir
-        raise FileNotFoundError(f"Configured CTest directory '{env_dir}' does not exist")
+        raise FileNotFoundError(
+            f"Configured CTest directory '{env_dir}' is missing CTest metadata"
+        )
 
-    default_dir = "build"
-    if os.path.isdir(default_dir):
-        return default_dir
+    preferred_candidates = ["build", os.path.join("build", "tests")]
+    for candidate in preferred_candidates:
+        if _is_ctest_binary_dir(candidate):
+            return candidate
 
     # Fall back to scanning for a directory that contains CTest metadata.
-    for entry in os.scandir("."):
+    for entry in sorted(os.scandir("."), key=lambda item: item.name):
         if not entry.is_dir():
             continue
         candidate = entry.path
-        ctest_file = os.path.join(candidate, "CTestTestfile.cmake")
-        if os.path.isfile(ctest_file):
+        if _is_ctest_binary_dir(candidate):
             return candidate
         nested_candidate = os.path.join(candidate, "build")
-        nested_ctest_file = os.path.join(nested_candidate, "CTestTestfile.cmake")
-        if os.path.isfile(nested_ctest_file):
+        if _is_ctest_binary_dir(nested_candidate):
             return nested_candidate
 
     raise FileNotFoundError(

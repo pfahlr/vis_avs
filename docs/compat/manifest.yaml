@@ -110,7 +110,7 @@ stubs:
     status: stub
     source: vis_avs/rlib.cpp (R_VideoDelay)
   - name: Holden05: Multi Delay
-    status: stub
+    status: implemented
     source: vis_avs/rlib.cpp (R_MultiDelay)
   - name: Misc / Comment
     status: stub

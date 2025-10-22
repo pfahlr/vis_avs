@@ -1,3 +1,5 @@
 # Trans / Color Modifier
 
-This is a stub for compatibility with legacy AVS presets. No functional rendering is implemented yet.
+Implements sinusoidal color remapping compatible with the legacy "Trans / Color Modifier" effect.
+The effect exposes a `mode` selector (identity, sine, cosine, sinecosine) that determines how each
+color channel is transformed.

@@ -9,7 +9,6 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_timescope.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_brightness.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_color_clip.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_color_modifier.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_colorfade.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_mosaic.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_scatter.cpp
@@ -69,6 +68,7 @@ add_library(avs-effects-core
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_mosaic.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_colorfade.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_color_clip.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_color_modifier.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_brightness.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_blur.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/render/effect_rotating_stars.cpp

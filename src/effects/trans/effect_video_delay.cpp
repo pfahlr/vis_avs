@@ -49,6 +49,8 @@ void VideoDelay::setParams(const avs::core::ParamBlock& params) {
     if (modeChanged) {
       framesSinceBeat_ = 0;
       currentDelayFrames_ = 0;
+      filledFrameCount_ = 0;
+      headIndex_ = 0;
     } else {
       currentDelayFrames_ = clampToRange(currentDelayFrames_, 0, kMaxHistoryFrames);
     }
@@ -71,25 +73,38 @@ bool VideoDelay::render(avs::core::RenderContext& context) {
     return true;
   }
 
-  if (!enabled_ || requiredDelay <= 0) {
+  if (!enabled_) {
     return true;
   }
 
-  ensureScratch(frameSize);
-  ensureBuffer(frameSize, requiredDelay);
+  const int historyTarget = useBeats_ ? std::max(requiredDelay, framesSinceBeat_) : requiredDelay;
+
+  ensureBuffer(frameSize, historyTarget);
 
   if (buffer_.empty() || bufferFrameCount_ == 0) {
     return true;
   }
 
-  std::memcpy(scratch_.data(), context.framebuffer.data, frameSize);
-
-  std::uint8_t* slot = buffer_.data() + headIndex_ * frameSize;
-
-  std::memcpy(context.framebuffer.data, slot, frameSize);
-  std::memcpy(slot, scratch_.data(), frameSize);
-
-  headIndex_ = (headIndex_ + 1u) % bufferFrameCount_;
+  if (requiredDelay > 0) {
+    ensureScratch(frameSize);
+    std::uint8_t* slot = buffer_.data() + headIndex_ * frameSize;
+    std::memcpy(scratch_.data(), context.framebuffer.data, frameSize);
+    std::memcpy(context.framebuffer.data, slot, frameSize);
+    std::memcpy(slot, scratch_.data(), frameSize);
+    if (filledFrameCount_ < bufferFrameCount_) {
+      ++filledFrameCount_;
+    }
+    headIndex_ = (headIndex_ + 1u) % bufferFrameCount_;
+  } else if (useBeats_) {
+    const std::size_t insertIndex = (headIndex_ + filledFrameCount_) % bufferFrameCount_;
+    std::uint8_t* slot = buffer_.data() + insertIndex * frameSize;
+    std::memcpy(slot, context.framebuffer.data, frameSize);
+    if (filledFrameCount_ < bufferFrameCount_) {
+      ++filledFrameCount_;
+    } else {
+      headIndex_ = (headIndex_ + 1u) % bufferFrameCount_;
+    }
+  }
 
   return true;
 }
@@ -103,12 +118,14 @@ void VideoDelay::ensureBuffer(std::size_t frameSize, int requiredFrames) {
     buffer_.clear();
     bufferFrameCount_ = 0;
     headIndex_ = 0;
+    filledFrameCount_ = 0;
   }
 
   if (targetCount == 0) {
     buffer_.clear();
     bufferFrameCount_ = 0;
     headIndex_ = 0;
+    filledFrameCount_ = 0;
     return;
   }
 
@@ -117,8 +134,9 @@ void VideoDelay::ensureBuffer(std::size_t frameSize, int requiredFrames) {
   }
 
   std::vector<std::uint8_t> newBuffer(targetCount * frameSize_, 0);
-  const std::size_t framesToCopy = std::min(bufferFrameCount_, targetCount);
-  if (!buffer_.empty() && framesToCopy > 0) {
+  const std::size_t framesToCopy =
+      std::min<std::size_t>(filledFrameCount_, std::min(bufferFrameCount_, targetCount));
+  if (!buffer_.empty() && framesToCopy > 0 && bufferFrameCount_ > 0) {
     for (std::size_t i = 0; i < framesToCopy; ++i) {
       const std::size_t srcIndex = (headIndex_ + i) % bufferFrameCount_;
       std::memcpy(newBuffer.data() + i * frameSize_, buffer_.data() + srcIndex * frameSize_,
@@ -128,6 +146,7 @@ void VideoDelay::ensureBuffer(std::size_t frameSize, int requiredFrames) {
   buffer_ = std::move(newBuffer);
   bufferFrameCount_ = targetCount;
   headIndex_ = 0;
+  filledFrameCount_ = framesToCopy;
 }
 
 void VideoDelay::ensureScratch(std::size_t frameSize) {

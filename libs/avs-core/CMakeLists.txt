@@ -42,7 +42,8 @@ target_compile_features(avs-core PUBLIC cxx_std_20)
 target_link_libraries(avs-core
   PUBLIC
     ns-eel
-    avs-runtime)
+    avs-runtime
+)
 add_executable(avs_headless src/headless_main.cpp)
 target_link_libraries(avs_headless PRIVATE avs-core)
 target_compile_options(avs_headless PRIVATE -Wall -Wextra -Werror)

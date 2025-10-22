@@ -356,8 +356,13 @@ Output: src/effects/render/effect_timescope.{h,cpp}
 Prompt:
 Scrolling waveform display (time vs. amplitude). Integrate audio analyzer.
 
-failed development branch: 
+failed development branch(es): 
 - codex/integrate-audio-analyzer-for-scrolling-waveform
+- codex/implement-timescope-effect-in-vis_avs
+- codex/implement-timescope-effect-in-vis_avs-e7nl9z
+- codex/implement-timescope-effect-in-vis_avs-gl2v5k
+- codex/implement-timescope-effect-in-vis_avs-h26js1
+
 ```
 You are to implement it **again from scratch**, correcting or avoiding any past issues. Use the same original file and class references as provided.
 

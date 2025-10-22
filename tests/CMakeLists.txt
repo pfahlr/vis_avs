@@ -66,14 +66,19 @@ add_executable(core_effects_tests
   core/test_trans_mosaic.cpp
   core/test_colorfade.cpp
   core/test_rotating_stars.cpp
+  core/test_simple_spectrum.cpp
+  core/test_oscilloscope_star.cpp
   core/test_render_ring.cpp
   core/test_render_dot_fountain.cpp
+  core/test_render_bass_spin.cpp
+  core/test_render_moving_particle.cpp
   core/test_render_mode.cpp
   core/test_misc_comment.cpp
   core/test_trans_multiplier.cpp
   core/test_trans_scatter.cpp
   core/test_multi_delay.cpp
-  core/test_video_delay.cpp)
+  core/test_video_delay.cpp
+  core/test_color_modifier.cpp)
 
 target_link_libraries(core_effects_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
 target_compile_options(core_effects_tests PRIVATE -Wall -Wextra -Werror)

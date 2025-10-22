@@ -13,6 +13,7 @@ steps:
   - Add regression presets (Superscope/ColorMod) with golden hashes across resolutions.
 acceptance_criteria:
   - Scripts produce visuals matching legacy outputs within tolerance; color mods transform input frames (not clear-to-black).
+  - All required tests execute via ctest and pass.
 test_hook:
   - "ctest: golden hash tests for Superscope/ColorMod presets at multiple resolutions."
 files_touched:

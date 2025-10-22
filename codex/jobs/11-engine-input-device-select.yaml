@@ -12,6 +12,7 @@ steps:
   - Document workflow and add a small regression around the negotiation helper.
 acceptance_criteria:
   - Users can enumerate and select capture devices; error messages are clear when selection fails.
+  - All required tests execute via ctest and pass.
 test_hook:
   - "CLI: --list-input-devices shows entries; --input-device switches source (validated in logs/metrics)."
 files_touched:

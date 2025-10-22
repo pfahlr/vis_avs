@@ -10,7 +10,8 @@ steps:
   - Open a no-op PR touching only this file.
 acceptance_criteria:
   - PR opens from branch codex/bootstrap-codex and CI passes.
+  - All required tests execute via ctest and pass.
 test_hook:
-  - "None (metadata only)."
+  - "Run ctest even for metadata-only changes to demonstrate the pipeline."
 files_touched:
   - codex/jobs/00-bootstrap.yaml

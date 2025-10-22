@@ -14,6 +14,7 @@ steps:
   - Build avs-core with -Wcast-align treated as error.
 acceptance_criteria:
   - No -Wcast-align warnings in avs-core targets under -Werror.
+  - All required tests execute via ctest and pass.
 test_hook:
   - "CI: add -Werror -Wcast-align; run ctest."
 files_touched:

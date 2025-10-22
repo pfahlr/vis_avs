@@ -7,7 +7,7 @@
 
 ## Environment bootstrapping (must do before configuring CMake)
 
-- **Install build dependencies first.** Run the dev-environment helper before any `cmake` invocation so PortAudio and the other required packages are available inside the container:
+- **Install build dependencies first.** Run the dev-environment helper before any `cmake` invocation so PortAudio and the other required packages are available inside the container. The top-level `CMakeLists.txt` will now invoke the helper automatically when packages are missing, but running it manually keeps the process explicit and allows skipping the automatic bootstrap when setting `AVS_SKIP_AUTO_DEPS=1`.
 
   ```bash
   ./run_setup_dev_environment.sh --platform ubuntu

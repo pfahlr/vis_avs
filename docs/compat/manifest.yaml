@@ -110,7 +110,7 @@ stubs:
     status: stub
     source: vis_avs/rlib.cpp (R_VideoDelay)
   - name: Holden05: Multi Delay
-    status: stub
+    status: implemented
     source: vis_avs/rlib.cpp (R_MultiDelay)
   - name: Misc / Comment
     status: stub
@@ -201,11 +201,11 @@ stubs:
     status: stub
     source: vis_avs/r_rotblit.cpp (R_RotBlit)
   - name: Trans / Scatter
-    status: stub
-    source: vis_avs/r_scat.cpp (R_Scat)
+    status: implemented
+    source: src/effects/trans/effect_scatter.cpp
   - name: Trans / Unique tone
-    status: stub
-    source: vis_avs/r_onetone.cpp (R_Onetone)
+    status: implemented
+    source: src/effects/trans/effect_unique_tone.cpp
   - name: Trans / Water
     status: stub
     source: vis_avs/r_water.cpp (R_Water)

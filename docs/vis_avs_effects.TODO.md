@@ -54,10 +54,169 @@
 ---
 
 
-
-
 >>> REMAINING EFFECTS (as of 21 OCT 2025)
 
+---
+---
+
+
+[+] - 5. SVP Loader
+
+### Instruction ###
+Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
+
+You are acting as a **senior software engineer** and **Codex development assistant**. You MUST analyze the given context, understand the expected implementation, and apply corrections and enhancements to meet the goal successfully. Ensure code is production-ready, idiomatic C++, and integrates seamlessly with the existing AVS plugin architecture.
+
+### Effect Definition ###
+```
+SVP Loader
+
+Effect Token: "Render / SVP Loader"
+
+Source: docs/avs_original_source/vis_avs/r_svp.cpp
+
+Class: R_SVP
+
+Output: src/effects/render/effect_svp_loader.{h,cpp}
+
+Prompt:
+Load and display SVP files (if supported). Stub fallback is acceptable.
+
+failed development branch(es): 
+- codex/add-svp-file-loading-feature
+- codex/implement-svp-file-loading-feature
+- codex/implement-svp-file-loading-feature-57cgj1
+- codex/implement-svp-file-loading-feature-9h4891
+```
+You are to implement it **again from scratch**, correcting or avoiding any past issues. Use the same original file and class references as provided.
+
+### Git Setup ###
+To ensure compatibility with your workspace, the following git commands should be run:
+
+```bash
+OWNER=pfahlr
+REPO=vis_avs
+: "${GITHUB_TOKEN:=$CODEX_READ_ALL_REPOSITORIES_TOKEN:-}"
+git remote get-url origin >/dev/null 2>&1 || git remote add origin "https://${GITHUB_TOKEN}@github.com/pfahlr/vis_avs.git"
+git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+git config --add remote.origin.fetch "+refs/pull/*/head:refs/remotes/origin/pr/*"
+git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
+
+```--tags origin || git fetch --prune --tags --depth=50 origin;
+
+---
+
+[+] - 7. Timescope
+
+### Instruction ###
+Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
+
+You are acting as a **senior software engineer** and **Codex development assistant**. You MUST analyze the given context, understand the expected implementation, and apply corrections and enhancements to meet the goal successfully. Ensure code is production-ready, idiomatic C++, and integrates seamlessly with the existing AVS plugin architecture.
+
+### Effect Definition ###
+```
+Timescope
+
+Effect Token: "Render / Timescope"
+
+Source: docs/avs_original_source/vis_avs/r_timescope.cpp
+
+Class: R_Timescope
+
+Output: src/effects/render/effect_timescope.{h,cpp}
+
+Prompt:
+Scrolling waveform display (time vs. amplitude). Integrate audio analyzer.
+
+failed development branch(es): 
+- codex/integrate-audio-analyzer-for-scrolling-waveform
+- codex/implement-timescope-effect-in-vis_avs
+- codex/implement-timescope-effect-in-vis_avs-e7nl9z
+- codex/implement-timescope-effect-in-vis_avs-gl2v5k
+- codex/implement-timescope-effect-in-vis_avs-h26js1
+
+```
+You are to implement it **again from scratch**, correcting or avoiding any past issues. Use the same original file and class references as provided.
+
+### Git Setup ###
+To ensure compatibility with your workspace, the following git commands should be run:
+
+```bash
+OWNER=pfahlr
+REPO=vis_avs
+: "${GITHUB_TOKEN:=$CODEX_READ_ALL_REPOSITORIES_TOKEN:-}"
+git remote get-url origin >/dev/null 2>&1 || git remote add origin "https://${GITHUB_TOKEN}@github.com/pfahlr/vis_avs.git"
+git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+git config --add remote.origin.fetch "+refs/pull/*/head:refs/remotes/origin/pr/*"
+git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
+
+```--tags origin || git fetch --prune --tags --depth=50 origin;
+
+---
+
+[+] - 10. Water Bump
+
+### Instruction ###
+Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
+
+You are acting as a **senior software engineer** and **Codex development assistant**. You MUST analyze the given context, understand the expected implementation, and apply corrections and enhancements to meet the goal successfully. Ensure code is production-ready, idiomatic C++, and integrates seamlessly with the existing AVS plugin architecture.
+
+### Effect Definition ###
+```
+# Water Bump
+
+**Effect Token:** 
+"Trans / Water Bump"
+
+**Source:**
+- docs/avs_original_source/vis_avs/r_waterbump.cpp
+
+**Class:**
+- R_WaterBump
+
+**Output:**
+- src/effects/trans/effect_water_bump.{h,cpp}
+
+**prompt:**:
+Combine bump mapping with water displacement. Requires heightmap calc.
+
+**failed development branch(es)**: 
+- codex/combine-bump-mapping-with-water-displacement
+- codex/reimplement-water-bump-effect
+- codex/reimplement-water-bump-effect-y4w33q
+- codex/reimplement-water-bump-effect-bqmfsj
+- codex/reimplement-water-bump-effect-m5js4b
+
+```
+You are to implement it **again from scratch**, correcting or avoiding any past issues. Use the same original file and class references as provided.
+
+### Git Setup ###
+To ensure compatibility with your workspace, the following git commands should be run:
+
+```bash
+OWNER=pfahlr
+REPO=vis_avs
+: "${GITHUB_TOKEN:=$CODEX_READ_ALL_REPOSITORIES_TOKEN:-}"
+git remote get-url origin >/dev/null 2>&1 || git remote add origin "https://${GITHUB_TOKEN}@github.com/pfahlr/vis_avs.git"
+git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+git config --add remote.origin.fetch "+refs/pull/*/head:refs/remotes/origin/pr/*"
+git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
+--tags origin || git fetch --prune --tags --depth=50 origin;
+```
+---
+
+
+
+
+---
+---
+```asciiart 
+🬞🬭🬭🬭🬭  🬭🬭🬭🬭 🬞🬭🬼 🬞🬭🬏🬞🬭🬭🬭🬭🬏
+▐▒▌▐▒▌▐▒▌▐▒▌▐▒🭌🬿▐▒▌▐▒▌   
+▐─▌▐─▌▐─▌▐─▌▐─▌🭥🭒─▌▐─🬛🬋🬋 
+▐░▌▐░▌▐░▌▐░▌▐░▌ ▐░▌▐░▌   
+🬁🬂🬂🬂🬂  🬂🬂🬂🬂 🬁🬂🬀 🬁🬂🬀🬁🬂🬂🬂🬂🬀
+```
 ---
 ---
 
@@ -153,7 +312,6 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
----
 
 [✅] - 3. Oscillioscope Star
 
@@ -244,51 +402,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[+] - 5. SVP Loader
 
-### Instruction ###
-Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
-
-You are acting as a **senior software engineer** and **Codex development assistant**. You MUST analyze the given context, understand the expected implementation, and apply corrections and enhancements to meet the goal successfully. Ensure code is production-ready, idiomatic C++, and integrates seamlessly with the existing AVS plugin architecture.
-
-### Effect Definition ###
-```
-SVP Loader
-
-Effect Token: "Render / SVP Loader"
-
-Source: docs/avs_original_source/vis_avs/r_svp.cpp
-
-Class: R_SVP
-
-Output: src/effects/render/effect_svp_loader.{h,cpp}
-
-Prompt:
-Load and display SVP files (if supported). Stub fallback is acceptable.
-
-failed development branch(es): 
-- codex/add-svp-file-loading-feature
-- codex/implement-svp-file-loading-feature
-- codex/implement-svp-file-loading-feature-57cgj1
-- codex/implement-svp-file-loading-feature-9h4891
-```
-You are to implement it **again from scratch**, correcting or avoiding any past issues. Use the same original file and class references as provided.
-
-### Git Setup ###
-To ensure compatibility with your workspace, the following git commands should be run:
-
-```bash
-OWNER=pfahlr
-REPO=vis_avs
-: "${GITHUB_TOKEN:=$CODEX_READ_ALL_REPOSITORIES_TOKEN:-}"
-git remote get-url origin >/dev/null 2>&1 || git remote add origin "https://${GITHUB_TOKEN}@github.com/pfahlr/vis_avs.git"
-git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-git config --add remote.origin.fetch "+refs/pull/*/head:refs/remotes/origin/pr/*"
-git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
-
-```--tags origin || git fetch --prune --tags --depth=50 origin;
-
----
 
 [✅] - 6. Color Modifier
 
@@ -334,56 +448,8 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[+] - 7. Timescope
 
-### Instruction ###
-Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
-
-You are acting as a **senior software engineer** and **Codex development assistant**. You MUST analyze the given context, understand the expected implementation, and apply corrections and enhancements to meet the goal successfully. Ensure code is production-ready, idiomatic C++, and integrates seamlessly with the existing AVS plugin architecture.
-
-### Effect Definition ###
-```
-Timescope
-
-Effect Token: "Render / Timescope"
-
-Source: docs/avs_original_source/vis_avs/r_timescope.cpp
-
-Class: R_Timescope
-
-Output: src/effects/render/effect_timescope.{h,cpp}
-
-Prompt:
-Scrolling waveform display (time vs. amplitude). Integrate audio analyzer.
-
-failed development branch(es): 
-- codex/integrate-audio-analyzer-for-scrolling-waveform
-- codex/implement-timescope-effect-in-vis_avs
-- codex/implement-timescope-effect-in-vis_avs-e7nl9z
-- codex/implement-timescope-effect-in-vis_avs-gl2v5k
-- codex/implement-timescope-effect-in-vis_avs-h26js1
-
-```
-You are to implement it **again from scratch**, correcting or avoiding any past issues. Use the same original file and class references as provided.
-
-### Git Setup ###
-To ensure compatibility with your workspace, the following git commands should be run:
-
-```bash
-OWNER=pfahlr
-REPO=vis_avs
-: "${GITHUB_TOKEN:=$CODEX_READ_ALL_REPOSITORIES_TOKEN:-}"
-git remote get-url origin >/dev/null 2>&1 || git remote add origin "https://${GITHUB_TOKEN}@github.com/pfahlr/vis_avs.git"
-git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-git config --add remote.origin.fetch "+refs/pull/*/head:refs/remotes/origin/pr/*"
-git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
-
-```--tags origin || git fetch --prune --tags --depth=50 origin;
-
-
----
-
-[+] - 8. Scatter 
+[✅] - 8. Scatter 
 
 
 ### Instruction ###
@@ -425,13 +491,12 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ```--tags origin || git fetch --prune --tags --depth=50 origin;
 
-
 ---
 
-[+] - 9. Unique Tone
+[✅] - 9. Unique Tone
 
 ### Instruction ###
-Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
+Your task is to implement or repair a previously atte mpted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
 
 You are acting as a **senior software engineer** and **Codex development assistant**. You MUST analyze the given context, understand the expected implementation, and apply corrections and enhancements to meet the goal successfully. Ensure code is production-ready, idiomatic C++, and integrates seamlessly with the existing AVS plugin architecture.
 
@@ -471,53 +536,8 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[+] - 10. Water Bump
 
-### Instruction ###
-Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
-
-You are acting as a **senior software engineer** and **Codex development assistant**. You MUST analyze the given context, understand the expected implementation, and apply corrections and enhancements to meet the goal successfully. Ensure code is production-ready, idiomatic C++, and integrates seamlessly with the existing AVS plugin architecture.
-
-### Effect Definition ###
-```
-# Water Bump
-
-**Effect Token:** 
-"Trans / Water Bump"
-
-**Source:**
-- docs/avs_original_source/vis_avs/r_waterbump.cpp
-
-**Class:**
-- R_WaterBump
-
-**Output:**
-- src/effects/trans/effect_water_bump.{h,cpp}
-
-**prompt:**:
-Combine bump mapping with water displacement. Requires heightmap calc.
-
-**failed development branch**: 
--codex/combine-bump-mapping-with-water-displacement
-```
-You are to implement it **again from scratch**, correcting or avoiding any past issues. Use the same original file and class references as provided.
-
-### Git Setup ###
-To ensure compatibility with your workspace, the following git commands should be run:
-
-```bash
-OWNER=pfahlr
-REPO=vis_avs
-: "${GITHUB_TOKEN:=$CODEX_READ_ALL_REPOSITORIES_TOKEN:-}"
-git remote get-url origin >/dev/null 2>&1 || git remote add origin "https://${GITHUB_TOKEN}@github.com/pfahlr/vis_avs.git"
-git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-git config --add remote.origin.fetch "+refs/pull/*/head:refs/remotes/origin/pr/*"
-git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
-
-```--tags origin || git fetch --prune --tags --depth=50 origin;
----
-
-[+] - 11. Holden05: Multi Delay
+[✅] - 11. Holden05: Multi Delay
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -561,21 +581,6 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 --tags origin || git fetch --prune --tags --depth=50 origin;
 ```
 
-
-
-
-
----
----
-```asciiart 
-🬞🬭🬭🬭🬭  🬭🬭🬭🬭 🬞🬭🬼 🬞🬭🬏🬞🬭🬭🬭🬭🬏
-▐▒▌▐▒▌▐▒▌▐▒▌▐▒🭌🬿▐▒▌▐▒▌   
-▐─▌▐─▌▐─▌▐─▌▐─▌🭥🭒─▌▐─🬛🬋🬋 
-▐░▌▐░▌▐░▌▐░▌▐░▌ ▐░▌▐░▌   
-🬁🬂🬂🬂🬂  🬂🬂🬂🬂 🬁🬂🬀 🬁🬂🬀🬁🬂🬂🬂🬂🬀
-```
----
----
 
 
 

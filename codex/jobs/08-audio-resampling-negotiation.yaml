@@ -12,6 +12,7 @@ steps:
   - Update README/--help; add tests for 44.1 kHz and 48 kHz flows.
 acceptance_criteria:
   - Interactive and headless both operate correctly at 44.1 kHz and 48 kHz; FFT non-zero.
+  - All required tests execute via ctest and pass.
 test_hook:
   - "Integration: run with WAVs/devices at 44.1k/48k and verify stable band/RMS logs."
 files_touched:

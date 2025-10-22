@@ -12,6 +12,7 @@ steps:
   - Update CLI help/docs and add a test.
 acceptance_criteria:
   - Providing --wav in GUI leads to either working offline playback or an immediate, explicit error.
+  - All required tests execute via ctest and pass.
 test_hook:
   - "Run avs-player --wav file.wav and assert non-zero FFT (if supported path) or specific exit code/message."
 files_touched:

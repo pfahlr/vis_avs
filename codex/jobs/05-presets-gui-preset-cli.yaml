@@ -11,6 +11,7 @@ steps:
   - Manual check: ./avs-player --preset tests/data/simple.avs renders that preset.
 acceptance_criteria:
   - GUI mode loads and runs user-specified preset; not the demo defaults.
+  - All required tests execute via ctest and pass.
 test_hook:
   - "Integration: launch with --preset and assert effect chain != fallback (via logs or query)."
 files_touched:

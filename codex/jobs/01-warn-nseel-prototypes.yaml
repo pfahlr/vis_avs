@@ -14,6 +14,7 @@ steps:
   - Rebuild ns-eel static lib with -Werror.
 acceptance_criteria:
   - Build passes with -Werror=implicit-function-declaration and no duplicate-prototype warnings.
+  - All required tests execute via ctest and pass.
 test_hook:
   - "Configure C and C++ builds with -Werror; run ctest."
 files_touched:

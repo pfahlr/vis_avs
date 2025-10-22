@@ -96,6 +96,12 @@ cmake --build . -j"$(nproc)"
 * **Performance Checks:** microbenchmark effects; fail CI if regression > 20% vs baseline.
 * **CI Mirrors Local:** keep `docs/README.md` dependencies in sync with `/.github/workflows/ci.yml`.
 
+**Mandatory test execution policy**
+
+* Codex contributions must execute the automated test suite relevant to the change (typically `ctest`) before a job is considered complete.
+* Final status updates and summaries must never emit the placeholder "⚠️ Tests not run (not requested)"—always run and report an actual test command.
+* When editing Codex specs or jobs, include an explicit acceptance criterion that the required tests are executed and pass so reviewers can enforce the policy.
+
 ---
 
 ## PR Instructions

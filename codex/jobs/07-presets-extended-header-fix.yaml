@@ -11,6 +11,7 @@ steps:
   - Document the legacy "size includes +4" quirk in code comments.
 acceptance_criteria:
   - First effect in nested render lists is parsed correctly; no misalignment of payloads.
+  - All required tests execute via ctest and pass.
 test_hook:
   - "New tests/data/extended_header.avs passes parse and render sanity checks."
 files_touched:

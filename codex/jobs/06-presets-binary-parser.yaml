@@ -16,6 +16,7 @@ steps:
 acceptance_criteria:
   - Complex presets (e.g., Helix) load without unsupported-spam; nested lists materialize correctly.
   - Color Modifier scripts execute with expected parameters populated.
+  - All required tests execute via ctest and pass.
 test_hook:
   - "ctest with golden preset fixtures comparing parsed effect types or rendered hashes."
 files_touched:

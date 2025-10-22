@@ -90,8 +90,8 @@ void Colorfade::updateOffsets(avs::core::RenderContext& context) {
   };
 
   stepTowards(currentOffsets_[0], baseOffsets_[0]);
-  stepTowards(currentOffsets_[1], baseOffsets_[2]);
-  stepTowards(currentOffsets_[2], baseOffsets_[1]);
+  stepTowards(currentOffsets_[1], baseOffsets_[1]);
+  stepTowards(currentOffsets_[2], baseOffsets_[2]);
 
   if (context.audioBeat) {
     if (randomizeOnBeat_) {

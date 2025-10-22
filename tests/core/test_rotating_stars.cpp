@@ -81,3 +81,30 @@ TEST(RotatingStarsEffectTest, HonorsCustomColorPalette) {
   EXPECT_EQ(pixels[maxIndex + 1u], 0u);
   EXPECT_EQ(pixels[maxIndex + 2u], 0u);
 }
+
+TEST(RotatingStarsEffectTest, InterpretsIntegerColorParamsAsRgb) {
+  avs::effects::render::RotatingStars effect;
+  avs::core::ParamBlock params;
+  params.setInt("color0", 0xFF0000);
+  effect.setParams(params);
+
+  std::vector<std::uint8_t> pixels(
+      static_cast<std::size_t>(kWidth) * static_cast<std::size_t>(kHeight) * 4u, 0u);
+  avs::audio::Analysis analysis{};
+  seedSpectrum(analysis);
+  auto context = makeContext(pixels, analysis);
+
+  ASSERT_TRUE(effect.render(context));
+
+  std::uint8_t maxRed = 0;
+  std::size_t maxIndex = 0;
+  for (std::size_t i = 0; i + 3 < pixels.size(); i += 4) {
+    if (pixels[i] > maxRed) {
+      maxRed = pixels[i];
+      maxIndex = i;
+    }
+  }
+  EXPECT_GT(maxRed, 0);
+  EXPECT_EQ(pixels[maxIndex + 1u], 0u);
+  EXPECT_EQ(pixels[maxIndex + 2u], 0u);
+}

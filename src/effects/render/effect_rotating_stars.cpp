@@ -81,9 +81,9 @@ RotatingStars::Color RotatingStars::makeColor(std::uint8_t r, std::uint8_t g, st
 }
 
 RotatingStars::Color RotatingStars::makeColorFromInt(std::uint32_t packed) {
-  const std::uint8_t r = static_cast<std::uint8_t>(packed & 0xFFu);
+  const std::uint8_t r = static_cast<std::uint8_t>((packed >> 16u) & 0xFFu);
   const std::uint8_t g = static_cast<std::uint8_t>((packed >> 8u) & 0xFFu);
-  const std::uint8_t b = static_cast<std::uint8_t>((packed >> 16u) & 0xFFu);
+  const std::uint8_t b = static_cast<std::uint8_t>(packed & 0xFFu);
   return makeColor(r, g, b);
 }
 

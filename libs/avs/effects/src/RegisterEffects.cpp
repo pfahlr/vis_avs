@@ -47,7 +47,7 @@
 #include "effects/render/effect_ring.h"
 #include "effects/stubs/effect_render_simple.h"
 #include "effects/stubs/effect_render_svp_loader.h"
-#include "effects/stubs/effect_render_timescope.h"
+#include "effects/render/effect_timescope.h"
 #include "effects/trans/effect_color_clip.h"
 #include "effects/trans/effect_brightness.h"
 #include "effects/trans/effect_blur.h"
@@ -143,8 +143,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("render / simple", []() { return std::make_unique<Effect_RenderSimple>(); });
   registry.registerFactory("Render / SVP Loader", []() { return std::make_unique<Effect_RenderSvpLoader>(); });
   registry.registerFactory("render / svp loader", []() { return std::make_unique<Effect_RenderSvpLoader>(); });
-  registry.registerFactory("Render / Timescope", []() { return std::make_unique<Effect_RenderTimescope>(); });
-  registry.registerFactory("render / timescope", []() { return std::make_unique<Effect_RenderTimescope>(); });
+  registry.registerFactory("Render / Timescope", []() { return std::make_unique<render::Timescope>(); });
+  registry.registerFactory("render / timescope", []() { return std::make_unique<render::Timescope>(); });
   registry.registerFactory("Trans / Blitter Feedback", []() { return std::make_unique<trans::BlitterFeedback>(); });
   registry.registerFactory("trans / blitter feedback", []() { return std::make_unique<trans::BlitterFeedback>(); });
   registry.registerFactory("Filter / Blur", []() { return std::make_unique<filters::BlurBox>(); });

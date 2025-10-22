@@ -49,7 +49,7 @@ class Timescope : public avs::core::IEffect {
   Color color_{};
   BlendMode blendMode_ = BlendMode::Line;
   bool blendAverage_ = false;
-  [[maybe_unused]] int channelSelection_ = 2;
+  int channelSelection_ = 2;
   int bandCount_ = 576;
   int cursor_ = -1;
   float normalization_ = 1.0f;

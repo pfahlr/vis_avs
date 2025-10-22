@@ -101,3 +101,43 @@ TEST(TransMultiplierEffect, CustomFactorsOverrideMode) {
   EXPECT_EQ(pixels[3], 99u);
   EXPECT_EQ(pixels[7], 77u);
 }
+
+TEST(TransMultiplierEffect, SingleChannelDefaultsOthersToNeutral) {
+  avs::effects::trans::Multiplier effect;
+  avs::core::ParamBlock params;
+  params.setFloat("factor_r", 0.5f);
+  effect.setParams(params);
+
+  std::array<std::uint8_t, 8> pixels{100u, 50u, 10u, 0u, 20u, 40u, 80u, 0u};
+  auto context = makeContext(pixels);
+
+  ASSERT_TRUE(effect.render(context));
+  EXPECT_EQ(pixels[0], 50u);
+  EXPECT_EQ(pixels[1], 50u);
+  EXPECT_EQ(pixels[2], 10u);
+  EXPECT_EQ(pixels[4], 10u);
+  EXPECT_EQ(pixels[5], 40u);
+  EXPECT_EQ(pixels[6], 80u);
+}
+
+TEST(TransMultiplierEffect, ChannelOverrideRetainsPreviousUniformFactor) {
+  avs::effects::trans::Multiplier effect;
+  avs::core::ParamBlock params;
+  params.setFloat("factor", 1.5f);
+  effect.setParams(params);
+
+  avs::core::ParamBlock overrideParams;
+  overrideParams.setFloat("factor_r", 0.5f);
+  effect.setParams(overrideParams);
+
+  std::array<std::uint8_t, 8> pixels{100u, 80u, 60u, 0u, 40u, 20u, 10u, 0u};
+  auto context = makeContext(pixels);
+
+  ASSERT_TRUE(effect.render(context));
+  EXPECT_EQ(pixels[0], 50u);
+  EXPECT_EQ(pixels[1], 120u);
+  EXPECT_EQ(pixels[2], 90u);
+  EXPECT_EQ(pixels[4], 20u);
+  EXPECT_EQ(pixels[5], 30u);
+  EXPECT_EQ(pixels[6], 15u);
+}

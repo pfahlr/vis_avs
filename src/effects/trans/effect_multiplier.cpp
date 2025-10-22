@@ -1,6 +1,7 @@
 #include "effects/trans/effect_multiplier.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
 
@@ -43,25 +44,39 @@ void Multiplier::setParams(const avs::core::ParamBlock& params) {
   }
 
   bool customSpecified = false;
+  bool uniformSpecified = false;
+  const bool wasUsingCustom = useCustomFactors_;
+  std::array<bool, 3> channelSpecified{false, false, false};
   if (params.contains("factor")) {
     const float value = params.getFloat("factor", customFactors_[0]);
     customFactors_.fill(value);
     customSpecified = true;
+    uniformSpecified = true;
   }
   if (params.contains("factor_r")) {
     customFactors_[0] = params.getFloat("factor_r", customFactors_[0]);
     customSpecified = true;
+    channelSpecified[0] = true;
   }
   if (params.contains("factor_g")) {
     customFactors_[1] = params.getFloat("factor_g", customFactors_[1]);
     customSpecified = true;
+    channelSpecified[1] = true;
   }
   if (params.contains("factor_b")) {
     customFactors_[2] = params.getFloat("factor_b", customFactors_[2]);
     customSpecified = true;
+    channelSpecified[2] = true;
   }
 
   if (customSpecified) {
+    if (!uniformSpecified && !wasUsingCustom) {
+      for (std::size_t index = 0; index < channelSpecified.size(); ++index) {
+        if (!channelSpecified[index]) {
+          customFactors_[index] = 1.0f;
+        }
+      }
+    }
     useCustomFactors_ = true;
   } else if (modeSpecified) {
     useCustomFactors_ = false;

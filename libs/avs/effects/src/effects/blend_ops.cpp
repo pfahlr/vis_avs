@@ -16,7 +16,8 @@ inline std::uint8_t saturatingAdd(std::uint8_t a, std::uint8_t b) {
 }
 
 inline std::uint8_t average(std::uint8_t a, std::uint8_t b) {
-  return static_cast<std::uint8_t>((a >> 1) + (b >> 1));
+  const std::uint16_t sum = static_cast<std::uint16_t>(a) + static_cast<std::uint16_t>(b);
+  return static_cast<std::uint8_t>(sum >> 1);
 }
 
 inline std::uint8_t blendTable(std::uint8_t value, std::uint8_t weight) {

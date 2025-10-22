@@ -207,6 +207,19 @@ TEST(MicroPresetParser, KeepsHashPrefixedHexValues) {
   EXPECT_EQ(cmd.params.getInt("bg", 0), 0xff0000);
 }
 
+TEST(BlendOps, AverageBlendPreservesCarry) {
+  const avs::effects::BlendConfig config{};
+  const std::array<std::uint8_t, 4> dst{{255u, 1u, 3u, 5u}};
+  const std::array<std::uint8_t, 4> src{{255u, 3u, 1u, 7u}};
+
+  const auto result = avs::effects::blendPixel(avs::effects::BlendOp::Blend, config, dst, src);
+
+  EXPECT_EQ(result[0], 255u);
+  EXPECT_EQ(result[1], 2u);
+  EXPECT_EQ(result[2], 2u);
+  EXPECT_EQ(result[3], 6u);
+}
+
 class BlendEffectsTest : public ::testing::Test {
  protected:
   BlendEffectsTest() { avs::effects::registerCoreEffects(registry_); }

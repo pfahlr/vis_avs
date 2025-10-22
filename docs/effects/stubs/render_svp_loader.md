@@ -1,3 +1,5 @@
 # Render / SVP Loader
 
-This is a stub for compatibility with legacy AVS presets. No functional rendering is implemented yet.
+Loads legacy SVP/UVS visualization plug-ins when running on Windows and a compatible module
+is configured. On other platforms the effect safely degrades to a no-op to keep presets
+compatible.

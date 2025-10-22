@@ -8,7 +8,7 @@
 #include <string>
 #include <string_view>
 
-#include <avs/preset/parser.h>
+#include <avs/effects/registry.h>
 
 namespace {
 
@@ -220,7 +220,7 @@ MicroPreset parseMicroPreset(std::string_view text) {
       continue;
     }
     MicroEffectCommand command;
-    command.effectKey = avs::runtime::parser::normalizeEffectToken(effectToken);
+    command.effectKey = avs::effects::Registry::normalize_legacy_token(effectToken);
     const bool isCommentEffect =
         command.effectKey == "misc_comment" || command.effectKey == "misc / comment";
     auto isCommentKey = [](const std::string& key) {

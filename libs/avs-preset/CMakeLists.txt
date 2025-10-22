@@ -2,10 +2,13 @@ add_library(avs-preset)
 add_library(avs::preset ALIAS avs-preset)
 
 set(AVS_PRESET_HEADERS
+  include/avs/preset/binder.h
+  include/avs/preset/ir.h
   include/avs/preset/parser.h
 )
 
 set(AVS_PRESET_SOURCES
+  src/binder.cpp
   src/parser.cpp
 )
 
@@ -21,6 +24,7 @@ target_sources(avs-preset
 
 target_link_libraries(avs-preset
   PUBLIC
+    avs::effects-api
     avs::core
     avs::dsl
 )

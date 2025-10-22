@@ -4,12 +4,15 @@
 #include <array>
 #include <cctype>
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <iterator>
 #include <sstream>
 #include <string>
 #include <string_view>
 #include <vector>
+
+#include "avs/legacy_effects.hpp"
 
 namespace avs {
 
@@ -27,103 +30,105 @@ class PassThroughEffect : public Effect {
   void process(const Framebuffer& in, Framebuffer& out) override { out = in; }
 };
 
+struct Reader;
+
 std::string effectNameForId(std::uint32_t effectId) {
   constexpr std::array<std::string_view, 46> kRegisteredEffectNames = {
-      "Render / Simple",            // R_SimpleSpectrum
-      "Render / Dot Plane",         // R_DotPlane
-      "Render / Oscilloscope Star", // R_OscStars (preferred casing from registry)
-      "",                           // R_FadeOut
-      "Trans / Blitter Feedback",   // R_BlitterFB
-      "",                           // R_NFClear
-      "Trans / Blur",               // R_Blur
-      "Render / Bass Spin",         // R_BSpin
-      "Render / Moving Particle",   // R_Parts
-      "Trans / Roto Blitter",       // R_RotBlit
-      "Render / SVP Loader",        // R_SVP
-      "Trans / Colorfade",          // R_ColorFade
-      "Trans / Color Clip",         // R_ContrastEnhance
-      "Render / Rotating Stars",    // R_RotStar
-      "Render / Ring",              // R_OscRings
-      "",                           // R_Trans
-      "Trans / Scatter",            // R_Scat
-      "",                           // R_DotGrid
-      "",                           // R_Stack
-      "Render / Dot Fountain",      // R_DotFountain
-      "Trans / Water",              // R_Water
-      "Misc / Comment",             // R_Comment
-      "Trans / Brightness",         // R_Brightness
-      "",                           // R_Interleave
-      "Trans / Grain",              // R_Grain
-      "",                           // R_Clear
-      "",                           // R_Mirror
-      "",                           // R_StarField
-      "",                           // R_Text
-      "",                           // R_Bump
-      "Trans / Mosaic",             // R_Mosaic
-      "Trans / Water Bump",         // R_WaterBump
-      "Render / AVI",               // R_AVI
-      "Misc / Custom BPM",          // R_Bpm
-      "",                           // R_Picture
-      "",                           // R_DDM
-      "",                           // R_SScope
-      "",                           // R_Invert
-      "Trans / Unique tone",        // R_Onetone
-      "Render / Timescope",         // R_Timescope
-      "Misc / Set render mode",     // R_LineMode
-      "Trans / Interferences",      // R_Interferences
-      "",                           // R_Shift
-      "",                           // R_DMove
-      "Trans / Fast Brightness",    // R_FastBright
-      "Trans / Color Modifier",     // R_DColorMod
+      "Render / Simple",             // R_SimpleSpectrum
+      "Render / Dot Plane",          // R_DotPlane
+      "Render / Oscilloscope Star",  // R_OscStars (preferred casing from registry)
+      "",                            // R_FadeOut
+      "Trans / Blitter Feedback",    // R_BlitterFB
+      "",                            // R_NFClear
+      "Trans / Blur",                // R_Blur
+      "Render / Bass Spin",          // R_BSpin
+      "Render / Moving Particle",    // R_Parts
+      "Trans / Roto Blitter",        // R_RotBlit
+      "Render / SVP Loader",         // R_SVP
+      "Trans / Colorfade",           // R_ColorFade
+      "Trans / Color Clip",          // R_ContrastEnhance
+      "Render / Rotating Stars",     // R_RotStar
+      "Render / Ring",               // R_OscRings
+      "",                            // R_Trans
+      "Trans / Scatter",             // R_Scat
+      "",                            // R_DotGrid
+      "",                            // R_Stack
+      "Render / Dot Fountain",       // R_DotFountain
+      "Trans / Water",               // R_Water
+      "Misc / Comment",              // R_Comment
+      "Trans / Brightness",          // R_Brightness
+      "",                            // R_Interleave
+      "Trans / Grain",               // R_Grain
+      "",                            // R_Clear
+      "",                            // R_Mirror
+      "",                            // R_StarField
+      "",                            // R_Text
+      "",                            // R_Bump
+      "Trans / Mosaic",              // R_Mosaic
+      "Trans / Water Bump",          // R_WaterBump
+      "Render / AVI",                // R_AVI
+      "Misc / Custom BPM",           // R_Bpm
+      "",                            // R_Picture
+      "",                            // R_DDM
+      "",                            // R_SScope
+      "",                            // R_Invert
+      "Trans / Unique tone",         // R_Onetone
+      "Render / Timescope",          // R_Timescope
+      "Misc / Set render mode",      // R_LineMode
+      "Trans / Interferences",       // R_Interferences
+      "",                            // R_Shift
+      "",                            // R_DMove
+      "Trans / Fast Brightness",     // R_FastBright
+      "Trans / Color Modifier",      // R_DColorMod
   };
 
   constexpr std::array<std::string_view, 46> kLegacyEffectNames = {
-      "Render / Simple",                     // R_SimpleSpectrum
-      "Render / Dot Plane",                  // R_DotPlane
-      "Render / Oscilliscope Star",          // R_OscStars
-      "Trans / Fadeout",                     // R_FadeOut
-      "Trans / Blitter Feedback",            // R_BlitterFB
-      "Render / OnBeat Clear",               // R_NFClear
-      "Trans / Blur",                        // R_Blur
-      "Render / Bass Spin",                  // R_BSpin
-      "Render / Moving Particle",            // R_Parts
-      "Trans / Roto Blitter",                // R_RotBlit
-      "Render / SVP Loader",                 // R_SVP
-      "Trans / Colorfade",                   // R_ColorFade
-      "Trans / Color Clip",                  // R_ContrastEnhance
-      "Render / Rotating Stars",             // R_RotStar
-      "Render / Ring",                       // R_OscRings
-      "Trans / Movement",                    // R_Trans
-      "Trans / Scatter",                     // R_Scat
-      "Render / Dot Grid",                   // R_DotGrid
-      "Misc / Buffer Save",                  // R_Stack
-      "Render / Dot Fountain",               // R_DotFountain
-      "Trans / Water",                       // R_Water
-      "Misc / Comment",                      // R_Comment
-      "Trans / Brightness",                  // R_Brightness
-      "Trans / Interleave",                  // R_Interleave
-      "Trans / Grain",                       // R_Grain
-      "Render / Clear screen",               // R_Clear
-      "Trans / Mirror",                      // R_Mirror
-      "Render / Starfield",                  // R_StarField
-      "Render / Text",                       // R_Text
-      "Trans / Bump",                        // R_Bump
-      "Trans / Mosaic",                      // R_Mosaic
-      "Trans / Water Bump",                  // R_WaterBump
-      "Render / AVI",                        // R_AVI
-      "Misc / Custom BPM",                   // R_Bpm
-      "Render / Picture",                    // R_Picture
-      "Trans / Dynamic Distance Modifier",   // R_DDM
-      "Render / SuperScope",                 // R_SScope
-      "Trans / Invert",                      // R_Invert
-      "Trans / Unique tone",                 // R_Onetone
-      "Render / Timescope",                  // R_Timescope
-      "Misc / Set render mode",              // R_LineMode
-      "Trans / Interferences",               // R_Interferences
-      "Trans / Dynamic Shift",               // R_Shift
-      "Trans / Dynamic Movement",            // R_DMove
-      "Trans / Fast Brightness",             // R_FastBright
-      "Trans / Color Modifier",              // R_DColorMod
+      "Render / Simple",                    // R_SimpleSpectrum
+      "Render / Dot Plane",                 // R_DotPlane
+      "Render / Oscilliscope Star",         // R_OscStars
+      "Trans / Fadeout",                    // R_FadeOut
+      "Trans / Blitter Feedback",           // R_BlitterFB
+      "Render / OnBeat Clear",              // R_NFClear
+      "Trans / Blur",                       // R_Blur
+      "Render / Bass Spin",                 // R_BSpin
+      "Render / Moving Particle",           // R_Parts
+      "Trans / Roto Blitter",               // R_RotBlit
+      "Render / SVP Loader",                // R_SVP
+      "Trans / Colorfade",                  // R_ColorFade
+      "Trans / Color Clip",                 // R_ContrastEnhance
+      "Render / Rotating Stars",            // R_RotStar
+      "Render / Ring",                      // R_OscRings
+      "Trans / Movement",                   // R_Trans
+      "Trans / Scatter",                    // R_Scat
+      "Render / Dot Grid",                  // R_DotGrid
+      "Misc / Buffer Save",                 // R_Stack
+      "Render / Dot Fountain",              // R_DotFountain
+      "Trans / Water",                      // R_Water
+      "Misc / Comment",                     // R_Comment
+      "Trans / Brightness",                 // R_Brightness
+      "Trans / Interleave",                 // R_Interleave
+      "Trans / Grain",                      // R_Grain
+      "Render / Clear screen",              // R_Clear
+      "Trans / Mirror",                     // R_Mirror
+      "Render / Starfield",                 // R_StarField
+      "Render / Text",                      // R_Text
+      "Trans / Bump",                       // R_Bump
+      "Trans / Mosaic",                     // R_Mosaic
+      "Trans / Water Bump",                 // R_WaterBump
+      "Render / AVI",                       // R_AVI
+      "Misc / Custom BPM",                  // R_Bpm
+      "Render / Picture",                   // R_Picture
+      "Trans / Dynamic Distance Modifier",  // R_DDM
+      "Render / SuperScope",                // R_SScope
+      "Trans / Invert",                     // R_Invert
+      "Trans / Unique tone",                // R_Onetone
+      "Render / Timescope",                 // R_Timescope
+      "Misc / Set render mode",             // R_LineMode
+      "Trans / Interferences",              // R_Interferences
+      "Trans / Dynamic Shift",              // R_Shift
+      "Trans / Dynamic Movement",           // R_DMove
+      "Trans / Fast Brightness",            // R_FastBright
+      "Trans / Color Modifier",             // R_DColorMod
   };
 
   if (effectId < kRegisteredEffectNames.size()) {
@@ -193,9 +198,258 @@ bool ensureRemaining(const Reader& r, size_t limit, size_t amount) {
   return r.pos + amount <= limit;
 }
 
-bool parseRenderListChunk(Reader& r,
-                          size_t chunkEnd,
-                          ParsedPreset& result,
+bool parseSimpleSpectrum(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& effect) {
+  std::uint32_t effectBits = 0;
+  std::uint32_t colorCount = 0;
+  if (!readU32Bounded(r, chunkEnd, effectBits) || !readU32Bounded(r, chunkEnd, colorCount)) {
+    r.pos = chunkEnd;
+    return false;
+  }
+  std::vector<std::uint32_t> palette;
+  palette.reserve(std::min<std::uint32_t>(colorCount, 16u));
+  const std::uint32_t limit = std::min<std::uint32_t>(colorCount, 16u);
+  for (std::uint32_t i = 0; i < limit; ++i) {
+    std::uint32_t color = 0;
+    if (!readU32Bounded(r, chunkEnd, color)) {
+      r.pos = chunkEnd;
+      return false;
+    }
+    palette.push_back(color);
+  }
+  if (colorCount > limit) {
+    const size_t extra = static_cast<size_t>(colorCount - limit);
+    if (!ensureRemaining(r, chunkEnd, extra * sizeof(std::uint32_t))) {
+      r.pos = chunkEnd;
+      return false;
+    }
+    r.pos += extra * sizeof(std::uint32_t);
+  }
+  SimpleSpectrumConfig config;
+  config.effectBits = effectBits;
+  config.palette = std::move(palette);
+  effect = std::make_unique<LegacySimpleSpectrumEffect>(std::move(config));
+  r.pos = chunkEnd;
+  return true;
+}
+
+bool parseFadeout(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& effect) {
+  std::uint32_t fadeLength = 0;
+  std::uint32_t color = 0;
+  if (!readU32Bounded(r, chunkEnd, fadeLength) || !readU32Bounded(r, chunkEnd, color)) {
+    r.pos = chunkEnd;
+    return false;
+  }
+  FadeoutConfig config;
+  config.fadeLength = fadeLength;
+  config.targetColor = color;
+  effect = std::make_unique<LegacyFadeoutEffect>(config);
+  r.pos = chunkEnd;
+  return true;
+}
+
+bool parseBlur(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& effect) {
+  std::uint32_t mode = 0;
+  std::uint32_t round = 0;
+  if (!readU32Bounded(r, chunkEnd, mode) || !readU32Bounded(r, chunkEnd, round)) {
+    r.pos = chunkEnd;
+    return false;
+  }
+  BlurConfig config;
+  config.mode = mode;
+  config.roundMode = round;
+  effect = std::make_unique<LegacyBlurEffect>(config);
+  r.pos = chunkEnd;
+  return true;
+}
+
+bool parseMovingParticle(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& effect) {
+  MovingParticleConfig config;
+  if (!readU32Bounded(r, chunkEnd, config.enabled) || !readU32Bounded(r, chunkEnd, config.color) ||
+      !readU32Bounded(r, chunkEnd, config.maxDistance) ||
+      !readU32Bounded(r, chunkEnd, config.size) ||
+      !readU32Bounded(r, chunkEnd, config.secondarySize) ||
+      !readU32Bounded(r, chunkEnd, config.blendMode)) {
+    r.pos = chunkEnd;
+    return false;
+  }
+  effect = std::make_unique<LegacyMovingParticleEffect>(config);
+  r.pos = chunkEnd;
+  return true;
+}
+
+bool parseRing(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& effect) {
+  std::uint32_t effectBits = 0;
+  std::uint32_t colorCount = 0;
+  if (!readU32Bounded(r, chunkEnd, effectBits) || !readU32Bounded(r, chunkEnd, colorCount)) {
+    r.pos = chunkEnd;
+    return false;
+  }
+  std::vector<std::uint32_t> palette;
+  palette.reserve(std::min<std::uint32_t>(colorCount, 16u));
+  const std::uint32_t limit = std::min<std::uint32_t>(colorCount, 16u);
+  for (std::uint32_t i = 0; i < limit; ++i) {
+    std::uint32_t color = 0;
+    if (!readU32Bounded(r, chunkEnd, color)) {
+      r.pos = chunkEnd;
+      return false;
+    }
+    palette.push_back(color);
+  }
+  if (colorCount > limit) {
+    const size_t extra = static_cast<size_t>(colorCount - limit);
+    if (!ensureRemaining(r, chunkEnd, extra * sizeof(std::uint32_t))) {
+      r.pos = chunkEnd;
+      return false;
+    }
+    r.pos += extra * sizeof(std::uint32_t);
+  }
+  std::uint32_t size = 0;
+  std::uint32_t source = 0;
+  if (!readU32Bounded(r, chunkEnd, size) || !readU32Bounded(r, chunkEnd, source)) {
+    r.pos = chunkEnd;
+    return false;
+  }
+  RingConfig config;
+  config.effectBits = effectBits;
+  config.palette = std::move(palette);
+  config.size = size;
+  config.sourceChannel = source;
+  effect = std::make_unique<LegacyRingEffect>(std::move(config));
+  r.pos = chunkEnd;
+  return true;
+}
+
+bool parseMovement(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& effect) {
+  MovementConfig config;
+  std::uint32_t rawEffect = 0;
+  if (!readU32Bounded(r, chunkEnd, rawEffect)) {
+    r.pos = chunkEnd;
+    return false;
+  }
+  config.effect = static_cast<std::int32_t>(rawEffect);
+  if (config.effect == 32767) {
+    const size_t remaining = chunkEnd - r.pos;
+    if (remaining >= 6 && std::memcmp(r.data.data() + r.pos, "!rect ", 6) == 0) {
+      config.rectangularFlagFromScript = true;
+      r.pos += 6;
+    }
+    if (r.pos < chunkEnd) {
+      std::uint8_t tag = static_cast<std::uint8_t>(r.data[r.pos]);
+      if (tag == 1) {
+        ++r.pos;
+        std::uint32_t scriptLen = 0;
+        if (!readU32Bounded(r, chunkEnd, scriptLen)) {
+          r.pos = chunkEnd;
+          return false;
+        }
+        if (!ensureRemaining(r, chunkEnd, scriptLen)) {
+          r.pos = chunkEnd;
+          return false;
+        }
+        if (scriptLen > 0) {
+          const char* begin = r.data.data() + r.pos;
+          config.script.assign(begin, begin + scriptLen);
+          while (!config.script.empty() && config.script.back() == '\0') {
+            config.script.pop_back();
+          }
+          r.pos += scriptLen;
+        }
+        config.scriptEncoding = MovementConfig::ScriptEncoding::Tagged;
+      } else {
+        const size_t legacyLen = 256u - (config.rectangularFlagFromScript ? 6u : 0u);
+        if (legacyLen > 0 && ensureRemaining(r, chunkEnd, legacyLen)) {
+          const char* begin = r.data.data() + r.pos;
+          config.script.assign(begin, begin + legacyLen);
+          while (!config.script.empty() && config.script.back() == '\0') {
+            config.script.pop_back();
+          }
+          r.pos += legacyLen;
+          config.scriptEncoding = MovementConfig::ScriptEncoding::Legacy;
+        }
+      }
+    }
+  }
+
+  std::uint32_t blend = 0;
+  std::uint32_t sourceMapped = 0;
+  std::uint32_t rectangular = 0;
+  std::uint32_t subpixel = 0;
+  std::uint32_t wrap = 0;
+  if (!readU32Bounded(r, chunkEnd, blend) || !readU32Bounded(r, chunkEnd, sourceMapped) ||
+      !readU32Bounded(r, chunkEnd, rectangular)) {
+    r.pos = chunkEnd;
+    return false;
+  }
+  config.blend = static_cast<std::int32_t>(blend);
+  config.sourceMapped = static_cast<std::int32_t>(sourceMapped);
+  config.rectangular = static_cast<std::int32_t>(rectangular);
+
+  if (readU32Bounded(r, chunkEnd, subpixel)) {
+    config.subpixel = static_cast<std::int32_t>(subpixel);
+  } else {
+    config.subpixel = 0;
+  }
+
+  if (readU32Bounded(r, chunkEnd, wrap)) {
+    config.wrap = static_cast<std::int32_t>(wrap);
+  } else {
+    config.wrap = 0;
+  }
+
+  if (config.effect == 0 && ensureRemaining(r, chunkEnd, sizeof(std::uint32_t))) {
+    if (!readU32Bounded(r, chunkEnd, rawEffect)) {
+      r.pos = chunkEnd;
+      return false;
+    }
+    config.effect = static_cast<std::int32_t>(rawEffect);
+  }
+
+  effect = std::make_unique<LegacyMovementEffect>(std::move(config));
+  r.pos = chunkEnd;
+  return true;
+}
+
+bool parseDotFountain(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& effect) {
+  DotFountainConfig config;
+  std::uint32_t rotationVelocity = 0;
+  if (!readU32Bounded(r, chunkEnd, rotationVelocity)) {
+    r.pos = chunkEnd;
+    return false;
+  }
+  config.rotationVelocity = static_cast<std::int32_t>(rotationVelocity);
+  for (auto& color : config.colors) {
+    if (!readU32Bounded(r, chunkEnd, color)) {
+      r.pos = chunkEnd;
+      return false;
+    }
+  }
+  std::uint32_t angle = 0;
+  std::uint32_t radius = 0;
+  if (!readU32Bounded(r, chunkEnd, angle) || !readU32Bounded(r, chunkEnd, radius)) {
+    r.pos = chunkEnd;
+    return false;
+  }
+  config.angle = static_cast<std::int32_t>(angle);
+  config.radius = static_cast<float>(static_cast<int>(radius)) / 32.0f;
+  effect = std::make_unique<LegacyDotFountainEffect>(config);
+  r.pos = chunkEnd;
+  return true;
+}
+
+bool parseMirror(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& effect) {
+  MirrorConfig config;
+  if (!readU32Bounded(r, chunkEnd, config.enabled) || !readU32Bounded(r, chunkEnd, config.mode) ||
+      !readU32Bounded(r, chunkEnd, config.onBeat) || !readU32Bounded(r, chunkEnd, config.smooth) ||
+      !readU32Bounded(r, chunkEnd, config.slower)) {
+    r.pos = chunkEnd;
+    return false;
+  }
+  effect = std::make_unique<LegacyMirrorEffect>(config);
+  r.pos = chunkEnd;
+  return true;
+}
+
+bool parseRenderListChunk(Reader& r, size_t chunkEnd, ParsedPreset& result,
                           std::vector<std::unique_ptr<Effect>>& chain);
 
 bool parseColorModifier(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& effect) {
@@ -232,12 +486,8 @@ bool parseColorModifier(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& eff
     return false;
   }
   r.pos = chunkEnd;
-  effect = std::make_unique<ScriptedEffect>(scripts[3],
-                                            scripts[1],
-                                            scripts[2],
-                                            scripts[0],
-                                            ScriptedEffect::Mode::kColorModifier,
-                                            recompute != 0);
+  effect = std::make_unique<ScriptedEffect>(scripts[3], scripts[1], scripts[2], scripts[0],
+                                            ScriptedEffect::Mode::kColorModifier, recompute != 0);
   return true;
 }
 
@@ -264,9 +514,7 @@ bool parseCommentEffect(Reader& r, size_t chunkEnd, ParsedPreset& result) {
   return true;
 }
 
-bool parseRenderListChunk(Reader& r,
-                          size_t chunkEnd,
-                          ParsedPreset& result,
+bool parseRenderListChunk(Reader& r, size_t chunkEnd, ParsedPreset& result,
                           std::vector<std::unique_ptr<Effect>>& chain) {
   if (chunkEnd > r.data.size()) {
     result.warnings.push_back("render list exceeds buffer bounds");
@@ -349,7 +597,31 @@ bool parseRenderListChunk(Reader& r,
       entry.payload.assign(payloadPtr, payloadPtr + payloadLen);
     }
 
-    if (effectId == 45u) {
+    if (effectId == 0u) {
+      knownEffect = true;
+      success = parseSimpleSpectrum(chunkReader, payloadEnd, parsedEffect);
+    } else if (effectId == 3u) {
+      knownEffect = true;
+      success = parseFadeout(chunkReader, payloadEnd, parsedEffect);
+    } else if (effectId == 6u) {
+      knownEffect = true;
+      success = parseBlur(chunkReader, payloadEnd, parsedEffect);
+    } else if (effectId == 8u) {
+      knownEffect = true;
+      success = parseMovingParticle(chunkReader, payloadEnd, parsedEffect);
+    } else if (effectId == 14u) {
+      knownEffect = true;
+      success = parseRing(chunkReader, payloadEnd, parsedEffect);
+    } else if (effectId == 15u) {
+      knownEffect = true;
+      success = parseMovement(chunkReader, payloadEnd, parsedEffect);
+    } else if (effectId == 19u) {
+      knownEffect = true;
+      success = parseDotFountain(chunkReader, payloadEnd, parsedEffect);
+    } else if (effectId == 26u) {
+      knownEffect = true;
+      success = parseMirror(chunkReader, payloadEnd, parsedEffect);
+    } else if (effectId == 45u) {
       knownEffect = true;
       success = parseColorModifier(chunkReader, payloadEnd, parsedEffect);
     } else if (effectId == 21u) {
@@ -401,7 +673,8 @@ bool parseRenderListChunk(Reader& r,
   return true;
 }
 
-bool parseBinaryMagicHeader(const std::vector<char>& data, size_t& headerLen, std::string& version) {
+bool parseBinaryMagicHeader(const std::vector<char>& data, size_t& headerLen,
+                            std::string& version) {
   if (data.size() <= kMagicPrefix.size()) return false;
   if (!std::equal(kMagicPrefix.begin(), kMagicPrefix.end(), data.begin())) return false;
   auto versionBegin = data.begin();
@@ -460,8 +733,7 @@ ParsedPreset parseTextPreset(const std::string& text) {
       } else {
         size_t pos = 0;
         while (pos < rest.size()) {
-          while (pos < rest.size() &&
-                 std::isspace(static_cast<unsigned char>(rest[pos]))) {
+          while (pos < rest.size() && std::isspace(static_cast<unsigned char>(rest[pos]))) {
             ++pos;
           }
           if (pos >= rest.size()) break;
@@ -496,9 +768,8 @@ ParsedPreset parseTextPreset(const std::string& text) {
           }
           std::string keyLower;
           keyLower.resize(key.size());
-          std::transform(key.begin(), key.end(), keyLower.begin(), [](unsigned char c) {
-            return static_cast<char>(std::tolower(c));
-          });
+          std::transform(key.begin(), key.end(), keyLower.begin(),
+                         [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
           if (keyLower == "init") {
             initScript = value;
           } else if (keyLower == "frame") {
@@ -509,9 +780,8 @@ ParsedPreset parseTextPreset(const std::string& text) {
             pixelScript = value;
           } else if (keyLower == "mode") {
             std::string valueLower = value;
-            std::transform(valueLower.begin(), valueLower.end(), valueLower.begin(), [](unsigned char c) {
-              return static_cast<char>(std::tolower(c));
-            });
+            std::transform(valueLower.begin(), valueLower.end(), valueLower.begin(),
+                           [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
             if (valueLower == "color_mod" || valueLower == "colormod") {
               mode = ScriptedEffect::Mode::kColorModifier;
             } else if (valueLower == "superscope") {
@@ -521,17 +791,16 @@ ParsedPreset parseTextPreset(const std::string& text) {
             }
           } else if (keyLower == "recompute") {
             std::string valueLower = value;
-            std::transform(valueLower.begin(), valueLower.end(), valueLower.begin(), [](unsigned char c) {
-              return static_cast<char>(std::tolower(c));
-            });
+            std::transform(valueLower.begin(), valueLower.end(), valueLower.begin(),
+                           [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
             recompute = (valueLower == "1" || valueLower == "true");
           } else {
             result.unknown.push_back("scripted:" + key);
           }
         }
       }
-      result.chain.push_back(
-          std::make_unique<ScriptedEffect>(initScript, frameScript, beatScript, pixelScript, mode, recompute));
+      result.chain.push_back(std::make_unique<ScriptedEffect>(initScript, frameScript, beatScript,
+                                                              pixelScript, mode, recompute));
     } else {
       result.warnings.push_back("unsupported effect: " + type);
       result.chain.push_back(std::make_unique<PassThroughEffect>());

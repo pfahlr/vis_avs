@@ -1,4 +1,4 @@
-#include <avs/effects/blend_ops.hpp>
+#include <avs/effects/core/blend_ops.hpp>
 
 #include <algorithm>
 #include <array>

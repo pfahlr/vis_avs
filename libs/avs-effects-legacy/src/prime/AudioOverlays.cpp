@@ -1,4 +1,4 @@
-#include <avs/effects/AudioOverlays.hpp>
+#include <avs/effects/prime/AudioOverlays.hpp>
 
 #include <algorithm>
 #include <array>

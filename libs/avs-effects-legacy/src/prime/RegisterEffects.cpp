@@ -1,23 +1,23 @@
-#include <avs/effects/RegisterEffects.hpp>
+#include <avs/effects/prime/RegisterEffects.hpp>
 
 #include <memory>
 
-#include <avs/effects/AudioOverlays.hpp>
-#include <avs/effects/Blend.hpp>
-#include <avs/effects/Bump.hpp>
-#include <avs/effects/Clear.hpp>
-#include <avs/effects/Globals.hpp>
-#include <avs/effects/Overlay.hpp>
-#include <avs/effects/Primitives.hpp>
-#include <avs/effects/Swizzle.hpp>
-#include <avs/effects/TransformAffine.hpp>
-#include <avs/effects/Zoom.hpp>
+#include <avs/effects/prime/AudioOverlays.hpp>
+#include <avs/effects/prime/Blend.hpp>
+#include <avs/effects/prime/Bump.hpp>
+#include <avs/effects/prime/Clear.hpp>
+#include <avs/effects/prime/Globals.hpp>
+#include <avs/effects/prime/Overlay.hpp>
+#include <avs/effects/primitives/Primitives.hpp>
+#include <avs/effects/prime/Swizzle.hpp>
+#include <avs/effects/prime/TransformAffine.hpp>
+#include <avs/effects/prime/Zoom.hpp>
 #include <avs/effects/dynamic/dyn_distance.h>
 #include <avs/effects/dynamic/dyn_movement.h>
 #include <avs/effects/dynamic/dyn_shift.h>
 #include <avs/effects/dynamic/movement.h>
 #include <avs/effects/dynamic/zoom_rotate.h>
-#include <avs/effects/legacy/effect_scripted.h>
+#include <avs/effects/core/effect_scripted.h>
 #include <avs/effects/filters/effect_blur_box.h>
 #include <avs/effects/filters/effect_color_map.h>
 #include <avs/effects/filters/effect_conv3x3.h>

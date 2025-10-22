@@ -1,4 +1,4 @@
-#include <avs/effects/Globals.hpp>
+#include <avs/effects/prime/Globals.hpp>
 
 namespace avs::effects {
 

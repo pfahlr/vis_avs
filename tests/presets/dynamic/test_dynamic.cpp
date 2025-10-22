@@ -16,7 +16,7 @@
 #include <avs/core/ParamBlock.hpp>
 #include <avs/core/Pipeline.hpp>
 #include <avs/core/RenderContext.hpp>
-#include <avs/effects/RegisterEffects.hpp>
+#include <avs/effects/prime/RegisterEffects.hpp>
 #include "md5_helper.hpp"
 
 namespace {

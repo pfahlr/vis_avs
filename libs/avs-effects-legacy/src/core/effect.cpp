@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/effect.h>
+#include <avs/effects/core/effect.h>
 
 #include <iostream>
 #include <utility>

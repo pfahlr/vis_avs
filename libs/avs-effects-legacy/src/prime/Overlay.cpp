@@ -1,4 +1,4 @@
-#include <avs/effects/Overlay.hpp>
+#include <avs/effects/prime/Overlay.hpp>
 
 #include <algorithm>
 

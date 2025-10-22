@@ -1,4 +1,4 @@
-#include <avs/effects/Blend.hpp>
+#include <avs/effects/prime/Blend.hpp>
 
 namespace {
 std::array<std::uint8_t, 4> colorFromInt(int value, std::uint8_t alphaDefault) {

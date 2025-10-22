@@ -1,4 +1,4 @@
-#include <avs/effects/Swizzle.hpp>
+#include <avs/effects/prime/Swizzle.hpp>
 
 #include <algorithm>
 #include <array>

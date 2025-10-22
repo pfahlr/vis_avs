@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/effect_scripted.h>
+#include <avs/effects/core/effect_scripted.h>
 
 #include <algorithm>
 #include <array>

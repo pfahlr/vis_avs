@@ -1,6 +1,6 @@
 #pragma once
 
-#include <avs/effects/legacy/effect.h>
+#include <avs/effects/core/effect.h>
 
 class Effect_RenderAvi : public Effect {
  public:

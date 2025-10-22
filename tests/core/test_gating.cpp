@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <avs/effects/legacy/gating.h>
+#include <avs/effects/core/gating.h>
 
 namespace {
 

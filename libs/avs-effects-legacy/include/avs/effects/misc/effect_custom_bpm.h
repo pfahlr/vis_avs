@@ -3,7 +3,7 @@
 #include <cstddef>
 
 #include <avs/core/IEffect.hpp>
-#include <avs/effects/Gating.hpp>
+#include <avs/effects/core/Gating.hpp>
 
 namespace avs::core {
 class ParamBlock;

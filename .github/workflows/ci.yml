@@ -37,15 +37,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Prepare cache directories
-        run: |
-          mkdir -p build/_deps
-          mkdir -p .ccache
-          mkdir -p "$HOME/.cache/fetchcontent"
-          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
-            mkdir -p /var/cache/apt
-          else
-            mkdir -p /var/cache/dnf
-          fi
+        shell: bash
+        env:
+          DISTRO: ${{ matrix.distro }}
+        run: .github/scripts/prepare_build_directories.sh
 
       - name: Cache package manager artifacts
         uses: actions/cache@v4
@@ -74,50 +69,9 @@ jobs:
 
       - name: Install build dependencies
         shell: bash
-        run: |
-          set -euo pipefail
-          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
-            export DEBIAN_FRONTEND=noninteractive
-            apt-get update
-            apt-get install -y --no-install-recommends \
-              build-essential \
-              ccache \
-              clang \
-              cmake \
-              git \
-              ninja-build \
-              pkg-config \
-              python3 \
-              libsdl2-dev \
-              libgl1-mesa-dev \
-              libglu1-mesa-dev \
-              libasound2-dev \
-              libjack-dev \
-              libportaudio2 \
-              portaudio19-dev \
-              libsamplerate0-dev \
-              libfftw3-dev
-          else
-            dnf -y makecache
-            dnf -y install \
-              ccache \
-              clang \
-              cmake \
-              gcc \
-              gcc-c++ \
-              git \
-              ninja-build \
-              pkgconf-pkg-config \
-              python3 \
-              SDL2-devel \
-              mesa-libGL-devel \
-              mesa-libGLU-devel \
-              alsa-lib-devel \
-              jack-audio-connection-kit-devel \
-              portaudio-devel \
-              libsamplerate-devel \
-              fftw-devel
-          fi
+        env:
+          DISTRO: ${{ matrix.distro }}
+        run: .github/scripts/install_build_dependencies.sh
 
       - name: Cache CMake dependencies
         uses: actions/cache@v4
@@ -141,13 +95,10 @@ jobs:
 
       # Optional: fix trust store if your runner image is missing CA certs
       - name: Ensure CA trust for git (defensive)
-        run: |
-          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
-            apt-get update
-            apt-get install -y ca-certificates
-            git config --global http.sslcainfo /etc/ssl/certs/ca-certificates.crt
-            unset CURL_CA_BUNDLE SSL_CERT_FILE
-          fi
+        shell: bash
+        env:
+          DISTRO: ${{ matrix.distro }}
+        run: .github/scripts/ensure_ca_trust.sh
       - name: Checkout PortAudio (shallow)
         uses: actions/checkout@v4
         with:
@@ -158,12 +109,9 @@ jobs:
       # Prove the path exists before CMake runs (avoids the exact error you hit)
       - name: Verify PortAudio path
         shell: bash
-        run: |
-         set -euxo pipefail
-         if [ "${{ matrix.distro }}" = "ubuntu" ]; then
-           test -d "$GITHUB_WORKSPACE/external/portaudio/.git"
-           ls -la "$GITHUB_WORKSPACE/external/portaudio" | head -n 20
-         fi
+        env:
+          DISTRO: ${{ matrix.distro }}
+        run: .github/scripts/verify_portaudio_path.sh
 
       # Add after the PortAudio checkout
       - name: Checkout googletest (shallow)
@@ -175,30 +123,14 @@ jobs:
 
       - name: Verify googletest path
         shell: bash
-        run: |
-          set -euo pipefail
-          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
-          test -d "$GITHUB_WORKSPACE/external/googletest/.git"
-          git -C "$GITHUB_WORKSPACE/external/googletest" rev-parse --short HEAD
-          fi
+        env:
+          DISTRO: ${{ matrix.distro }}
+        run: .github/scripts/verify_googletest_path.sh
       - name: Configure
-        run: |
-          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
-            cmake -S . -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DFETCHCONTENT_SOURCE_DIR_PORTAUDIO="$GITHUB_WORKSPACE/external/portaudio" \
-            -DFETCHCONTENT_SOURCE_DIR_GOOGLETEST="$GITHUB_WORKSPACE/external/googletest" \
-            -DFETCHCONTENT_FULLY_DISCONNECTED=ON \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_INSTALL_PREFIX="${PWD}/install"
-          else
-            cmake -S . -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_INSTALL_PREFIX="${PWD}/install"
-          fi
+        shell: bash
+        env:
+          DISTRO: ${{ matrix.distro }}
+        run: .github/scripts/configure_build.sh
       - name: Build
         run: cmake --build build -- -k 0
 
@@ -256,14 +188,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Prepare cache directories
-        run: |
-          mkdir -p .ccache
-          mkdir -p "$HOME/.cache/fetchcontent"
-          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
-            mkdir -p /var/cache/apt
-          else
-            mkdir -p /var/cache/dnf
-          fi
+        shell: bash
+        env:
+          DISTRO: ${{ matrix.distro }}
+        run: .github/scripts/prepare_test_directories.sh
 
       - name: Cache package manager artifacts
         uses: actions/cache@v4
@@ -275,38 +203,9 @@ jobs:
 
       - name: Install runtime dependencies
         shell: bash
-        run: |
-          set -euo pipefail
-          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
-            export DEBIAN_FRONTEND=noninteractive
-            apt-get update
-            apt-get install -y --no-install-recommends \
-              cmake \
-              git \
-              libasound2-dev \
-              libgl1-mesa-dev \
-              libglu1-mesa-dev \
-              libjack-dev \
-              libportaudio2 \
-              libsdl2-dev \
-              libsamplerate0-dev \
-              libfftw3-dev \
-              python3
-          else
-            dnf -y makecache
-            dnf -y install \
-              cmake \
-              SDL2-devel \
-              alsa-lib-devel \
-              fftw-devel \
-              git \
-              jack-audio-connection-kit-devel \
-              libsamplerate-devel \
-              mesa-libGL-devel \
-              mesa-libGLU-devel \
-              portaudio-devel \
-              python3
-          fi
+        env:
+          DISTRO: ${{ matrix.distro }}
+        run: .github/scripts/install_runtime_dependencies.sh
 
       - name: Download build artifact
         uses: actions/download-artifact@v4
@@ -316,106 +215,13 @@ jobs:
 
       - name: Normalize build directory
         shell: bash
-        run: |
-          set -euo pipefail
-          if [ -d build ]; then
-            exit 0
-          fi
-
-          distro_dir="build-${{ matrix.distro }}"
-
-          maybe_extract_archive() {
-            local archive="$1"
-            local tmpdir
-
-            if [ ! -f "${archive}" ]; then
-              return 1
-            fi
-
-            tmpdir="$(mktemp -d)"
-            trap 'rm -rf "${tmpdir}"' RETURN
-
-            case "${archive}" in
-              *.tar.gz|*.tgz)
-                tar -xzf "${archive}" -C "${tmpdir}"
-                ;;
-              *.tar)
-                tar -xf "${archive}" -C "${tmpdir}"
-                ;;
-              *.zip)
-                python3 - "${archive}" "${tmpdir}" <<'PY'
-import sys
-import zipfile
-from pathlib import Path
-
-archive_path = Path(sys.argv[1])
-destination = Path(sys.argv[2])
-
-with zipfile.ZipFile(archive_path) as zf:
-    zf.extractall(destination)
-PY
-                ;;
-              *)
-                echo "Unsupported archive format: ${archive}" >&2
-                return 1
-                ;;
-            esac
-
-            if [ -d "${tmpdir}/build" ]; then
-              mv "${tmpdir}/build" build
-            else
-              local first_dir
-              first_dir="$(find "${tmpdir}" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
-              if [ -n "${first_dir}" ]; then
-                mv "${first_dir}" build
-              else
-                echo "Archive ${archive} did not contain a build directory" >&2
-                return 1
-              fi
-            fi
-
-            rm -rf "${tmpdir}"
-            rm -f "${archive}"
-            trap - RETURN
-            return 0
-          }
-
-          if [ -d "${distro_dir}/build" ]; then
-            mv "${distro_dir}/build" build
-            rmdir "${distro_dir}" || true
-            exit 0
-          fi
-
-          if [ -d "${distro_dir}" ]; then
-            mv "${distro_dir}" build
-            exit 0
-          fi
-
-          for archive in \
-            "${distro_dir}.tar.gz" \
-            "${distro_dir}.tgz" \
-            "${distro_dir}.tar" \
-            "${distro_dir}.zip"
-          do
-            if maybe_extract_archive "${archive}"; then
-              exit 0
-            fi
-          done
-
-          echo "Unable to locate build directory after downloading artifact" >&2
-          echo "Contents of workspace:" >&2
-          ls -al >&2
-          exit 1
+        env:
+          DISTRO: ${{ matrix.distro }}
+        run: .github/scripts/normalize_build_directory.sh
 
       - name: Run tests
         shell: bash
         env:
           SHARD_INDEX: ${{ matrix.shard }}
           SHARD_TOTAL: ${{ matrix.total_shards }}
-        run: |
-          set -euo pipefail
-          if [ "${SHARD_TOTAL}" -le 1 ]; then
-            ctest --test-dir build --output-on-failure --parallel "${CMAKE_BUILD_PARALLEL_LEVEL}"
-            exit 0
-          fi
-          python3 .github/scripts/run_sharded_ctest.py
+        run: .github/scripts/run_tests.sh

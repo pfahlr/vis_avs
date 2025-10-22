@@ -23,6 +23,18 @@ set(AVS_EFFECTS_LINK_LIBS
   avs::testing
   avs::preset)
 
+add_executable(effects_registry_tests
+  ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/tests/test_registry.cpp)
+target_link_libraries(effects_registry_tests PRIVATE avs::effects-legacy GTest::gtest_main)
+target_compile_options(effects_registry_tests PRIVATE -Wall -Wextra -Werror)
+add_test(NAME effects_registry_tests COMMAND $<TARGET_FILE:effects_registry_tests>)
+
+add_executable(preset_binder_tests
+  ${CMAKE_SOURCE_DIR}/libs/avs-preset/tests/test_ir_and_binder.cpp)
+target_link_libraries(preset_binder_tests PRIVATE avs::preset avs::effects-legacy GTest::gtest_main)
+target_compile_options(preset_binder_tests PRIVATE -Wall -Wextra -Werror)
+add_test(NAME preset_binder_tests COMMAND $<TARGET_FILE:preset_binder_tests>)
+
 add_executable(avs_core_tests avs_core_tests.cpp)
 target_link_libraries(avs_core_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
 target_compile_options(avs_core_tests PRIVATE -Wall -Wextra -Werror)

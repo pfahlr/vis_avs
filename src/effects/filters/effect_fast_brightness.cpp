@@ -39,14 +39,12 @@ bool FastBrightness::render(avs::core::RenderContext& context) {
     std::uint8_t* px = pixels + i * 4u;
     for (int channel = 0; channel < 3; ++channel) {
       const float scaled = static_cast<float>(px[channel]) * amount_ + bias_;
-      if (clampOutput_) {
-        const float clamped = std::clamp(scaled, 0.0f, 255.0f);
-        const int rounded = static_cast<int>(std::nearbyint(clamped));
-        px[channel] = clampByte(rounded);
-      } else {
-        const int rounded = static_cast<int>(std::nearbyint(scaled));
-        px[channel] = static_cast<std::uint8_t>(rounded);
-      }
+      const float processed =
+          clampOutput_ ? std::clamp(scaled, 0.0f, 255.0f) : scaled;
+      const int rounded = static_cast<int>(std::nearbyint(processed));
+      const std::uint8_t quantized =
+          clampOutput_ ? clampByte(rounded) : static_cast<std::uint8_t>(rounded);
+      px[channel] = quantized;
     }
   }
   return true;

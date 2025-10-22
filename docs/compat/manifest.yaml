@@ -152,8 +152,9 @@ stubs:
     status: stub
     source: vis_avs/r_simple.cpp (R_SimpleSpectrum)
   - name: Render / SVP Loader
-    status: stub
+    status: partial
     source: vis_avs/r_svp.cpp (R_SVP)
+    notes: "Loads SVP plug-ins on Windows; no-op fallback on other platforms."
   - name: Render / Timescope
     status: stub
     source: vis_avs/r_timescope.cpp (R_Timescope)

@@ -28,7 +28,56 @@ class PassThroughEffect : public Effect {
 };
 
 std::string effectNameForId(std::uint32_t effectId) {
-  constexpr std::array<std::string_view, 46> kEffectNames = {
+  constexpr std::array<std::string_view, 46> kRegisteredEffectNames = {
+      "Render / Simple",            // R_SimpleSpectrum
+      "Render / Dot Plane",         // R_DotPlane
+      "Render / Oscilloscope Star", // R_OscStars (preferred casing from registry)
+      "",                           // R_FadeOut
+      "Trans / Blitter Feedback",   // R_BlitterFB
+      "",                           // R_NFClear
+      "Trans / Blur",               // R_Blur
+      "Render / Bass Spin",         // R_BSpin
+      "Render / Moving Particle",   // R_Parts
+      "Trans / Roto Blitter",       // R_RotBlit
+      "Render / SVP Loader",        // R_SVP
+      "Trans / Colorfade",          // R_ColorFade
+      "Trans / Color Clip",         // R_ContrastEnhance
+      "Render / Rotating Stars",    // R_RotStar
+      "Render / Ring",              // R_OscRings
+      "",                           // R_Trans
+      "Trans / Scatter",            // R_Scat
+      "",                           // R_DotGrid
+      "",                           // R_Stack
+      "Render / Dot Fountain",      // R_DotFountain
+      "Trans / Water",              // R_Water
+      "Misc / Comment",             // R_Comment
+      "Trans / Brightness",         // R_Brightness
+      "",                           // R_Interleave
+      "Trans / Grain",              // R_Grain
+      "",                           // R_Clear
+      "",                           // R_Mirror
+      "",                           // R_StarField
+      "",                           // R_Text
+      "",                           // R_Bump
+      "Trans / Mosaic",             // R_Mosaic
+      "Trans / Water Bump",         // R_WaterBump
+      "Render / AVI",               // R_AVI
+      "Misc / Custom BPM",          // R_Bpm
+      "",                           // R_Picture
+      "",                           // R_DDM
+      "",                           // R_SScope
+      "",                           // R_Invert
+      "Trans / Unique tone",        // R_Onetone
+      "Render / Timescope",         // R_Timescope
+      "Misc / Set render mode",     // R_LineMode
+      "Trans / Interferences",      // R_Interferences
+      "",                           // R_Shift
+      "",                           // R_DMove
+      "Trans / Fast Brightness",    // R_FastBright
+      "Trans / Color Modifier",     // R_DColorMod
+  };
+
+  constexpr std::array<std::string_view, 46> kLegacyEffectNames = {
       "Render / Simple",                     // R_SimpleSpectrum
       "Render / Dot Plane",                  // R_DotPlane
       "Render / Oscilliscope Star",          // R_OscStars
@@ -76,8 +125,15 @@ std::string effectNameForId(std::uint32_t effectId) {
       "Trans / Fast Brightness",             // R_FastBright
       "Trans / Color Modifier",              // R_DColorMod
   };
-  if (effectId < kEffectNames.size()) {
-    return std::string(kEffectNames[effectId]);
+
+  if (effectId < kRegisteredEffectNames.size()) {
+    const std::string_view preferred = kRegisteredEffectNames[effectId];
+    if (!preferred.empty()) {
+      return std::string(preferred);
+    }
+  }
+  if (effectId < kLegacyEffectNames.size()) {
+    return std::string(kLegacyEffectNames[effectId]);
   }
   return {};
 }

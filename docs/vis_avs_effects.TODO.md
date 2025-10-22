@@ -60,65 +60,6 @@
 ---
 
 
-
-
-
-
-
-[+] - 10. Water Bump
-
-### Instruction ###
-Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
-
-You are acting as a **senior software engineer** and **Codex development assistant**. You MUST analyze the given context, understand the expected implementation, and apply corrections and enhancements to meet the goal successfully. Ensure code is production-ready, idiomatic C++, and integrates seamlessly with the existing AVS plugin architecture.
-
-### Effect Definition ###
-```
-# Water Bump
-
-**Effect Token:** 
-"Trans / Water Bump"
-
-**Source:**
-- docs/avs_original_source/vis_avs/r_waterbump.cpp
-
-**Class:**
-- R_WaterBump
-
-**Output:**
-- src/effects/trans/effect_water_bump.{h,cpp}
-
-**prompt:**:
-Combine bump mapping with water displacement. Requires heightmap calc.
-
-**failed development branch(es)**: 
-- codex/combine-bump-mapping-with-water-displacement
-- codex/reimplement-water-bump-effect
-- codex/reimplement-water-bump-effect-y4w33q
-- codex/reimplement-water-bump-effect-bqmfsj
-- codex/reimplement-water-bump-effect-m5js4b
-- codex/reimplement-water-bump-effect-yancfh
-- codex/reimplement-water-bump-effect-onx4rk
--- 
-
-```
-You are to implement it **again from scratch**, correcting or avoiding any past issues. Use the same original file and class references as provided.
-
-### Git Setup ###
-To ensure compatibility with your workspace, the following git commands should be run:
-
-```bash
-OWNER=pfahlr
-REPO=vis_avs
-: "${GITHUB_TOKEN:=$CODEX_READ_ALL_REPOSITORIES_TOKEN:-}"
-git remote get-url origin >/dev/null 2>&1 || git remote add origin "https://${GITHUB_TOKEN}@github.com/pfahlr/vis_avs.git"
-git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-git config --add remote.origin.fetch "+refs/pull/*/head:refs/remotes/origin/pr/*"
-git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
-```
----
-
-
 ---
 ---
 ```asciiart 
@@ -573,9 +514,58 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 ```
 ---
 
+[✅] - 10. Water Bump
 
+### Instruction ###
+Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
 
+You are acting as a **senior software engineer** and **Codex development assistant**. You MUST analyze the given context, understand the expected implementation, and apply corrections and enhancements to meet the goal successfully. Ensure code is production-ready, idiomatic C++, and integrates seamlessly with the existing AVS plugin architecture.
 
+### Effect Definition ###
+```
+# Water Bump
+
+**Effect Token:** 
+"Trans / Water Bump"
+
+**Source:**
+- docs/avs_original_source/vis_avs/r_waterbump.cpp
+
+**Class:**
+- R_WaterBump
+
+**Output:**
+- src/effects/trans/effect_water_bump.{h,cpp}
+
+**prompt:**:
+Combine bump mapping with water displacement. Requires heightmap calc.
+
+**failed development branch(es)**: 
+- codex/combine-bump-mapping-with-water-displacement
+- codex/reimplement-water-bump-effect
+- codex/reimplement-water-bump-effect-y4w33q
+- codex/reimplement-water-bump-effect-bqmfsj
+- codex/reimplement-water-bump-effect-m5js4b
+- codex/reimplement-water-bump-effect-yancfh
+- codex/reimplement-water-bump-effect-onx4rk
+-- 
+
+```
+You are to implement it **again from scratch**, correcting or avoiding any past issues. Use the same original file and class references as provided.
+
+### Git Setup ###
+To ensure compatibility with your workspace, the following git commands should be run:
+
+```bash
+OWNER=pfahlr
+REPO=vis_avs
+: "${GITHUB_TOKEN:=$CODEX_READ_ALL_REPOSITORIES_TOKEN:-}"
+git remote get-url origin >/dev/null 2>&1 || git remote add origin "https://${GITHUB_TOKEN}@github.com/pfahlr/vis_avs.git"
+git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
+git config --add remote.origin.fetch "+refs/pull/*/head:refs/remotes/origin/pr/*"
+git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
+```
+---
 
 ---
 COMPLETED EFFECTS PROMPTS (week of 13 OCT 2025)

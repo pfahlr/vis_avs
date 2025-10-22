@@ -285,6 +285,14 @@ bool parseRenderListChunk(Reader& r,
     bool knownEffect = false;
     bool success = false;
 
+    LegacyEffectEntry entry;
+    entry.effectId = effectId;
+    entry.effectName = effectNameForId(effectId);
+    if (payloadLen > 0) {
+      const auto* payloadPtr = reinterpret_cast<const std::uint8_t*>(r.data.data() + payloadStart);
+      entry.payload.assign(payloadPtr, payloadPtr + payloadLen);
+    }
+
     if (effectId == 45u) {
       knownEffect = true;
       success = parseColorModifier(chunkReader, payloadEnd, parsedEffect);
@@ -302,6 +310,11 @@ bool parseRenderListChunk(Reader& r,
         }
         parsedEffect = std::move(composite);
       }
+    }
+
+    if (!entry.payload.empty() || effectId == 21u || effectId == 45u || effectId == kListId ||
+        !entry.effectName.empty()) {
+      result.effects.push_back(std::move(entry));
     }
 
     if (knownEffect) {

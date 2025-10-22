@@ -117,6 +117,57 @@ TEST(VideoDelayEffect, BeatModeUpdatesDelay) {
   EXPECT_EQ(effect.currentDelayFrames(), 9);
 }
 
+TEST(VideoDelayEffect, BeatModeCapturesPreBeatHistory) {
+  VideoDelay effect;
+  avs::core::ParamBlock params;
+  params.setBool("enabled", true);
+  params.setBool("use_beats", true);
+  params.setInt("delay", 1);
+  effect.setParams(params);
+
+  std::array<std::uint8_t, 4> pixel{0u, 0u, 0u, 255u};
+  auto context = makeContext(pixel.data(), pixel.size());
+
+  context.audioBeat = false;
+  pixel = {10u, 0u, 0u, 255u};
+  ASSERT_TRUE(effect.render(context));
+  EXPECT_EQ(pixel[0], 10u);
+  EXPECT_EQ(pixel[1], 0u);
+  EXPECT_EQ(pixel[2], 0u);
+  EXPECT_EQ(pixel[3], 255u);
+
+  pixel = {20u, 0u, 0u, 255u};
+  ASSERT_TRUE(effect.render(context));
+  EXPECT_EQ(pixel[0], 20u);
+  EXPECT_EQ(pixel[1], 0u);
+  EXPECT_EQ(pixel[2], 0u);
+  EXPECT_EQ(pixel[3], 255u);
+
+  pixel = {30u, 0u, 0u, 255u};
+  ASSERT_TRUE(effect.render(context));
+  EXPECT_EQ(pixel[0], 30u);
+  EXPECT_EQ(pixel[1], 0u);
+  EXPECT_EQ(pixel[2], 0u);
+  EXPECT_EQ(pixel[3], 255u);
+
+  context.audioBeat = true;
+  pixel = {40u, 0u, 0u, 255u};
+  ASSERT_TRUE(effect.render(context));
+  EXPECT_EQ(pixel[0], 10u);
+  EXPECT_EQ(pixel[1], 0u);
+  EXPECT_EQ(pixel[2], 0u);
+  EXPECT_EQ(pixel[3], 255u);
+  EXPECT_EQ(effect.currentDelayFrames(), 3);
+
+  context.audioBeat = false;
+  pixel = {50u, 0u, 0u, 255u};
+  ASSERT_TRUE(effect.render(context));
+  EXPECT_EQ(pixel[0], 20u);
+  EXPECT_EQ(pixel[1], 0u);
+  EXPECT_EQ(pixel[2], 0u);
+  EXPECT_EQ(pixel[3], 255u);
+}
+
 TEST(VideoDelayEffect, ClampsBeatDelayToHistoryLimit) {
   VideoDelay effect;
   avs::core::ParamBlock params;

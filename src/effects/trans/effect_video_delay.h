@@ -36,6 +36,7 @@ class VideoDelay : public avs::core::IEffect {
   std::size_t frameSize_ = 0;
   std::size_t bufferFrameCount_ = 0;
   std::size_t headIndex_ = 0;
+  std::size_t filledFrameCount_ = 0;
   std::vector<std::uint8_t> buffer_;
   std::vector<std::uint8_t> scratch_;
 };

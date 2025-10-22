@@ -1,15 +1,6 @@
 set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/effect.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_bass_spin.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_moving_particle.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_oscilloscope_star.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_avi.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_brightness.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_color_clip.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_colorfade.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_mosaic.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_scatter.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_unique_tone.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/dynamic/frame_warp.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/dynamic/dynamic_shader.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/dynamic/dyn_movement.cpp

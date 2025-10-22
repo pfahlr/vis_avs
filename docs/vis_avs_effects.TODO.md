@@ -1,4 +1,12 @@
+
 # VIS_AVS EFFECTS IMPLEMENTATIONS
+
+
+## STATUS KEY
+[ ] = todo
+[+] = active development
+[✅] = COMPLETED 
+
 
 ## VIS_AVS NEW EFFECTS - EFFECTS UNIQUE TO 2025 REBUILD 
 
@@ -53,7 +61,7 @@
 ---
 ---
 
-[+] - 1. Bass Spin
+[✅ - 1. Bass Spin
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -100,7 +108,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[+] - 2. Moving Particle
+[✅] - 2. Moving Particle
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -147,7 +155,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[+] - 3. Oscillioscope Star
+[✅] - 3. Oscillioscope Star
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -192,7 +200,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[+] - 4. Simple Spectrum
+[✅] - 4. Simple Spectrum
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -260,6 +268,9 @@ Load and display SVP files (if supported). Stub fallback is acceptable.
 
 failed development branch(es): 
 - codex/add-svp-file-loading-feature
+- codex/implement-svp-file-loading-feature
+- codex/implement-svp-file-loading-feature-57cgj1
+- codex/implement-svp-file-loading-feature-9h4891
 ```
 You are to implement it **again from scratch**, correcting or avoiding any past issues. Use the same original file and class references as provided.
 
@@ -279,7 +290,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[ ] - 6. Color Modifier
+[✅] - 6. Color Modifier
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -323,7 +334,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[ ] - 7. Timescope
+[+] - 7. Timescope
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -345,8 +356,13 @@ Output: src/effects/render/effect_timescope.{h,cpp}
 Prompt:
 Scrolling waveform display (time vs. amplitude). Integrate audio analyzer.
 
-failed development branch: 
+failed development branch(es): 
 - codex/integrate-audio-analyzer-for-scrolling-waveform
+- codex/implement-timescope-effect-in-vis_avs
+- codex/implement-timescope-effect-in-vis_avs-e7nl9z
+- codex/implement-timescope-effect-in-vis_avs-gl2v5k
+- codex/implement-timescope-effect-in-vis_avs-h26js1
+
 ```
 You are to implement it **again from scratch**, correcting or avoiding any past issues. Use the same original file and class references as provided.
 
@@ -367,7 +383,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[ ] - 8. Scatter 
+[✅] - 8. Scatter 
 
 
 ### Instruction ###
@@ -412,7 +428,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[ ] - 9. Unique Tone
+[+] - 9. Unique Tone
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -455,7 +471,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[ ] - 10. Water Bump
+[+] - 10. Water Bump
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -501,7 +517,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 ```--tags origin || git fetch --prune --tags --depth=50 origin;
 ---
 
-[ ] - 11. Holden05: Multi Delay
+[+] - 11. Holden05: Multi Delay
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.

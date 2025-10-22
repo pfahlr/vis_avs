@@ -38,25 +38,25 @@
 #include "effects/misc/effect_custom_bpm.h"
 #include "effects/trans/effect_multiplier.h"
 #include "effects/stubs/effect_render_avi.h"
-#include "effects/stubs/effect_render_bass_spin.h"
+#include "effects/render/effect_bass_spin.h"
 #include "effects/render/effect_dot_plane.h"
 #include "effects/render/effect_dot_fountain.h"
-#include "effects/stubs/effect_render_moving_particle.h"
-#include "effects/stubs/effect_render_oscilloscope_star.h"
+#include "effects/render/effect_oscilloscope_star.h"
+#include "effects/render/effect_moving_particle.h"
 #include "effects/render/effect_rotating_stars.h"
 #include "effects/render/effect_ring.h"
-#include "effects/stubs/effect_render_simple.h"
+#include "effects/render/effect_simple_spectrum.h"
 #include "effects/stubs/effect_render_svp_loader.h"
 #include "effects/stubs/effect_render_timescope.h"
 #include "effects/trans/effect_color_clip.h"
 #include "effects/trans/effect_brightness.h"
 #include "effects/trans/effect_blur.h"
 #include "effects/trans/effect_blitter_feedback.h"
-#include "effects/stubs/effect_trans_color_modifier.h"
+#include "effects/trans/effect_color_modifier.h"
 #include "effects/trans/effect_roto_blitter.h"
 #include "effects/trans/effect_mosaic.h"
 #include "effects/trans/effect_colorfade.h"
-#include "effects/stubs/effect_trans_scatter.h"
+#include "effects/trans/effect_scatter.h"
 #include "effects/stubs/effect_trans_water_bump.h"
 #include "effects/trans/effect_water.h"
 #include "effects/trans/effect_color_reduction.h"
@@ -125,22 +125,22 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("multiplier", []() { return std::make_unique<trans::Multiplier>(); });
   registry.registerFactory("Render / AVI", []() { return std::make_unique<Effect_RenderAvi>(); });
   registry.registerFactory("render / avi", []() { return std::make_unique<Effect_RenderAvi>(); });
-  registry.registerFactory("Render / Bass Spin", []() { return std::make_unique<Effect_RenderBassSpin>(); });
-  registry.registerFactory("render / bass spin", []() { return std::make_unique<Effect_RenderBassSpin>(); });
+  registry.registerFactory("Render / Bass Spin", []() { return std::make_unique<render::BassSpin>(); });
+  registry.registerFactory("render / bass spin", []() { return std::make_unique<render::BassSpin>(); });
   registry.registerFactory("Render / Dot Fountain", []() { return std::make_unique<Effect_RenderDotFountain>(); });
   registry.registerFactory("render / dot fountain", []() { return std::make_unique<Effect_RenderDotFountain>(); });
   registry.registerFactory("Render / Dot Plane", []() { return std::make_unique<render::DotPlane>(); });
   registry.registerFactory("render / dot plane", []() { return std::make_unique<render::DotPlane>(); });
-  registry.registerFactory("Render / Moving Particle", []() { return std::make_unique<Effect_RenderMovingParticle>(); });
-  registry.registerFactory("render / moving particle", []() { return std::make_unique<Effect_RenderMovingParticle>(); });
-  registry.registerFactory("Render / Oscilloscope Star", []() { return std::make_unique<Effect_RenderOscilloscopeStar>(); });
-  registry.registerFactory("render / oscilloscope star", []() { return std::make_unique<Effect_RenderOscilloscopeStar>(); });
+  registry.registerFactory("Render / Moving Particle", []() { return std::make_unique<render::MovingParticle>(); });
+  registry.registerFactory("render / moving particle", []() { return std::make_unique<render::MovingParticle>(); });
+  registry.registerFactory("Render / Oscilloscope Star", []() { return std::make_unique<render::OscilloscopeStar>(); });
+  registry.registerFactory("render / oscilloscope star", []() { return std::make_unique<render::OscilloscopeStar>(); });
   registry.registerFactory("Render / Ring", []() { return std::make_unique<render::Ring>(); });
   registry.registerFactory("render / ring", []() { return std::make_unique<render::Ring>(); });
   registry.registerFactory("Render / Rotating Stars", []() { return std::make_unique<render::RotatingStars>(); });
   registry.registerFactory("render / rotating stars", []() { return std::make_unique<render::RotatingStars>(); });
-  registry.registerFactory("Render / Simple", []() { return std::make_unique<Effect_RenderSimple>(); });
-  registry.registerFactory("render / simple", []() { return std::make_unique<Effect_RenderSimple>(); });
+  registry.registerFactory("Render / Simple", []() { return std::make_unique<render::SimpleSpectrum>(); });
+  registry.registerFactory("render / simple", []() { return std::make_unique<render::SimpleSpectrum>(); });
   registry.registerFactory("Render / SVP Loader", []() { return std::make_unique<Effect_RenderSvpLoader>(); });
   registry.registerFactory("render / svp loader", []() { return std::make_unique<Effect_RenderSvpLoader>(); });
   registry.registerFactory("Render / Timescope", []() { return std::make_unique<Effect_RenderTimescope>(); });
@@ -171,16 +171,16 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("trans / color clip", []() { return std::make_unique<avs::effects::trans::ColorClip>(); });
   registry.registerFactory("Trans / Brightness", []() { return std::make_unique<trans::Brightness>(); });
   registry.registerFactory("trans / brightness", []() { return std::make_unique<trans::Brightness>(); });
-  registry.registerFactory("Trans / Color Modifier", []() { return std::make_unique<Effect_TransColorModifier>(); });
-  registry.registerFactory("trans / color modifier", []() { return std::make_unique<Effect_TransColorModifier>(); });
+  registry.registerFactory("Trans / Color Modifier", []() { return std::make_unique<trans::ColorModifier>(); });
+  registry.registerFactory("trans / color modifier", []() { return std::make_unique<trans::ColorModifier>(); });
   registry.registerFactory("Trans / Roto Blitter", []() { return std::make_unique<avs::effects::trans::RotoBlitter>(); });
   registry.registerFactory("trans / roto blitter", []() { return std::make_unique<avs::effects::trans::RotoBlitter>(); });
   registry.registerFactory("Trans / Mosaic", []() { return std::make_unique<trans::Mosaic>(); });
   registry.registerFactory("trans / mosaic", []() { return std::make_unique<trans::Mosaic>(); });
   registry.registerFactory("Trans / Colorfade", []() { return std::make_unique<trans::Colorfade>(); });
   registry.registerFactory("trans / colorfade", []() { return std::make_unique<trans::Colorfade>(); });
-  registry.registerFactory("Trans / Scatter", []() { return std::make_unique<Effect_TransScatter>(); });
-  registry.registerFactory("trans / scatter", []() { return std::make_unique<Effect_TransScatter>(); });
+  registry.registerFactory("Trans / Scatter", []() { return std::make_unique<trans::Scatter>(); });
+  registry.registerFactory("trans / scatter", []() { return std::make_unique<trans::Scatter>(); });
   registry.registerFactory("Trans / Unique tone", []() { return std::make_unique<trans::UniqueTone>(); });
   registry.registerFactory("trans / unique tone", []() { return std::make_unique<trans::UniqueTone>(); });
   registry.registerFactory("Trans / Water", []() { return std::make_unique<trans::Water>(); });

@@ -367,7 +367,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[ ] - 8. Scatter 
+[x] - 8. Scatter
 
 
 ### Instruction ###

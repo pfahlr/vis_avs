@@ -71,6 +71,7 @@ add_executable(core_effects_tests
   core/test_render_mode.cpp
   core/test_misc_comment.cpp
   core/test_trans_multiplier.cpp
+  core/test_trans_scatter.cpp
   core/test_multi_delay.cpp
   core/test_video_delay.cpp)
 

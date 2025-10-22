@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/dynamic/dyn_shift.h>
+#include <avs/effects/dynamic/dyn_shift.h>
 
 namespace avs::effects {
 

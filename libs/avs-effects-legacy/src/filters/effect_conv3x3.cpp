@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/filters/effect_conv3x3.h>
+#include <avs/effects/filters/effect_conv3x3.h>
 
 #include <algorithm>
 #include <cmath>
@@ -7,7 +7,7 @@
 #include <string>
 #include <string_view>
 
-#include <avs/effects/legacy/filters/filter_common.h>
+#include <avs/effects/filters/filter_common.h>
 
 namespace avs::effects::filters {
 

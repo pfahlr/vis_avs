@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_color_modifier.h>
+#include <avs/effects/trans/effect_color_modifier.h>
 
 #include <algorithm>
 #include <array>

@@ -7,7 +7,7 @@
 
 #include <avs/audio/analyzer.h>
 #include <avs/core/RenderContext.hpp>
-#include <avs/effects/legacy/render/effect_oscilloscope_star.h>
+#include <avs/effects/render/effect_oscilloscope_star.h>
 
 namespace {
 

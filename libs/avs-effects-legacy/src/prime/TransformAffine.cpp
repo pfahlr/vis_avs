@@ -7,7 +7,7 @@
 
 #include <avs/core/ParamBlock.hpp>
 #include <avs/effects/legacy/gating.h>
-#include <avs/effects/legacy/transform_affine.h>
+#include <avs/effects/transform_affine.h>
 
 namespace {
 constexpr float kPi = 3.14159265358979323846f;

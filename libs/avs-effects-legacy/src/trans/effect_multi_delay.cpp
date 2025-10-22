@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_multi_delay.h>
+#include <avs/effects/trans/effect_multi_delay.h>
 
 #include <algorithm>
 #include <array>

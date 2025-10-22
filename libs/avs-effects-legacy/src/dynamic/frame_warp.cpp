@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/dynamic/frame_warp.h>
+#include <avs/effects/dynamic/frame_warp.h>
 
 #include <algorithm>
 #include <cmath>

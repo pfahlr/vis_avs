@@ -5,7 +5,7 @@
 
 #include <avs/core/ParamBlock.hpp>
 #include <avs/core/RenderContext.hpp>
-#include <avs/effects/legacy/trans/effect_multiplier.h>
+#include <avs/effects/trans/effect_multiplier.h>
 
 namespace {
 

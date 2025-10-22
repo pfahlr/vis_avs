@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_blur.h>
+#include <avs/effects/trans/effect_blur.h>
 
 #include <algorithm>
 #include <cstring>

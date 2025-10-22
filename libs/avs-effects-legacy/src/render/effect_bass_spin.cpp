@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/render/effect_bass_spin.h>
+#include <avs/effects/render/effect_bass_spin.h>
 
 #include <algorithm>
 #include <array>

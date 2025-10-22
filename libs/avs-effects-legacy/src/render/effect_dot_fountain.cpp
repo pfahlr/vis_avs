@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/render/effect_dot_fountain.h>
+#include <avs/effects/render/effect_dot_fountain.h>
 
 #include <algorithm>
 #include <cmath>

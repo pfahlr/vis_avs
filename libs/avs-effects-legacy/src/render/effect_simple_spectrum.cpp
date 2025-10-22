@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/render/effect_simple_spectrum.h>
+#include <avs/effects/render/effect_simple_spectrum.h>
 
 #include <algorithm>
 #include <array>

@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_color_reduction.h>
+#include <avs/effects/trans/effect_color_reduction.h>
 
 #include <algorithm>
 #include <cstddef>

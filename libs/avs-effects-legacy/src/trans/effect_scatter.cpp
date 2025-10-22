@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_scatter.h>
+#include <avs/effects/trans/effect_scatter.h>
 
 #include <algorithm>
 #include <cstddef>

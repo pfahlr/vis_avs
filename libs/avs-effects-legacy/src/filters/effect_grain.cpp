@@ -1,9 +1,9 @@
-#include <avs/effects/legacy/filters/effect_grain.h>
+#include <avs/effects/filters/effect_grain.h>
 
 #include <algorithm>
 #include <random>
 
-#include <avs/effects/legacy/filters/filter_common.h>
+#include <avs/effects/filters/filter_common.h>
 
 namespace avs::effects::filters {
 

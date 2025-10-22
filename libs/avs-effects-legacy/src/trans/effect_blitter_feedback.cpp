@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_blitter_feedback.h>
+#include <avs/effects/trans/effect_blitter_feedback.h>
 
 #include <algorithm>
 #include <cctype>

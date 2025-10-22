@@ -7,7 +7,7 @@
 #include <avs/audio/analyzer.h>
 #include <avs/core/ParamBlock.hpp>
 #include <avs/core/RenderContext.hpp>
-#include <avs/effects/legacy/render/effect_rotating_stars.h>
+#include <avs/effects/render/effect_rotating_stars.h>
 
 namespace {
 

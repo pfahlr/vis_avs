@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_unique_tone.h>
+#include <avs/effects/trans/effect_unique_tone.h>
 
 #include <algorithm>
 #include <array>

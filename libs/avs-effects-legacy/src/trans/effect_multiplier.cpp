@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_multiplier.h>
+#include <avs/effects/trans/effect_multiplier.h>
 
 #include <algorithm>
 #include <array>

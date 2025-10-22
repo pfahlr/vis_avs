@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_water.h>
+#include <avs/effects/trans/effect_water.h>
 
 #include <cstring>
 

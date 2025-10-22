@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/render/effect_rotating_stars.h>
+#include <avs/effects/render/effect_rotating_stars.h>
 
 #include <algorithm>
 #include <array>

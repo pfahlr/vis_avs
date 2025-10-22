@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#include <avs/effects/legacy/primitives/primitive_common.hpp>
+#include <avs/effects/primitives/primitive_common.hpp>
 
 namespace avs::effects {
 

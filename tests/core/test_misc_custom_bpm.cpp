@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/misc/effect_custom_bpm.h>
+#include <avs/effects/misc/effect_custom_bpm.h>
 
 #include <gtest/gtest.h>
 

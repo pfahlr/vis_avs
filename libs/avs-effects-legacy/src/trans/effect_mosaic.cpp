@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_mosaic.h>
+#include <avs/effects/trans/effect_mosaic.h>
 
 #include <algorithm>
 #include <cstddef>

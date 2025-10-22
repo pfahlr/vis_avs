@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/render/effect_dot_plane.h>
+#include <avs/effects/render/effect_dot_plane.h>
 
 #include <algorithm>
 #include <array>

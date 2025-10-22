@@ -3,7 +3,7 @@
 
 #include <avs/core/ParamBlock.hpp>
 #include <avs/core/RenderContext.hpp>
-#include <avs/effects/legacy/trans/effect_video_delay.h>
+#include <avs/effects/trans/effect_video_delay.h>
 #include "gtest/gtest.h"
 
 namespace {

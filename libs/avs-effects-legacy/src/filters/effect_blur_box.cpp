@@ -1,9 +1,9 @@
-#include <avs/effects/legacy/filters/effect_blur_box.h>
+#include <avs/effects/filters/effect_blur_box.h>
 
 #include <algorithm>
 #include <cstring>
 
-#include <avs/effects/legacy/filters/filter_common.h>
+#include <avs/effects/filters/filter_common.h>
 
 namespace avs::effects::filters {
 

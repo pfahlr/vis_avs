@@ -279,7 +279,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[ ] - 6. Color Modifier
+[+] - 6. Color Modifier
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -323,7 +323,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[ ] - 7. Timescope
+[+] - 7. Timescope
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -367,7 +367,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[ ] - 8. Scatter 
+[+] - 8. Scatter 
 
 
 ### Instruction ###
@@ -412,7 +412,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[ ] - 9. Unique Tone
+[+] - 9. Unique Tone
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -455,7 +455,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[ ] - 10. Water Bump
+[+] - 10. Water Bump
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -501,7 +501,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 ```--tags origin || git fetch --prune --tags --depth=50 origin;
 ---
 
-[ ] - 11. Holden05: Multi Delay
+[+] - 11. Holden05: Multi Delay
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.

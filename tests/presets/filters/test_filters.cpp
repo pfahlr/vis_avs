@@ -16,7 +16,7 @@
 #include <avs/core/EffectRegistry.hpp>
 #include <avs/core/Pipeline.hpp>
 #include <avs/core/RenderContext.hpp>
-#include <avs/effects/RegisterEffects.hpp>
+#include <avs/effects/prime/RegisterEffects.hpp>
 #include <avs/offscreen/Md5.hpp>
 #include <avs/effects/filters/effect_conv3x3.h>
 #include <avs/effects/filters/effect_fast_brightness.h>

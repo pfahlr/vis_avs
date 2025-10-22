@@ -1,4 +1,4 @@
-#include <avs/effects/TransformAffine.hpp>
+#include <avs/effects/prime/TransformAffine.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -6,8 +6,8 @@
 #include <cstdint>
 
 #include <avs/core/ParamBlock.hpp>
-#include <avs/effects/legacy/gating.h>
-#include <avs/effects/transform_affine.h>
+#include <avs/effects/core/gating.h>
+#include <avs/effects/core/transform_affine.h>
 
 namespace {
 constexpr float kPi = 3.14159265358979323846f;

@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/gating.h>
+#include <avs/effects/core/gating.h>
 
 namespace avs::effects {
 

@@ -1,4 +1,4 @@
-#include <avs/effects/Zoom.hpp>
+#include <avs/effects/prime/Zoom.hpp>
 
 namespace avs::effects {
 

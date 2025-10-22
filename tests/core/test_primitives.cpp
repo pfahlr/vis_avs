@@ -6,7 +6,7 @@
 
 #include <avs/core/ParamBlock.hpp>
 #include <avs/core/RenderContext.hpp>
-#include <avs/effects/Primitives.hpp>
+#include <avs/effects/primitives/Primitives.hpp>
 
 namespace {
 

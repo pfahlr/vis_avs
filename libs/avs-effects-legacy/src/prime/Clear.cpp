@@ -1,4 +1,4 @@
-#include <avs/effects/Clear.hpp>
+#include <avs/effects/prime/Clear.hpp>
 
 #include <algorithm>
 

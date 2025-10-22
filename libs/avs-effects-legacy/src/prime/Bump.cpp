@@ -1,4 +1,4 @@
-#include <avs/effects/Bump.hpp>
+#include <avs/effects/prime/Bump.hpp>
 
 #include <algorithm>
 #include <array>

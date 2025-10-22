@@ -15,7 +15,7 @@
 #include <avs/core/ParamBlock.hpp>
 #include <avs/core/Pipeline.hpp>
 #include <avs/core/RenderContext.hpp>
-#include <avs/effects/RegisterEffects.hpp>
+#include <avs/effects/prime/RegisterEffects.hpp>
 #include <avs/offscreen/Md5.hpp>
 #include <avs/effects/trans/effect_blur.h>
 

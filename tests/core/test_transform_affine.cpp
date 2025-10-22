@@ -15,10 +15,10 @@
 #include <avs/core/ParamBlock.hpp>
 #include <avs/core/Pipeline.hpp>
 #include <avs/core/RenderContext.hpp>
-#include <avs/effects/RegisterEffects.hpp>
-#include <avs/effects/TransformAffine.hpp>
-#include <avs/effects/micro_preset_parser.hpp>
-#include <avs/effects/transform_affine.h>
+#include <avs/effects/prime/RegisterEffects.hpp>
+#include <avs/effects/prime/TransformAffine.hpp>
+#include <avs/effects/prime/micro_preset_parser.hpp>
+#include <avs/effects/core/transform_affine.h>
 
 namespace {
 

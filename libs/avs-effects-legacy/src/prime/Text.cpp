@@ -1,4 +1,4 @@
-#include <avs/effects/Primitives.hpp>
+#include <avs/effects/primitives/Primitives.hpp>
 
 #include <algorithm>
 #include <cctype>

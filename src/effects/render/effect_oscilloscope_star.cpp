@@ -46,21 +46,37 @@ std::vector<std::array<std::uint8_t, 4>> parseColorListString(std::string_view t
   }
   std::stringstream stream{std::string(text)};
   std::string token;
-  while (stream >> token) {
-    token = sanitizeToken(token);
-    if (token.empty()) {
-      continue;
+  auto applyToken = [&](std::string_view rawToken) {
+    std::string tokenValue = sanitizeToken(std::string(rawToken));
+    if (tokenValue.empty()) {
+      return;
     }
     std::uint32_t parsed = 0;
-    if (parseHex(token, parsed)) {
+    if (parseHex(tokenValue, parsed)) {
       std::array<std::uint8_t, 4> color{0u, 0u, 0u, 255u};
-      if (token.size() > 6u) {
+      if (tokenValue.size() > 6u) {
         color[3] = static_cast<std::uint8_t>((parsed >> 24u) & 0xFFu);
       }
       color[0] = static_cast<std::uint8_t>((parsed >> 16u) & 0xFFu);
       color[1] = static_cast<std::uint8_t>((parsed >> 8u) & 0xFFu);
       color[2] = static_cast<std::uint8_t>(parsed & 0xFFu);
       result.push_back(color);
+    }
+  };
+
+  while (stream >> token) {
+    if (token.empty()) {
+      continue;
+    }
+    std::size_t start = 0;
+    while (start < token.size()) {
+      const std::size_t end = token.find_first_of(",;", start);
+      const std::size_t length = (end == std::string::npos) ? token.size() - start : end - start;
+      applyToken(std::string_view(token).substr(start, length));
+      if (end == std::string::npos) {
+        break;
+      }
+      start = end + 1;
     }
   }
   return result;

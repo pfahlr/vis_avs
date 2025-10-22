@@ -32,9 +32,14 @@ class Scatter : public avs::core::IEffect {
   void ensureScratch(std::size_t bytes);
   void ensureOffsetTable(int width);
 
+  struct ScatterOffset {
+    int dx = 0;
+    int dy = 0;
+  };
+
   bool enabled_ = true;
   int cachedWidth_ = 0;
-  std::vector<int> offsets_;
+  std::vector<ScatterOffset> offsets_;
   std::vector<std::uint8_t> scratch_;
 };
 

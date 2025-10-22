@@ -70,7 +70,7 @@ void Scatter::ensureOffsetTable(int width) {
     if (offsetY < 0) {
       ++offsetY;
     }
-    offsets_[i] = offsetY * width + offsetX;
+    offsets_[i] = {offsetX, offsetY};
   }
 
   cachedWidth_ = width;
@@ -119,8 +119,10 @@ bool Scatter::render(avs::core::RenderContext& context) {
 
       const std::uint32_t randomValue = context.rng.nextUint32();
       const int tableIndex = static_cast<int>(randomValue & kOffsetMask);
-      int sampleIndex = index + offsets_[tableIndex];
-      sampleIndex = std::clamp(sampleIndex, 0, totalPixels - 1);
+      const ScatterOffset& offset = offsets_[tableIndex];
+      const int sampleX = std::clamp(x + offset.dx, 0, width - 1);
+      const int sampleY = std::clamp(y + offset.dy, 0, height - 1);
+      const int sampleIndex = sampleY * width + sampleX;
       const std::uint32_t scatteredPixel = source[static_cast<std::size_t>(sampleIndex)];
 
       if (weight >= kFalloffRadius) {

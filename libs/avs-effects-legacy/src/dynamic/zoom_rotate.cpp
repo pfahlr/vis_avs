@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/dynamic/zoom_rotate.h>
+#include <avs/effects/dynamic/zoom_rotate.h>
 
 #include <algorithm>
 #include <cmath>

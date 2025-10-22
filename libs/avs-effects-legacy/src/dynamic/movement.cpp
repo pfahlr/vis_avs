@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/dynamic/movement.h>
+#include <avs/effects/dynamic/movement.h>
 
 #include <algorithm>
 #include <cmath>

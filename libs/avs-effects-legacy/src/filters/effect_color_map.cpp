@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/filters/effect_color_map.h>
+#include <avs/effects/filters/effect_color_map.h>
 
 #include <algorithm>
 #include <cctype>
@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 
-#include <avs/effects/legacy/filters/filter_common.h>
+#include <avs/effects/filters/filter_common.h>
 
 namespace avs::effects::filters {
 

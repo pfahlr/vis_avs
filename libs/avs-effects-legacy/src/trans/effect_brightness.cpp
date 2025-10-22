@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_brightness.h>
+#include <avs/effects/trans/effect_brightness.h>
 
 #include <algorithm>
 #include <cstddef>

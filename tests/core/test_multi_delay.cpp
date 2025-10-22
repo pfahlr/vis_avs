@@ -7,7 +7,7 @@
 
 #include <avs/core/ParamBlock.hpp>
 #include <avs/core/RenderContext.hpp>
-#include <avs/effects/legacy/trans/effect_multi_delay.h>
+#include <avs/effects/trans/effect_multi_delay.h>
 
 namespace {
 

@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/misc/effect_comment.h>
+#include <avs/effects/misc/effect_comment.h>
 
 #include <array>
 #include <string>

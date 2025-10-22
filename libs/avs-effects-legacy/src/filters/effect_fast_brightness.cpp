@@ -1,9 +1,9 @@
-#include <avs/effects/legacy/filters/effect_fast_brightness.h>
+#include <avs/effects/filters/effect_fast_brightness.h>
 
 #include <algorithm>
 #include <cmath>
 
-#include <avs/effects/legacy/filters/filter_common.h>
+#include <avs/effects/filters/filter_common.h>
 
 namespace avs::effects::filters {
 

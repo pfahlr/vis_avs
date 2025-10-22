@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_color_clip.h>
+#include <avs/effects/trans/effect_color_clip.h>
 
 #include <array>
 #include <cstddef>

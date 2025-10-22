@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/dynamic/dyn_distance.h>
+#include <avs/effects/dynamic/dyn_distance.h>
 
 #include <cmath>
 

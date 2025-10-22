@@ -6,7 +6,7 @@
 
 #include <avs/core/ParamBlock.hpp>
 #include <avs/core/RenderContext.hpp>
-#include <avs/effects/legacy/trans/effect_color_modifier.h>
+#include <avs/effects/trans/effect_color_modifier.h>
 #include "gtest/gtest.h"
 
 namespace {

@@ -5,7 +5,7 @@
 #include <string>
 
 #include <avs/runtime/script/eel_runtime.h>
-#include <avs/effects/legacy/dynamic/frame_warp.h>
+#include <avs/effects/dynamic/frame_warp.h>
 
 namespace avs::effects {
 

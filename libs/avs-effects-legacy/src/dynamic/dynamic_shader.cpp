@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/dynamic/dynamic_shader.h>
+#include <avs/effects/dynamic/dynamic_shader.h>
 
 #include <cmath>
 #include <iostream>

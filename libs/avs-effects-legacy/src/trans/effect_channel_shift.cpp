@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_channel_shift.h>
+#include <avs/effects/trans/effect_channel_shift.h>
 
 #include <algorithm>
 #include <array>

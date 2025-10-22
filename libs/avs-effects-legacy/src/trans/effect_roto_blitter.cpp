@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_roto_blitter.h>
+#include <avs/effects/trans/effect_roto_blitter.h>
 
 #include <algorithm>
 #include <cmath>

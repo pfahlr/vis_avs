@@ -1,9 +1,7 @@
 file(GLOB_RECURSE AVS_EFFECTS_LEGACY_SOURCES CONFIGURE_DEPENDS
   "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
-file(GLOB AVS_EFFECTS_LEGACY_HEADERS
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/avs/effects/legacy/*.hpp"
-  "${CMAKE_CURRENT_SOURCE_DIR}/include/avs/effects/legacy/*.h"
+file(GLOB_RECURSE AVS_EFFECTS_LEGACY_HEADERS
   "${CMAKE_CURRENT_SOURCE_DIR}/include/avs/effects/*.hpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/include/avs/effects/*.h")
 

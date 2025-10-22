@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/render/effect_svp_loader.h>
+#include <avs/effects/render/effect_svp_loader.h>
 
 #include <algorithm>
 #include <array>

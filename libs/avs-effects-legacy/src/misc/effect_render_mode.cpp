@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/misc/effect_render_mode.h>
+#include <avs/effects/misc/effect_render_mode.h>
 
 #include <algorithm>
 #include <array>

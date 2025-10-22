@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/render/effect_oscilloscope_star.h>
+#include <avs/effects/render/effect_oscilloscope_star.h>
 
 #include <algorithm>
 #include <array>

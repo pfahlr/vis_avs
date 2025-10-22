@@ -5,7 +5,7 @@
 #include <string>
 #include <string_view>
 
-#include <avs/effects/legacy/primitives/primitive_common.hpp>
+#include <avs/effects/primitives/primitive_common.hpp>
 #include "text/text_renderer.h"
 
 namespace avs::effects {

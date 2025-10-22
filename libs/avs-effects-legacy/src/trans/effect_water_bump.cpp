@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_water_bump.h>
+#include <avs/effects/trans/effect_water_bump.h>
 
 #include <algorithm>
 #include <cmath>

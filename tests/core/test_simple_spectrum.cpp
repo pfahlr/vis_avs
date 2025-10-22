@@ -6,7 +6,7 @@
 #include <avs/audio/analyzer.h>
 #include <avs/core/ParamBlock.hpp>
 #include <avs/core/RenderContext.hpp>
-#include <avs/effects/legacy/render/effect_simple_spectrum.h>
+#include <avs/effects/render/effect_simple_spectrum.h>
 
 namespace {
 

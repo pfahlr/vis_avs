@@ -3,7 +3,7 @@
 #include <array>
 #include <cstdint>
 
-#include <avs/effects/legacy/trans/effect_color_clip.h>
+#include <avs/effects/trans/effect_color_clip.h>
 
 namespace {
 

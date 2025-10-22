@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/render/effect_timescope.h>
+#include <avs/effects/render/effect_timescope.h>
 
 #include <algorithm>
 #include <cctype>

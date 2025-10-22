@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/render/effect_moving_particle.h>
+#include <avs/effects/render/effect_moving_particle.h>
 
 #include <algorithm>
 #include <cctype>

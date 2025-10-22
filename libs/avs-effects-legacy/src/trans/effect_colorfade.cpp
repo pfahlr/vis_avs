@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_colorfade.h>
+#include <avs/effects/trans/effect_colorfade.h>
 
 #include <algorithm>
 #include <array>

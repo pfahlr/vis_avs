@@ -6,7 +6,7 @@
 
 #include <avs/core/ParamBlock.hpp>
 #include <avs/core/RenderContext.hpp>
-#include <avs/effects/legacy/render/effect_timescope.h>
+#include <avs/effects/render/effect_timescope.h>
 
 namespace {
 

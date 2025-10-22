@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/dynamic/dyn_movement.h>
+#include <avs/effects/dynamic/dyn_movement.h>
 
 namespace avs::effects {
 

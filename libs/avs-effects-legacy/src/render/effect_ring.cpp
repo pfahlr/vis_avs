@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/render/effect_ring.h>
+#include <avs/effects/render/effect_ring.h>
 
 #include <algorithm>
 #include <cctype>

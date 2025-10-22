@@ -1,4 +1,4 @@
-#include <avs/effects/legacy/trans/effect_video_delay.h>
+#include <avs/effects/trans/effect_video_delay.h>
 
 #include <algorithm>
 #include <cstring>

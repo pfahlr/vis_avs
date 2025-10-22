@@ -26,12 +26,6 @@ class CustomBpmEffect : public avs::core::IEffect {
     Invert,
   };
 
-  enum class BeatAction {
-    None,
-    Set,
-    Clear,
-  };
-
   void configureGate();
   void resetState();
   [[nodiscard]] double intervalSeconds() const;

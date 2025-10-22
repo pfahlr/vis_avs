@@ -8,7 +8,6 @@ import json
 import os
 import pathlib
 import re
-import subprocess
 from collections import defaultdict
 
 repo = pathlib.Path(os.environ["REPO_ROOT"])
@@ -322,64 +321,62 @@ def load_dev_plan() -> dict[tuple[str, ...], dict[str, str]]:
     return plan_map
 
 
-def gather_references(terms: list[str]) -> list[dict[str, str | int]]:
-    results: list[dict[str, str | int]] = []
-    seen: set[tuple[str, int, str]] = set()
-    search_roots = [repo / "tests", repo / "codex", repo / "apps"]
-    for term in terms:
-        if not term:
-            continue
-        for root in search_roots:
-            if not root.exists():
-                continue
-            cmd = [
-                "rg",
-                "--with-filename",
-                "--line-number",
-                "--no-heading",
-                "--ignore-case",
-                "--fixed-strings",
-                term,
-                str(root),
-            ]
-            try:
-                proc = subprocess.run(
-                    cmd, capture_output=True, text=True, check=False
-                )
-            except FileNotFoundError:
-                return []
-            if proc.returncode not in (0, 1):
-                continue
-            for line in proc.stdout.splitlines():
-                parts = line.split(":", 2)
-                if len(parts) < 3:
-                    continue
-                file_path, line_no, snippet = parts
-                try:
-                    line_int = int(line_no)
-                except ValueError:
-                    continue
-                rel_path = os.path.relpath(file_path, repo)
-                key = (rel_path, line_int, snippet.strip())
-                if key in seen:
-                    continue
-                seen.add(key)
-                results.append(
-                    {
-                        "path": rel_path.replace("\\", "/"),
-                        "line": line_int,
-                        "match": snippet.strip(),
-                        "term": term,
-                    }
-                )
-    return results
-
-
 plan_by_tokens = load_dev_plan()
 
 
 effects: list[dict[str, object]] = []
 covered_tokens: set[tuple[str, ...]] = set()
+
+
+def build_preset_reference_info(
+    registry_id: str | None,
+    group: str | None,
+    original_matches: list[dict[str, str]] | None,
+) -> dict[str, object]:
+    methods: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+
+    if registry_id:
+        methods.append(
+            {
+                "kind": "compat_registry",
+                "identifier": registry_id,
+                "group": group,
+            }
+        )
+        seen.add(("compat_registry", registry_id.lower()))
+
+    if original_matches:
+        for match in original_matches:
+            legacy_name = match.get("name")
+            if legacy_name:
+                key = ("legacy_module_name", legacy_name.lower())
+                if key not in seen:
+                    methods.append(
+                        {
+                            "kind": "legacy_module_name",
+                            "identifier": legacy_name,
+                            "source": match.get("path"),
+                        }
+                    )
+                    seen.add(key)
+            legacy_func = match.get("function")
+            if legacy_func:
+                key = ("legacy_function", legacy_func.lower())
+                if key not in seen:
+                    methods.append(
+                        {
+                            "kind": "legacy_function",
+                            "identifier": legacy_func,
+                            "source": match.get("path"),
+                        }
+                    )
+                    seen.add(key)
+
+    return {
+        "can_reference": bool(methods),
+        "methods": methods or None,
+    }
 
 for effect_id, cls, group in registry_entries:
     metadata = class_metadata.get(cls, {})
@@ -398,15 +395,9 @@ for effect_id, cls, group in registry_entries:
     if source_path:
         implementation_files["source"] = source_path
     parameters = parameters_by_class.get(cls, [])
-    references = gather_references(
-        [
-            effect_id,
-            display_name or "",
-            f"{group} / {display_name}" if display_name else "",
-        ]
-    )
     status = "stub" if class_to_stub.get(cls, False) else "implemented"
     origin = "winamp_original" if original_matches else "2025_rebuild_only"
+    preset_reference = build_preset_reference_info(effect_id, group, original_matches)
     effect_entry = {
         "machine_readable_effect_name": f"{group}/{effect_id}",
         "status": status,
@@ -428,8 +419,8 @@ for effect_id, cls, group in registry_entries:
         "implementation_files": implementation_files or None,
         "parameters": parameters,
         "original_sources": original_matches,
-        "preset_references": references,
-        "preset_references_count": len(references),
+        "implementation_complete": status == "implemented",
+        "preset_reference": preset_reference,
     }
     if status == "stub":
         effect_entry["notes"] = "Process() currently marked as stub"
@@ -442,7 +433,7 @@ for tokens, entries in original_by_tokens.items():
     category = plan_entry.get("category") if plan_entry else None
     for entry in entries:
         machine_suffix = "_".join(tokens) if tokens else entry["function"].lower()
-        references = gather_references([entry["name"], entry["function"]])
+        preset_reference = build_preset_reference_info(None, category, [entry])
         effects.append(
             {
                 "machine_readable_effect_name": f"legacy/{machine_suffix}",
@@ -465,8 +456,8 @@ for tokens, entries in original_by_tokens.items():
                 "implementation_files": None,
                 "parameters": [],
                 "original_sources": [entry],
-                "preset_references": references,
-                "preset_references_count": len(references),
+                "implementation_complete": False,
+                "preset_reference": preset_reference,
                 "notes": "No compat layer stub or registry entry",
             }
         )
@@ -477,7 +468,7 @@ for tokens, plan_entry in plan_by_tokens.items():
     if tokens in original_by_tokens:
         continue
     machine_suffix = "_".join(tokens)
-    references = gather_references([plan_entry.get("name", "")])
+    preset_reference = build_preset_reference_info(None, plan_entry.get("category"), None)
     effects.append(
         {
             "machine_readable_effect_name": f"plan_only/{machine_suffix}",
@@ -496,8 +487,8 @@ for tokens, plan_entry in plan_by_tokens.items():
             "implementation_files": None,
             "parameters": [],
             "original_sources": [],
-            "preset_references": references,
-            "preset_references_count": len(references),
+            "implementation_complete": False,
+            "preset_reference": preset_reference,
             "notes": "Tracked in development plan only",
         }
     )

@@ -44,4 +44,4 @@ case "${DISTRO}" in
     echo "Unsupported distro: ${DISTRO}" >&2
     exit 1
     ;;
-fi
+esac

@@ -14,7 +14,6 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_mosaic.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_scatter.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_unique_tone.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_water_bump.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/dynamic/frame_warp.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/dynamic/dynamic_shader.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/dynamic/dyn_movement.cpp
@@ -65,6 +64,7 @@ add_library(avs-effects-core
   ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_grain.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/filters/effect_interferences.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_water.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_water_bump.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_roto_blitter.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_mosaic.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_colorfade.cpp

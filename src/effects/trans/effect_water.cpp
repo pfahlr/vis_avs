@@ -103,7 +103,7 @@ bool Water::render(avs::core::RenderContext& context) {
     }
   }
 
-  std::memcpy(lastFrame_.data(), src, requiredBytes);
+  std::memcpy(lastFrame_.data(), dst, requiredBytes);
   std::memcpy(context.framebuffer.data, dst, requiredBytes);
 
   return true;

@@ -1,6 +1,6 @@
 id: engine-input-device-select
 title: Allow selecting PortAudio input device
-status: READY
+status: DONE
 labels: [audio, portaudio, cli]
 depends_on: []
 goal: >

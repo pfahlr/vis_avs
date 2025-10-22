@@ -1,6 +1,6 @@
 id: presets-binary-parser
 title: Full Nullsoft binary preset parser compatibility
-status: READY
+status: DONE
 labels: [presets, parser, compatibility]
 depends_on:
   - presets-extended-header-fix

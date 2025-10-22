@@ -1,6 +1,6 @@
 id: engine-pa-underflow-surfacing
 title: Detect and surface PortAudio input underflow
-status: IN-REVIEW
+status: DONE
 labels: [audio, portaudio, reliability]
 depends_on: []
 goal: >

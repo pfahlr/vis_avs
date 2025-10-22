@@ -1,6 +1,6 @@
 id: warn-nseel-prototypes
 title: Export NS-EEL parser prototypes
-status: IN-REVIEW
+status: DONE
 labels: [warnings, ns-eel, build]
 depends_on: []
 goal: >

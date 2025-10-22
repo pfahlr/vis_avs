@@ -122,3 +122,53 @@ TEST(ColorfadeEffect, RandomizesOffsetsDeterministicallyOnBeat) {
   EXPECT_EQ(pixel[1], static_cast<std::uint8_t>(std::clamp(20 + offsetA, 0, 255)));
   EXPECT_EQ(pixel[2], static_cast<std::uint8_t>(std::clamp(10 + offsetC, 0, 255)));
 }
+
+TEST(ColorfadeEffect, SmoothingReturnsOffsetsToConfiguredBaseValues) {
+  Colorfade smoothEffect;
+  Colorfade baseEffect;
+
+  avs::core::ParamBlock baseParams;
+  baseParams.setInt("offset_a", 12);
+  baseParams.setInt("offset_b", -18);
+  baseParams.setInt("offset_c", 7);
+  baseEffect.setParams(baseParams);
+
+  avs::core::ParamBlock smoothParams;
+  smoothParams.setBool("smooth", true);
+  smoothParams.setInt("offset_a", 12);
+  smoothParams.setInt("offset_b", -18);
+  smoothParams.setInt("offset_c", 7);
+  smoothParams.setInt("beat_offset_a", -4);
+  smoothParams.setInt("beat_offset_b", 11);
+  smoothParams.setInt("beat_offset_c", -9);
+  smoothEffect.setParams(smoothParams);
+
+  const std::array<std::uint8_t, 16> initialPixels{
+      250u, 20u, 10u, 255u,
+      15u, 200u, 10u, 255u,
+      5u, 40u, 230u, 255u,
+      120u, 120u, 120u, 255u,
+  };
+
+  std::array<std::uint8_t, 16> smoothPixels = initialPixels;
+  avs::core::RenderContext smoothContext = makeContext(smoothPixels);
+  smoothContext.audioBeat = true;
+  ASSERT_TRUE(smoothEffect.render(smoothContext));
+
+  smoothPixels = initialPixels;
+  smoothContext.audioBeat = false;
+
+  const int iterations = 64;
+  for (int i = 0; i < iterations; ++i) {
+    ASSERT_TRUE(smoothEffect.render(smoothContext));
+    if (i + 1 < iterations) {
+      smoothPixels = initialPixels;
+    }
+  }
+
+  std::array<std::uint8_t, 16> basePixels = initialPixels;
+  avs::core::RenderContext baseContext = makeContext(basePixels);
+  ASSERT_TRUE(baseEffect.render(baseContext));
+
+  EXPECT_EQ(smoothPixels, basePixels);
+}

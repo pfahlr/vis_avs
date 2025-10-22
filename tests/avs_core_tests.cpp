@@ -360,6 +360,15 @@ TEST(PresetParser, ParsesLegacyBinaryPreset) {
   fs::remove(tmp);
 }
 
+TEST(PresetParser, WarnsWhenEffectIsUndecodedButRecognized) {
+  namespace fs = std::filesystem;
+  auto preset = avs::parsePreset(fs::path(SOURCE_DIR) / "tests/data/phase1/fadeout_color.avs");
+  ASSERT_FALSE(preset.warnings.empty());
+  const std::string& warning = preset.warnings.front();
+  EXPECT_NE(warning.find("preset loader does not yet decode effect: 3 (Trans / Fadeout)"),
+            std::string::npos);
+}
+
 TEST(PresetParser, ParsesNestedRenderLists) {
   auto preset = avs::parsePreset(std::filesystem::path(SOURCE_DIR) / "tests/data/nested_list.avs");
   EXPECT_TRUE(preset.warnings.empty());

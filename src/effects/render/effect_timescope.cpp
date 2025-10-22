@@ -152,6 +152,7 @@ void Timescope::applyParams(const avs::core::ParamBlock& params) {
   bandCount_ = std::clamp(params.getInt("nbands", bandCount_), kMinBands, kMaxBands);
   if (params.contains("which_ch")) {
     channelSelection_ = params.getInt("which_ch", channelSelection_);
+    channelSelection_ = std::clamp(channelSelection_, 0, 2);
   }
 
   ensureBandCapacity();

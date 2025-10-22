@@ -9,6 +9,9 @@ on:
 env:
   CCACHE_DIR: ${{ github.workspace }}/.ccache
   CCACHE_MAXSIZE: 750M
+  # Provide a safe default that keeps the workflow valid until the cores step
+  # overrides it via $GITHUB_ENV.
+  CMAKE_BUILD_PARALLEL_LEVEL: 1
 
 jobs:
   build:

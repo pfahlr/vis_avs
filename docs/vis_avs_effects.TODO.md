@@ -53,6 +53,8 @@
 ---
 ---
 
+[+] - 1. Bass Spin
+
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
 
@@ -97,6 +99,8 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 
 ---
+
+[+] - 2. Moving Particle
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -143,6 +147,8 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
+[+] - 3. Oscillioscope Star
+
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
 
@@ -185,6 +191,9 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 ```--tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
+
+[+] - 4. Simple Spectrum
+
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
 
@@ -226,6 +235,9 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 ```--tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
+
+[+] - 5. SVP Loader
+
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
 
@@ -266,6 +278,9 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 ```--tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
+
+[ ] - 6. Color Modifier
+
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
 
@@ -307,6 +322,9 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 ```--tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
+
+[ ] - 7. Timescope
+
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
 
@@ -348,6 +366,10 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 
 ---
+
+[ ] - 8. Scatter 
+
+
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
 
@@ -389,6 +411,9 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 
 ---
+
+[ ] - 9. Unique Tone
+
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
 
@@ -429,6 +454,9 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 
 ---
+
+[ ] - 10. Water Bump
+
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
 
@@ -472,6 +500,8 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ```--tags origin || git fetch --prune --tags --depth=50 origin;
 ---
+
+[ ] - 11. Holden05: Multi Delay
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.

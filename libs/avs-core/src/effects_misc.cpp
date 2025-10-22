@@ -64,6 +64,7 @@ class EffectListConfigParser {
     if (peek() == '[') {
       get();
       if (!parseArray(out)) return false;
+      if (!consume(']')) return false;
 
       skipWhitespace();
       return skipTrailing();
@@ -78,7 +79,6 @@ class EffectListConfigParser {
   bool parseArray(std::vector<EffectListEffect::ConfigNode>& out) {
     skipWhitespace();
     if (peek() == ']') {
-      get();
       return true;
     }
     while (pos_ < text_.size()) {
@@ -92,7 +92,6 @@ class EffectListConfigParser {
         continue;
       }
       if (peek() == ']') {
-        get();
         return true;
       }
       return false;
@@ -120,6 +119,7 @@ class EffectListConfigParser {
       } else if (key == "children") {
         if (!consume('[')) return false;
         if (!parseArray(node.children)) return false;
+        if (!consume(']')) return false;
       } else {
         if (!skipValue()) return false;
       }
@@ -150,6 +150,7 @@ class EffectListConfigParser {
       get();
       std::vector<EffectListEffect::ConfigNode> tmp;
       if (!parseArray(tmp)) return false;
+      if (!consume(']')) return false;
       return true;
     }
     std::size_t start = pos_;

@@ -5,15 +5,7 @@ effect indices defined in `effectNameForId` inside
 `libs/avs-core/src/preset.cpp`. Specifically, it can parse the following
 effect payloads:
 
-- **0 – Render / Simple**
-- **3 – Trans / Fadeout**
-- **6 – Trans / Blur**
-- **8 – Render / Moving Particle**
-- **14 – Render / Ring**
-- **15 – Trans / Movement**
-- **19 – Render / Dot Fountain**
 - **21 – Misc / Comment**
-- **26 – Trans / Mirror**
 - **45 – Trans / Color Modifier**
 
 All other effect indices are presently treated as unknown and trigger the
@@ -23,24 +15,32 @@ track decoding progress.
 
 | Effect ID | Effect label |
 |----------:|:-------------|
+| 0 | Render / Simple |
 | 1 | Render / Dot Plane |
 | 2 | Render / Oscilliscope Star |
+| 3 | Trans / Fadeout |
 | 4 | Trans / Blitter Feedback |
 | 5 | Render / OnBeat Clear |
+| 6 | Trans / Blur |
 | 7 | Render / Bass Spin |
+| 8 | Render / Moving Particle |
 | 9 | Trans / Roto Blitter |
 | 10 | Render / SVP Loader |
 | 11 | Trans / Colorfade |
 | 12 | Trans / Color Clip |
 | 13 | Render / Rotating Stars |
+| 14 | Render / Ring |
+| 15 | Trans / Movement |
 | 16 | Trans / Scatter |
 | 17 | Render / Dot Grid |
 | 18 | Misc / Buffer Save |
+| 19 | Render / Dot Fountain |
 | 20 | Trans / Water |
 | 22 | Trans / Brightness |
 | 23 | Trans / Interleave |
 | 24 | Trans / Grain |
 | 25 | Render / Clear screen |
+| 26 | Trans / Mirror |
 | 27 | Render / Starfield |
 | 28 | Render / Text |
 | 29 | Trans / Bump |

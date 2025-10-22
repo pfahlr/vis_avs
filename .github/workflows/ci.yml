@@ -9,7 +9,6 @@ on:
 env:
   CCACHE_DIR: ${{ github.workspace }}/.ccache
   CCACHE_MAXSIZE: 750M
-  CMAKE_BUILD_PARALLEL_LEVEL: ${{ steps.cores.outputs.cores }}
 
 jobs:
   build:

@@ -10,7 +10,7 @@
 #include <avs/audio/analyzer.h>
 #include <avs/core/ParamBlock.hpp>
 #include <avs/core/RenderContext.hpp>
-#include "effects/render/effect_moving_particle.h"
+#include <avs/effects/legacy/render/effect_moving_particle.h>
 
 namespace {
 

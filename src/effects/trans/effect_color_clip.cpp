@@ -15,7 +15,7 @@ std::uint8_t extractComponent(int value, int shift) {
 }
 
 int composeColor(const std::array<std::uint8_t, 3>& color) {
-  return static_cast<int>(color[0]) | (static_cast<int>(color[1]) << 8) | (static_cast<int>(color[2]) << 16);
+  return (static_cast<int>(color[0]) << 16) | (static_cast<int>(color[1]) << 8) | static_cast<int>(color[2]);
 }
 
 int readColorParam(const avs::core::ParamBlock& params, int fallback) {
@@ -50,9 +50,9 @@ void ColorClip::setParams(const avs::core::ParamBlock& params) {
   enabled_ = readEnabled(params, enabled_);
   const int defaultColor = composeColor(clipColor_);
   const int colorValue = readColorParam(params, defaultColor);
-  clipColor_[0] = extractComponent(colorValue, 0);
+  clipColor_[0] = extractComponent(colorValue, 16);
   clipColor_[1] = extractComponent(colorValue, 8);
-  clipColor_[2] = extractComponent(colorValue, 16);
+  clipColor_[2] = extractComponent(colorValue, 0);
 }
 
 bool ColorClip::render(avs::core::RenderContext& context) {

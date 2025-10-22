@@ -41,9 +41,15 @@ std::uint32_t Mosaic::blendAdditive(std::uint32_t dst, std::uint32_t src) {
 }
 
 std::uint32_t Mosaic::blendAverage(std::uint32_t dst, std::uint32_t src) {
-  const std::uint32_t lhs = (dst >> 1) & 0x7F7F7F7Fu;
-  const std::uint32_t rhs = (src >> 1) & 0x7F7F7F7Fu;
-  return lhs + rhs;
+  const std::uint16_t r = static_cast<std::uint16_t>(dst & 0xFFu) + static_cast<std::uint16_t>(src & 0xFFu);
+  const std::uint16_t g = static_cast<std::uint16_t>((dst >> 8) & 0xFFu) +
+                          static_cast<std::uint16_t>((src >> 8) & 0xFFu);
+  const std::uint16_t b = static_cast<std::uint16_t>((dst >> 16) & 0xFFu) +
+                          static_cast<std::uint16_t>((src >> 16) & 0xFFu);
+  const std::uint16_t a = static_cast<std::uint16_t>((dst >> 24) & 0xFFu) +
+                          static_cast<std::uint16_t>((src >> 24) & 0xFFu);
+  return static_cast<std::uint32_t>(r >> 1) | (static_cast<std::uint32_t>(g >> 1) << 8) |
+         (static_cast<std::uint32_t>(b >> 1) << 16) | (static_cast<std::uint32_t>(a >> 1) << 24);
 }
 
 void Mosaic::setParams(const avs::core::ParamBlock& params) {

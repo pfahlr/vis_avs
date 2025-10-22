@@ -10,6 +10,7 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_color_clip.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_colorfade.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_mosaic.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_scatter.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_unique_tone.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_water_bump.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/dynamic/frame_warp.cpp
@@ -69,6 +70,7 @@ add_library(avs-effects-core
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_color_modifier.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_brightness.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_blur.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_unique_tone.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/render/effect_rotating_stars.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/render/effect_simple_spectrum.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/render/effect_oscilloscope_star.cpp

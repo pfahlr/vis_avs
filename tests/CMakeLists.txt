@@ -61,6 +61,7 @@ add_executable(core_effects_tests
   core/test_transform_affine.cpp
   core/test_roto_blitter.cpp
   core/test_trans_brightness.cpp
+  core/test_trans_unique_tone.cpp
   core/test_gating.cpp
   core/test_primitives.cpp
   core/test_trans_mosaic.cpp

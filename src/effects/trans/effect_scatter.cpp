@@ -120,9 +120,9 @@ bool Scatter::render(avs::core::RenderContext& context) {
       const std::uint32_t randomValue = context.rng.nextUint32();
       const int tableIndex = static_cast<int>(randomValue & kOffsetMask);
       const ScatterOffset& offset = offsets_[tableIndex];
-      const int sampleX = std::clamp(x + offset.dx, 0, width - 1);
-      const int sampleY = std::clamp(y + offset.dy, 0, height - 1);
-      const int sampleIndex = sampleY * width + sampleX;
+      const int flatOffset = offset.dy * width + offset.dx;
+      int sampleIndex = index + flatOffset;
+      sampleIndex = std::clamp(sampleIndex, 0, totalPixels - 1);
       const std::uint32_t scatteredPixel = source[static_cast<std::size_t>(sampleIndex)];
 
       if (weight >= kFalloffRadius) {

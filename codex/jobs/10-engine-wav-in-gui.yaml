@@ -1,6 +1,6 @@
 id: engine-wav-in-gui
 title: Respect --wav in interactive mode
-status: READY
+status: DONE
 labels: [audio, cli, gui]
 depends_on: []
 goal: >

@@ -1,6 +1,6 @@
 id: presets-gui-preset-cli
 title: Honor --preset in GUI mode
-status: IN-REVIEW
+status: DONE
 labels: [presets, cli, gui]
 depends_on: []
 goal: >

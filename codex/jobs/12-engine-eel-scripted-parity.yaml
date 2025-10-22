@@ -1,6 +1,6 @@
 id: engine-eel-scripted-parity
 title: Restore AVS EEL built-ins & ScriptedEffect semantics
-status: READY
+status: DONE
 labels: [scripting, eel, presets]
 depends_on:
   - presets-binary-parser

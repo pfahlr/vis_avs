@@ -431,7 +431,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 [✅] - 9. Unique Tone
 
 ### Instruction ###
-Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
+Your task is to implement or repair a previously atte mpted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
 
 You are acting as a **senior software engineer** and **Codex development assistant**. You MUST analyze the given context, understand the expected implementation, and apply corrections and enhancements to meet the goal successfully. Ensure code is production-ready, idiomatic C++, and integrates seamlessly with the existing AVS plugin architecture.
 
@@ -497,8 +497,13 @@ You are acting as a **senior software engineer** and **Codex development assista
 **prompt:**:
 Combine bump mapping with water displacement. Requires heightmap calc.
 
-**failed development branch**: 
--codex/combine-bump-mapping-with-water-displacement
+**failed development branch(es)**: 
+- codex/combine-bump-mapping-with-water-displacement
+- codex/reimplement-water-bump-effect
+- codex/reimplement-water-bump-effect-y4w33q
+- codex/reimplement-water-bump-effect-bqmfsj
+- codex/reimplement-water-bump-effect-m5js4b
+
 ```
 You are to implement it **again from scratch**, correcting or avoiding any past issues. Use the same original file and class references as provided.
 
@@ -513,11 +518,12 @@ git remote get-url origin >/dev/null 2>&1 || git remote add origin "https://${GI
 git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
 git config --add remote.origin.fetch "+refs/pull/*/head:refs/remotes/origin/pr/*"
 git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
-
-```--tags origin || git fetch --prune --tags --depth=50 origin;
+--tags origin || git fetch --prune --tags --depth=50 origin;
+```
 ---
 
-[+] - 11. Holden05: Multi Delay
+
+[✅] - 11. Holden05: Multi Delay
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.

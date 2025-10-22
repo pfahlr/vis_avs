@@ -7,7 +7,9 @@ on:
   pull_request:
 
 env:
-  CMAKE_BUILD_PARALLEL_LEVEL: 4
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+  CCACHE_MAXSIZE: 750M
+  CMAKE_BUILD_PARALLEL_LEVEL: ${{ steps.cores.outputs.cores }}
 
 jobs:
   build:
@@ -26,11 +28,20 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
+      - name: Detect available cores
+        id: cores
+        run: echo "cores=$(nproc)" >> "$GITHUB_OUTPUT"
+
+      - name: Export parallel build level
+        run: echo "CMAKE_BUILD_PARALLEL_LEVEL=${{ steps.cores.outputs.cores }}" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v4
 
       - name: Prepare cache directories
         run: |
           mkdir -p build/_deps
+          mkdir -p .ccache
+          mkdir -p "$HOME/.cache/fetchcontent"
           if [ "${{ matrix.distro }}" = "ubuntu" ]; then
             mkdir -p /var/cache/apt
           else
@@ -38,12 +49,28 @@ jobs:
           fi
 
       - name: Cache package manager artifacts
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ matrix.pkg_cache }}
           key: ${{ runner.os }}-${{ matrix.distro }}-pkg-${{ hashFiles('.github/workflows/ci.yml') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.distro }}-pkg-
+
+      - name: Cache compiler cache
+        uses: actions/cache@v4
+        with:
+          path: .ccache
+          key: ccache-${{ runner.os }}-${{ matrix.distro }}-${{ hashFiles('**/CMakeLists.txt','cmake/**/*') }}
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ matrix.distro }}-
+
+      - name: Cache FetchContent base dir
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.HOME }}/.cache/fetchcontent
+          key: fetch-${{ runner.os }}-${{ hashFiles('**/CMakeLists.txt','cmake/**/*') }}
+          restore-keys: |
+            fetch-${{ runner.os }}-
 
 
       - name: Install build dependencies
@@ -55,6 +82,7 @@ jobs:
             apt-get update
             apt-get install -y --no-install-recommends \
               build-essential \
+              ccache \
               clang \
               cmake \
               git \
@@ -73,6 +101,7 @@ jobs:
           else
             dnf -y makecache
             dnf -y install \
+              ccache \
               clang \
               cmake \
               gcc \
@@ -92,12 +121,24 @@ jobs:
           fi
 
       - name: Cache CMake dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: build/_deps
           key: cmake-${{ matrix.distro }}-${{ hashFiles('CMakeLists.txt', 'libs/**/CMakeLists.txt', 'apps/**/CMakeLists.txt', 'tools/CMakeLists.txt', 'tests/CMakeLists.txt') }}
           restore-keys: |
             cmake-${{ matrix.distro }}-
+
+      - name: Cache CMake configure metadata
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/.ninja_deps
+            build/.ninja_log
+            build/CMakeCache.txt
+            build/CMakeFiles
+          key: graph-${{ runner.os }}-${{ matrix.distro }}-${{ hashFiles('**/CMakeLists.txt','cmake/**/*','src/**/*') }}
+          restore-keys: |
+            graph-${{ runner.os }}-${{ matrix.distro }}-
 
       # Optional: fix trust store if your runner image is missing CA certs
       - name: Ensure CA trust for git (defensive)
@@ -149,10 +190,14 @@ jobs:
             -DFETCHCONTENT_SOURCE_DIR_PORTAUDIO="$GITHUB_WORKSPACE/external/portaudio" \
             -DFETCHCONTENT_SOURCE_DIR_GOOGLETEST="$GITHUB_WORKSPACE/external/googletest" \
             -DFETCHCONTENT_FULLY_DISCONNECTED=ON \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_INSTALL_PREFIX="${PWD}/install"
           else
             cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_INSTALL_PREFIX="${PWD}/install"
           fi
       - name: Build

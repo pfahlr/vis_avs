@@ -76,7 +76,8 @@ add_executable(core_effects_tests
   core/test_misc_comment.cpp
   core/test_trans_multiplier.cpp
   core/test_multi_delay.cpp
-  core/test_video_delay.cpp)
+  core/test_video_delay.cpp
+  core/test_color_modifier.cpp)
 
 target_link_libraries(core_effects_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
 target_compile_options(core_effects_tests PRIVATE -Wall -Wextra -Werror)

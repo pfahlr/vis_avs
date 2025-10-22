@@ -52,7 +52,7 @@
 #include "effects/trans/effect_brightness.h"
 #include "effects/trans/effect_blur.h"
 #include "effects/trans/effect_blitter_feedback.h"
-#include "effects/stubs/effect_trans_color_modifier.h"
+#include "effects/trans/effect_color_modifier.h"
 #include "effects/trans/effect_roto_blitter.h"
 #include "effects/trans/effect_mosaic.h"
 #include "effects/trans/effect_colorfade.h"
@@ -171,8 +171,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("trans / color clip", []() { return std::make_unique<avs::effects::trans::ColorClip>(); });
   registry.registerFactory("Trans / Brightness", []() { return std::make_unique<trans::Brightness>(); });
   registry.registerFactory("trans / brightness", []() { return std::make_unique<trans::Brightness>(); });
-  registry.registerFactory("Trans / Color Modifier", []() { return std::make_unique<Effect_TransColorModifier>(); });
-  registry.registerFactory("trans / color modifier", []() { return std::make_unique<Effect_TransColorModifier>(); });
+  registry.registerFactory("Trans / Color Modifier", []() { return std::make_unique<trans::ColorModifier>(); });
+  registry.registerFactory("trans / color modifier", []() { return std::make_unique<trans::ColorModifier>(); });
   registry.registerFactory("Trans / Roto Blitter", []() { return std::make_unique<avs::effects::trans::RotoBlitter>(); });
   registry.registerFactory("trans / roto blitter", []() { return std::make_unique<avs::effects::trans::RotoBlitter>(); });
   registry.registerFactory("Trans / Mosaic", []() { return std::make_unique<trans::Mosaic>(); });

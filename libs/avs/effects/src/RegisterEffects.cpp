@@ -38,11 +38,11 @@
 #include "effects/misc/effect_custom_bpm.h"
 #include "effects/trans/effect_multiplier.h"
 #include "effects/stubs/effect_render_avi.h"
-#include "effects/stubs/effect_render_bass_spin.h"
+#include "effects/render/effect_bass_spin.h"
 #include "effects/render/effect_dot_plane.h"
 #include "effects/render/effect_dot_fountain.h"
-#include "effects/stubs/effect_render_moving_particle.h"
 #include "effects/render/effect_oscilloscope_star.h"
+#include "effects/render/effect_moving_particle.h"
 #include "effects/render/effect_rotating_stars.h"
 #include "effects/render/effect_ring.h"
 #include "effects/stubs/effect_render_simple.h"
@@ -125,14 +125,14 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("multiplier", []() { return std::make_unique<trans::Multiplier>(); });
   registry.registerFactory("Render / AVI", []() { return std::make_unique<Effect_RenderAvi>(); });
   registry.registerFactory("render / avi", []() { return std::make_unique<Effect_RenderAvi>(); });
-  registry.registerFactory("Render / Bass Spin", []() { return std::make_unique<Effect_RenderBassSpin>(); });
-  registry.registerFactory("render / bass spin", []() { return std::make_unique<Effect_RenderBassSpin>(); });
+  registry.registerFactory("Render / Bass Spin", []() { return std::make_unique<render::BassSpin>(); });
+  registry.registerFactory("render / bass spin", []() { return std::make_unique<render::BassSpin>(); });
   registry.registerFactory("Render / Dot Fountain", []() { return std::make_unique<Effect_RenderDotFountain>(); });
   registry.registerFactory("render / dot fountain", []() { return std::make_unique<Effect_RenderDotFountain>(); });
   registry.registerFactory("Render / Dot Plane", []() { return std::make_unique<render::DotPlane>(); });
   registry.registerFactory("render / dot plane", []() { return std::make_unique<render::DotPlane>(); });
-  registry.registerFactory("Render / Moving Particle", []() { return std::make_unique<Effect_RenderMovingParticle>(); });
-  registry.registerFactory("render / moving particle", []() { return std::make_unique<Effect_RenderMovingParticle>(); });
+  registry.registerFactory("Render / Moving Particle", []() { return std::make_unique<render::MovingParticle>(); });
+  registry.registerFactory("render / moving particle", []() { return std::make_unique<render::MovingParticle>(); });
   registry.registerFactory("Render / Oscilloscope Star", []() { return std::make_unique<render::OscilloscopeStar>(); });
   registry.registerFactory("render / oscilloscope star", []() { return std::make_unique<render::OscilloscopeStar>(); });
   registry.registerFactory("Render / Ring", []() { return std::make_unique<render::Ring>(); });

@@ -28,13 +28,13 @@ Nice—those three cover the biggest wins. What’s *left* (ordered by impact):
   ctest --test-dir build --output-on-failure --parallel ${{ env.CMAKE_BUILD_PARALLEL_LEVEL }}
   ```
 
-5. Add ccache stats + baselining
+[ ] - 5. Add ccache stats + baselining
 
 * Before configure: `ccache --zero-stats || true`
 * After tests: `ccache -s || true`
 * Acceptance: non-zero hits on second run.
 
-6. Improve cache key hygiene for the compiler cache
+[ ] - 6. Improve cache key hygiene for the compiler cache
 
 * Include compiler version in the **ccache** key to avoid mixing GCC/Clang outputs across runners:
 
@@ -51,11 +51,11 @@ Nice—those three cover the biggest wins. What’s *left* (ordered by impact):
     ```
 * (Optional) Add `CCACHE_BASEDIR: ${{ github.workspace }}` and `CCACHE_NOHASHDIR: 1` to improve hit rates across path changes.
 
-7. Optional: switch to `sccache` with a remote backend
+[ ] - 7. Optional: switch to `sccache` with a remote backend
 
 * For shared cache hits across runners/branches, wire S3/MinIO/Redis and drop `actions/cache` for the compiler cache.
 
-8. Micro-optimizations
+[ ] - 8. Micro-optimizations
 
 * Skip `apt-get update`/`dnf makecache` when pre-baked images are in place.
 * Keep FetchContent cache, and consider `-DFETCHCONTENT_FULLY_DISCONNECTED=ON` after restore (if your CMake logic allows) to avoid network checks.

@@ -18,6 +18,7 @@
 #include "avs/core/RenderContext.hpp"
 #include "avs/effects/RegisterEffects.hpp"
 #include "avs/offscreen/Md5.hpp"
+#include "effects/filters/effect_conv3x3.h"
 #include "effects/filters/effect_fast_brightness.h"
 #include "effects/trans/effect_water.h"
 #include "effects/trans/effect_color_reduction.h"
@@ -256,6 +257,56 @@ TEST(FastBrightnessEffect, HonorsClampOutputModes) {
     EXPECT_EQ(pixel[1], static_cast<std::uint8_t>(-295));
     EXPECT_EQ(pixel[2], static_cast<std::uint8_t>(-177));
     EXPECT_EQ(pixel[3], 255u);
+  }
+}
+
+TEST(Convolution3x3Effect, HonorsClampOutputModes) {
+  const std::string kernel = "0 0 0 0 2 0 0 0 0";
+
+  {
+    avs::effects::filters::Convolution3x3 effect;
+    avs::core::ParamBlock params;
+    params.setString("kernel", kernel);
+    params.setFloat("divisor", 1.0f);
+    params.setFloat("bias", 0.0f);
+    params.setBool("preserve_alpha", false);
+    params.setBool("clamp", true);
+    effect.setParams(params);
+
+    std::array<std::uint8_t, 4> pixel{200u, 10u, 180u, 200u};
+    avs::core::RenderContext context{};
+    context.width = 1;
+    context.height = 1;
+    context.framebuffer = {pixel.data(), pixel.size()};
+
+    ASSERT_TRUE(effect.render(context));
+    EXPECT_EQ(pixel[0], 255u);
+    EXPECT_EQ(pixel[1], 20u);
+    EXPECT_EQ(pixel[2], 255u);
+    EXPECT_EQ(pixel[3], 255u);
+  }
+
+  {
+    avs::effects::filters::Convolution3x3 effect;
+    avs::core::ParamBlock params;
+    params.setString("kernel", kernel);
+    params.setFloat("divisor", 1.0f);
+    params.setFloat("bias", 0.0f);
+    params.setBool("preserve_alpha", false);
+    params.setBool("clamp", false);
+    effect.setParams(params);
+
+    std::array<std::uint8_t, 4> pixel{200u, 10u, 180u, 200u};
+    avs::core::RenderContext context{};
+    context.width = 1;
+    context.height = 1;
+    context.framebuffer = {pixel.data(), pixel.size()};
+
+    ASSERT_TRUE(effect.render(context));
+    EXPECT_EQ(pixel[0], static_cast<std::uint8_t>(400));
+    EXPECT_EQ(pixel[1], static_cast<std::uint8_t>(20));
+    EXPECT_EQ(pixel[2], static_cast<std::uint8_t>(360));
+    EXPECT_EQ(pixel[3], static_cast<std::uint8_t>(400));
   }
 }
 

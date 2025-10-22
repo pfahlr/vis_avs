@@ -1,4 +1,12 @@
+
 # VIS_AVS EFFECTS IMPLEMENTATIONS
+
+
+## STATUS KEY
+[ ] = todo
+[+] = active development
+[✅] = COMPLETED 
+
 
 ## VIS_AVS NEW EFFECTS - EFFECTS UNIQUE TO 2025 REBUILD 
 

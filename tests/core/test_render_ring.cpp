@@ -74,7 +74,7 @@ TEST(RenderRingTest, OscillatorHashStable) {
 
   ASSERT_TRUE(effect.render(context));
   const std::string hash = hashFNV1a(pixels);
-  EXPECT_EQ(hash, "ce4136f2");
+  EXPECT_EQ(hash, "d8f04d66");
 }
 
 TEST(RenderRingTest, SpectrumEffectBitParsing) {
@@ -95,5 +95,5 @@ TEST(RenderRingTest, SpectrumEffectBitParsing) {
 
   ASSERT_TRUE(effect.render(context));
   const std::string hash = hashFNV1a(pixels);
-  EXPECT_EQ(hash, "44770945");
+  EXPECT_EQ(hash, "a39510b5");
 }

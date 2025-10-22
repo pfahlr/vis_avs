@@ -99,9 +99,9 @@ bool Ring::parseColorToken(std::string_view token, Color& color) {
 
 Ring::Color Ring::colorFromInt(std::uint32_t value) {
   Color c{};
-  c.r = static_cast<std::uint8_t>(value & 0xFFu);
+  c.r = static_cast<std::uint8_t>((value >> 16) & 0xFFu);
   c.g = static_cast<std::uint8_t>((value >> 8) & 0xFFu);
-  c.b = static_cast<std::uint8_t>((value >> 16) & 0xFFu);
+  c.b = static_cast<std::uint8_t>(value & 0xFFu);
   return c;
 }
 

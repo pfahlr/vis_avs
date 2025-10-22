@@ -325,46 +325,4 @@ jobs:
             ctest --test-dir build --output-on-failure --parallel "${CMAKE_BUILD_PARALLEL_LEVEL}"
             exit 0
           fi
-          python3 - <<'PY'
-import os
-import re
-import subprocess
-import sys
-
-shard_index = int(os.environ["SHARD_INDEX"])
-shard_total = int(os.environ["SHARD_TOTAL"])
-
-ctest_list = subprocess.check_output(["ctest", "--test-dir", "build", "-N"], text=True)
-tests = []
-for line in ctest_list.splitlines():
-    line = line.strip()
-    if line.startswith("Test #"):
-        parts = line.split(": ", 1)
-        if len(parts) == 2:
-            tests.append(parts[1].strip())
-
-if not tests:
-    print("No tests discovered; exiting shard early.")
-    sys.exit(0)
-
-tests.sort()
-shard_tests = tests[shard_index::shard_total]
-
-if not shard_tests:
-    print("Shard has no tests to run; exiting.")
-    sys.exit(0)
-
-pattern = "^(%s)$" % "|".join(re.escape(t) for t in shard_tests)
-cmd = [
-    "ctest",
-    "--test-dir", "build",
-    "--output-on-failure",
-    "--parallel", os.environ.get("CMAKE_BUILD_PARALLEL_LEVEL", "1"),
-    "--tests-regex", pattern,
-]
-
-print("Running:", " ".join(cmd))
-sys.stdout.flush()
-result = subprocess.call(cmd)
-sys.exit(result)
-PY
+          python3 .github/scripts/run_sharded_ctest.py

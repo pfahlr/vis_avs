@@ -12,6 +12,7 @@ add_library(avs-core STATIC
   src/effects/colormap.cpp
   src/effects/convolution.cpp
   src/effects/motion_blur.cpp
+  src/effects/fadeout.cpp
   src/effects/color_transform.cpp
   src/effects/glow.cpp
   src/effects/zoom_rotate.cpp

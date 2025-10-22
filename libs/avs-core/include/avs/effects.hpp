@@ -85,6 +85,23 @@ class MotionBlurEffect : public Effect {
   Framebuffer prev_;
 };
 
+class FadeoutEffect : public Effect {
+ public:
+  FadeoutEffect(int fadeLen, std::uint32_t color);
+  void init(int w, int h) override;
+  void process(const Framebuffer& in, Framebuffer& out) override;
+
+ private:
+  void recomputeLuts();
+  int fadeLen_ = 0;
+  std::uint8_t targetR_ = 0;
+  std::uint8_t targetG_ = 0;
+  std::uint8_t targetB_ = 0;
+  std::array<std::uint8_t, 256> lutR_{};
+  std::array<std::uint8_t, 256> lutG_{};
+  std::array<std::uint8_t, 256> lutB_{};
+};
+
 class ColorTransformEffect : public Effect {
  public:
   void init(int w, int h) override;

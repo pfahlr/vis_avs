@@ -198,6 +198,72 @@ bool parseRenderListChunk(Reader& r,
                           ParsedPreset& result,
                           std::vector<std::unique_ptr<Effect>>& chain);
 
+bool parseFadeoutEffect(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& effect) {
+  std::uint32_t fadeLen = 0;
+  std::uint32_t color = 0;
+  if (!readU32Bounded(r, chunkEnd, fadeLen) || !readU32Bounded(r, chunkEnd, color)) {
+    r.pos = chunkEnd;
+    return false;
+  }
+  r.pos = chunkEnd;
+  int fade = static_cast<int>(std::min<std::uint32_t>(fadeLen, 255u));
+  if (fade == 0) {
+    effect = std::make_unique<PassThroughEffect>();
+  } else {
+    effect = std::make_unique<FadeoutEffect>(fade, color);
+  }
+  return true;
+}
+
+bool parseBlurEffect(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& effect) {
+  std::uint32_t mode = 0;
+  std::uint32_t roundmode = 0;
+  if (!readU32Bounded(r, chunkEnd, mode) || !readU32Bounded(r, chunkEnd, roundmode)) {
+    (void)roundmode;
+    r.pos = chunkEnd;
+    return false;
+  }
+  r.pos = chunkEnd;
+  if (mode == 0) {
+    effect = std::make_unique<PassThroughEffect>();
+  } else {
+    int radius = 1;
+    switch (mode) {
+      case 1:
+        radius = 1;
+        break;
+      case 2:
+        radius = 2;
+        break;
+      case 3:
+        radius = 3;
+        break;
+      default:
+        radius = std::clamp(static_cast<int>(mode), 1, 8);
+        break;
+    }
+    effect = std::make_unique<BlurEffect>(radius);
+  }
+  return true;
+}
+
+bool parseMirrorEffect(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& effect) {
+  std::array<std::uint32_t, 5> fields{};
+  for (auto& field : fields) {
+    if (!readU32Bounded(r, chunkEnd, field)) {
+      r.pos = chunkEnd;
+      return false;
+    }
+  }
+  r.pos = chunkEnd;
+  if (fields[0] == 0) {
+    effect = std::make_unique<PassThroughEffect>();
+  } else {
+    effect = std::make_unique<MirrorEffect>();
+  }
+  return true;
+}
+
 bool parseColorModifier(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& effect) {
   std::uint8_t version = 0;
   if (!readByteBounded(r, chunkEnd, version)) return false;
@@ -355,6 +421,15 @@ bool parseRenderListChunk(Reader& r,
     } else if (effectId == 21u) {
       knownEffect = true;
       success = parseCommentEffect(chunkReader, payloadEnd, result);
+    } else if (effectId == 3u) {
+      knownEffect = true;
+      success = parseFadeoutEffect(chunkReader, payloadEnd, parsedEffect);
+    } else if (effectId == 6u) {
+      knownEffect = true;
+      success = parseBlurEffect(chunkReader, payloadEnd, parsedEffect);
+    } else if (effectId == 26u) {
+      knownEffect = true;
+      success = parseMirrorEffect(chunkReader, payloadEnd, parsedEffect);
     } else if (effectId == kListId) {
       knownEffect = true;
       std::vector<std::unique_ptr<Effect>> nestedChain;

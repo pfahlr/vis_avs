@@ -7,6 +7,9 @@ effect payloads:
 
 - **21 – Misc / Comment**
 - **45 – Trans / Color Modifier**
+- **03 – Trans / Fadeout**
+- **06 – Trans / Blur**
+- **26 – Trans / Mirror**
 
 All other effect indices are presently treated as unknown and trigger the
 "preset loader does not yet decode effect" warning that appears when loading
@@ -18,10 +21,8 @@ track decoding progress.
 | 0 | Render / Simple |
 | 1 | Render / Dot Plane |
 | 2 | Render / Oscilliscope Star |
-| 3 | Trans / Fadeout |
 | 4 | Trans / Blitter Feedback |
 | 5 | Render / OnBeat Clear |
-| 6 | Trans / Blur |
 | 7 | Render / Bass Spin |
 | 8 | Render / Moving Particle |
 | 9 | Trans / Roto Blitter |
@@ -40,7 +41,6 @@ track decoding progress.
 | 23 | Trans / Interleave |
 | 24 | Trans / Grain |
 | 25 | Render / Clear screen |
-| 26 | Trans / Mirror |
 | 27 | Render / Starfield |
 | 28 | Render / Text |
 | 29 | Trans / Bump |

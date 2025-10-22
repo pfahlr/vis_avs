@@ -362,11 +362,54 @@ TEST(PresetParser, ParsesLegacyBinaryPreset) {
 
 TEST(PresetParser, WarnsWhenEffectIsUndecodedButRecognized) {
   namespace fs = std::filesystem;
-  auto preset = avs::parsePreset(fs::path(SOURCE_DIR) / "tests/data/phase1/fadeout_color.avs");
+  std::vector<char> data;
+  const std::string header = "Nullsoft AVS Preset 0.2";
+  data.insert(data.end(), header.begin(), header.end());
+  data.push_back('\x1a');
+  data.push_back(static_cast<char>(0));
+  auto appendU32 = [&data](std::uint32_t value) {
+    data.push_back(static_cast<char>(value & 0xFFu));
+    data.push_back(static_cast<char>((value >> 8) & 0xFFu));
+    data.push_back(static_cast<char>((value >> 16) & 0xFFu));
+    data.push_back(static_cast<char>((value >> 24) & 0xFFu));
+  };
+  appendU32(8u);
+  appendU32(0u);
+
+  auto tmp = fs::temp_directory_path() / "undecoded_effect.avs";
+  {
+    std::ofstream out(tmp, std::ios::binary);
+    ASSERT_TRUE(out.is_open());
+    out.write(data.data(), static_cast<std::streamsize>(data.size()));
+  }
+  auto preset = avs::parsePreset(tmp);
+  fs::remove(tmp);
+
   ASSERT_FALSE(preset.warnings.empty());
   const std::string& warning = preset.warnings.front();
-  EXPECT_NE(warning.find("preset loader does not yet decode effect: 3 (Trans / Fadeout)"),
+  EXPECT_NE(warning.find("preset loader does not yet decode effect: 8 (Render / Moving Particle)"),
             std::string::npos);
+}
+
+TEST(PresetParser, ParsesBinaryFadeoutEffect) {
+  namespace fs = std::filesystem;
+  auto preset = avs::parsePreset(fs::path(SOURCE_DIR) / "tests/data/phase1/fadeout_color.avs");
+  EXPECT_TRUE(preset.warnings.empty());
+  ASSERT_EQ(preset.chain.size(), 1u);
+  auto* fade = dynamic_cast<avs::FadeoutEffect*>(preset.chain[0].get());
+  ASSERT_NE(fade, nullptr);
+  ASSERT_FALSE(preset.effects.empty());
+  EXPECT_EQ(preset.effects.front().effectId, 3u);
+}
+
+TEST(PresetParser, ParsesBinaryBlurEffect) {
+  namespace fs = std::filesystem;
+  auto preset = avs::parsePreset(fs::path(SOURCE_DIR) / "tests/data/phase1/blur_roundmode.avs");
+  EXPECT_TRUE(preset.warnings.empty());
+  ASSERT_EQ(preset.chain.size(), 1u);
+  EXPECT_NE(dynamic_cast<avs::BlurEffect*>(preset.chain[0].get()), nullptr);
+  ASSERT_FALSE(preset.effects.empty());
+  EXPECT_EQ(preset.effects.front().effectId, 6u);
 }
 
 TEST(PresetParser, ParsesNestedRenderLists) {

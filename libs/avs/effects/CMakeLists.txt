@@ -5,7 +5,6 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_oscilloscope_star.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_simple.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_avi.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_svp_loader.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_render_timescope.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_brightness.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_color_clip.cpp
@@ -74,6 +73,7 @@ add_library(avs-effects-core
   ${CMAKE_SOURCE_DIR}/src/effects/render/effect_rotating_stars.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/render/effect_dot_plane.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/render/effect_dot_fountain.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/render/effect_svp_loader.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/misc/effect_render_mode.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/misc/effect_custom_bpm.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_multiplier.cpp

@@ -73,6 +73,7 @@ add_executable(core_effects_tests
   core/test_render_dot_fountain.cpp
   core/test_render_bass_spin.cpp
   core/test_render_moving_particle.cpp
+  core/test_render_timescope.cpp
   core/test_render_mode.cpp
   core/test_misc_comment.cpp
   core/test_trans_multiplier.cpp

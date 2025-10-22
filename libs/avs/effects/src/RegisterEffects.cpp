@@ -24,44 +24,37 @@
 #include "effects/filters/effect_fast_brightness.h"
 #include "effects/filters/effect_grain.h"
 #include "effects/filters/effect_interferences.h"
-#include "effects/effect_scripted.h"
-#include "effects/dynamic/dyn_distance.h"
-#include "effects/dynamic/dyn_movement.h"
-#include "effects/dynamic/dyn_shift.h"
-#include "effects/dynamic/movement.h"
-#include "effects/dynamic/zoom_rotate.h"
 #include "effects/misc/effect_comment.h"
-#include "effects/trans/effect_channel_shift.h"
-#include "effects/trans/effect_multi_delay.h"
-#include "effects/trans/effect_video_delay.h"
-#include "effects/misc/effect_render_mode.h"
 #include "effects/misc/effect_custom_bpm.h"
-#include "effects/trans/effect_multiplier.h"
-#include "effects/stubs/effect_render_avi.h"
+#include "effects/misc/effect_render_mode.h"
 #include "effects/render/effect_bass_spin.h"
-#include "effects/render/effect_dot_plane.h"
 #include "effects/render/effect_dot_fountain.h"
-#include "effects/render/effect_oscilloscope_star.h"
+#include "effects/render/effect_dot_plane.h"
 #include "effects/render/effect_moving_particle.h"
-#include "effects/render/effect_rotating_stars.h"
+#include "effects/render/effect_oscilloscope_star.h"
 #include "effects/render/effect_ring.h"
+#include "effects/render/effect_rotating_stars.h"
 #include "effects/render/effect_simple_spectrum.h"
+#include "effects/render/effect_timescope.h"
+#include "effects/stubs/effect_render_avi.h"
 #include "effects/stubs/effect_render_svp_loader.h"
-#include "effects/stubs/effect_render_timescope.h"
-#include "effects/trans/effect_color_clip.h"
-#include "effects/trans/effect_brightness.h"
-#include "effects/trans/effect_blur.h"
-#include "effects/trans/effect_blitter_feedback.h"
-#include "effects/trans/effect_color_modifier.h"
-#include "effects/trans/effect_roto_blitter.h"
-#include "effects/trans/effect_mosaic.h"
-#include "effects/trans/effect_colorfade.h"
 #include "effects/trans/effect_scatter.h"
 #include "effects/stubs/effect_trans_water_bump.h"
-#include "effects/trans/effect_water.h"
+#include "effects/trans/effect_blitter_feedback.h"
+#include "effects/trans/effect_blur.h"
+#include "effects/trans/effect_brightness.h"
+#include "effects/trans/effect_channel_shift.h"
+#include "effects/trans/effect_color_clip.h"
+#include "effects/trans/effect_color_modifier.h"
 #include "effects/trans/effect_color_reduction.h"
+#include "effects/trans/effect_colorfade.h"
+#include "effects/trans/effect_mosaic.h"
+#include "effects/trans/effect_multi_delay.h"
+#include "effects/trans/effect_multiplier.h"
+#include "effects/trans/effect_roto_blitter.h"
+#include "effects/trans/effect_video_delay.h"
+#include "effects/trans/effect_water.h"
 #include "effects/trans/effect_unique_tone.h"
-
 
 namespace avs::effects {
 
@@ -74,27 +67,17 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("globals", []() { return std::make_unique<Globals>(); });
   registry.registerFactory("bump", []() { return std::make_unique<Bump>(); });
   registry.registerFactory("scripted", []() { return std::make_unique<ScriptedEffect>(); });
-  registry.registerFactory("transform_affine",
-                           []() { return std::make_unique<TransformAffine>(); });
+  registry.registerFactory("transform_affine", []() { return std::make_unique<TransformAffine>(); });
   registry.registerFactory("movement", []() { return std::make_unique<MovementEffect>(); });
-  registry.registerFactory("dyn_movement",
-                           []() { return std::make_unique<DynamicMovementEffect>(); });
-  registry.registerFactory("dyn_distance",
-                           []() { return std::make_unique<DynamicDistanceModifierEffect>(); });
+  registry.registerFactory("dyn_movement", []() { return std::make_unique<DynamicMovementEffect>(); });
+  registry.registerFactory("dyn_distance", []() { return std::make_unique<DynamicDistanceModifierEffect>(); });
   registry.registerFactory("dyn_shift", []() { return std::make_unique<DynamicShiftEffect>(); });
   registry.registerFactory("zoom_rotate", []() { return std::make_unique<ZoomRotateEffect>(); });
-  registry.registerFactory(
-      "effect_wave", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Wave); });
-  registry.registerFactory(
-      "effect_spec", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Spectrum); });
-  registry.registerFactory(
-      "effect_bands", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Bands); });
-  registry.registerFactory("effect_leveltext", []() {
-    return std::make_unique<AudioOverlay>(AudioOverlay::Mode::LevelText);
-  });
-  registry.registerFactory("effect_bandtxt", []() {
-    return std::make_unique<AudioOverlay>(AudioOverlay::Mode::BandText);
-  });
+  registry.registerFactory("effect_wave", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Wave); });
+  registry.registerFactory("effect_spec", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Spectrum); });
+  registry.registerFactory("effect_bands", []() { return std::make_unique<AudioOverlay>(AudioOverlay::Mode::Bands); });
+  registry.registerFactory("effect_leveltext", []() {return std::make_unique<AudioOverlay>(AudioOverlay::Mode::LevelText); });
+  registry.registerFactory("effect_bandtxt", []() {return std::make_unique<AudioOverlay>(AudioOverlay::Mode::BandText);});
   registry.registerFactory("solid", []() { return std::make_unique<PrimitiveSolid>(); });
   registry.registerFactory("dot", []() { return std::make_unique<PrimitiveDots>(); });
   registry.registerFactory("dots", []() { return std::make_unique<PrimitiveDots>(); });
@@ -106,8 +89,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("rrect", []() { return std::make_unique<PrimitiveRoundedRect>(); });
   registry.registerFactory("roundedrect", []() { return std::make_unique<PrimitiveRoundedRect>(); });
   registry.registerFactory("text", []() { return std::make_unique<Text>(); });
-  registry.registerFactory("Channel Shift", []() {return std::make_unique<avs::effects::trans::ChannelShift>();});
-  registry.registerFactory("channel shift", []() {return std::make_unique<avs::effects::trans::ChannelShift>();});
+  registry.registerFactory("Channel Shift", []() { return std::make_unique<avs::effects::trans::ChannelShift>(); });
+  registry.registerFactory("channel shift", []() { return std::make_unique<avs::effects::trans::ChannelShift>(); });
   registry.registerFactory("color_reduction", []() { return std::make_unique<trans::ColorReduction>(); });
   registry.registerFactory("Color Reduction", []() { return std::make_unique<trans::ColorReduction>(); });
   registry.registerFactory("color reduction", []() { return std::make_unique<trans::ColorReduction>(); });
@@ -143,8 +126,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("render / simple", []() { return std::make_unique<render::SimpleSpectrum>(); });
   registry.registerFactory("Render / SVP Loader", []() { return std::make_unique<Effect_RenderSvpLoader>(); });
   registry.registerFactory("render / svp loader", []() { return std::make_unique<Effect_RenderSvpLoader>(); });
-  registry.registerFactory("Render / Timescope", []() { return std::make_unique<Effect_RenderTimescope>(); });
-  registry.registerFactory("render / timescope", []() { return std::make_unique<Effect_RenderTimescope>(); });
+  registry.registerFactory("Render / Timescope", []() { return std::make_unique<render::Timescope>(); });
+  registry.registerFactory("render / timescope", []() { return std::make_unique<render::Timescope>(); });
   registry.registerFactory("Trans / Blitter Feedback", []() { return std::make_unique<trans::BlitterFeedback>(); });
   registry.registerFactory("trans / blitter feedback", []() { return std::make_unique<trans::BlitterFeedback>(); });
   registry.registerFactory("Filter / Blur", []() { return std::make_unique<filters::BlurBox>(); });
@@ -174,7 +157,7 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("Trans / Color Modifier", []() { return std::make_unique<trans::ColorModifier>(); });
   registry.registerFactory("trans / color modifier", []() { return std::make_unique<trans::ColorModifier>(); });
   registry.registerFactory("Trans / Roto Blitter", []() { return std::make_unique<avs::effects::trans::RotoBlitter>(); });
-  registry.registerFactory("trans / roto blitter", []() { return std::make_unique<avs::effects::trans::RotoBlitter>(); });
+  registry.registerFactory("trans / roto blitter",[]() { return std::make_unique<avs::effects::trans::RotoBlitter>(); });
   registry.registerFactory("Trans / Mosaic", []() { return std::make_unique<trans::Mosaic>(); });
   registry.registerFactory("trans / mosaic", []() { return std::make_unique<trans::Mosaic>(); });
   registry.registerFactory("Trans / Colorfade", []() { return std::make_unique<trans::Colorfade>(); });
@@ -187,7 +170,6 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("trans / water", []() { return std::make_unique<trans::Water>(); });
   registry.registerFactory("Trans / Water Bump", []() { return std::make_unique<Effect_TransWaterBump>(); });
   registry.registerFactory("trans / water bump", []() { return std::make_unique<Effect_TransWaterBump>(); });
-  
 }
 
 }  // namespace avs::effects

@@ -428,7 +428,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[+] - 9. Unique Tone
+[✅] - 9. Unique Tone
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.

@@ -61,7 +61,7 @@
 ---
 ---
 
-[+] - 1. Bass Spin
+[✅ - 1. Bass Spin
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -108,7 +108,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[+] - 2. Moving Particle
+[✅] - 2. Moving Particle
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -155,7 +155,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[+] - 3. Oscillioscope Star
+[✅] - 3. Oscillioscope Star
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.
@@ -200,7 +200,7 @@ git fetch --prune --tags origin || git fetch --prune --tags --depth=50 origin;
 
 ---
 
-[+] - 4. Simple Spectrum
+[✅] - 4. Simple Spectrum
 
 ### Instruction ###
 Your task is to implement or repair a previously attempted feature in the `vis_avs` repository. This feature implementation failed in a prior branch and must be re-executed correctly.

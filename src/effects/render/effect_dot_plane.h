@@ -33,6 +33,7 @@ class DotPlane : public avs::core::IEffect {
                        std::size_t index);
   static Rgb decodeColor(int value);
   static std::uint32_t encodeColor(const Rgb& color);
+  std::uint32_t gradientColorForValue(float value) const;
 
   void sampleAudio(const avs::core::RenderContext& context,
                    std::array<float, kGridSize>& amplitudes) const;

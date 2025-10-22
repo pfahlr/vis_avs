@@ -128,6 +128,14 @@ std::uint32_t DotPlane::encodeColor(const Rgb& color) {
          (static_cast<std::uint32_t>(color.b) << 16u);
 }
 
+std::uint32_t DotPlane::gradientColorForValue(float value) const {
+  const float clampedValue = std::clamp(value, 0.0f, 255.0f);
+  const int gradientIndex = static_cast<int>(clampedValue / 4.0f);
+  const int maxIndex = static_cast<int>(colorGradient_.size()) - 1;
+  const int clampedIndex = std::clamp(gradientIndex, 0, maxIndex);
+  return colorGradient_[static_cast<std::size_t>(clampedIndex)];
+}
+
 bool DotPlane::applyColorParam(const avs::core::ParamBlock& params, std::string_view prefix,
                                std::size_t index) {
   const std::string key = colorKey(prefix, index);
@@ -211,12 +219,10 @@ void DotPlane::updateHeightField(const std::array<float, kGridSize>& previousTop
       const std::size_t src =
           static_cast<std::size_t>(row - 1) * kGridSize + static_cast<std::size_t>(column);
       float value = height_[src] + velocity_[src];
-      if (value < 0.0f) {
-        value = 0.0f;
-      }
+      value = std::clamp(value, 0.0f, 255.0f);
       height_[dst] = value;
       velocity_[dst] = velocity_[src] - kDampingFactor * (value / 255.0f);
-      colorRows_[dst] = colorRows_[src];
+      colorRows_[dst] = gradientColorForValue(value);
     }
   }
 
@@ -225,10 +231,7 @@ void DotPlane::updateHeightField(const std::array<float, kGridSize>& previousTop
     const float value = std::clamp(newTop[column], 0.0f, 255.0f);
     height_[index] = value;
     velocity_[index] = (value - previousTop[column]) / 90.0f;
-    const int gradientIndex = static_cast<int>(value / 4.0f);
-    const int clampedIndex =
-        std::clamp(gradientIndex, 0, static_cast<int>(colorGradient_.size() - 1));
-    colorRows_[index] = colorGradient_[static_cast<std::size_t>(clampedIndex)];
+    colorRows_[index] = gradientColorForValue(value);
   }
 }
 

@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstdint>
 #include <vector>
 
@@ -80,6 +81,38 @@ TEST(RotatingStarsEffectTest, HonorsCustomColorPalette) {
   EXPECT_GT(maxRed, 0);
   EXPECT_EQ(pixels[maxIndex + 1u], 0u);
   EXPECT_EQ(pixels[maxIndex + 2u], 0u);
+}
+
+TEST(RotatingStarsEffectTest, ParsesCommaSeparatedPaletteTokens) {
+  avs::effects::render::RotatingStars effect;
+  avs::core::ParamBlock params;
+  params.setString("colors", "#FF0000,#00FF00");
+  effect.setParams(params);
+
+  std::vector<std::uint8_t> pixels(
+      static_cast<std::size_t>(kWidth) * static_cast<std::size_t>(kHeight) * 4u, 0u);
+  avs::audio::Analysis analysis{};
+  bool sawGreenDominant = false;
+
+  for (int frame = 0; frame < 256 && !sawGreenDominant; ++frame) {
+    std::fill(pixels.begin(), pixels.end(), 0u);
+    seedSpectrum(analysis);
+    auto context = makeContext(pixels, analysis);
+
+    ASSERT_TRUE(effect.render(context));
+
+    for (std::size_t i = 0; i + 3 < pixels.size(); i += 4) {
+      const std::uint8_t red = pixels[i];
+      const std::uint8_t green = pixels[i + 1u];
+      const std::uint8_t blue = pixels[i + 2u];
+      if (green > red && green > blue && green > 0u) {
+        sawGreenDominant = true;
+        break;
+      }
+    }
+  }
+
+  EXPECT_TRUE(sawGreenDominant);
 }
 
 TEST(RotatingStarsEffectTest, InterpretsIntegerColorParamsAsRgb) {

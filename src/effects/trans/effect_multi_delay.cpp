@@ -456,8 +456,7 @@ class SharedState {
     }
 
     std::vector<std::uint8_t> newStorage(requiredSize, 0);
-    if (historyMode == HistoryMode::Preserve && !buffer.storage.empty() && buffer.frameCount > 0 &&
-        buffer.frameStride > 0) {
+    if (!forceRecreate && historyMode == HistoryMode::Preserve && !buffer.storage.empty() && buffer.frameCount > 0 && buffer.frameStride > 0) {
       const std::size_t framesToCopy = std::min(buffer.frameCount, frameCount);
       const std::size_t bytesToCopy = std::min(buffer.frameStride, frameStride);
       for (std::size_t i = 0; i < framesToCopy; ++i) {

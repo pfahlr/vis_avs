@@ -73,14 +73,17 @@ void ColorMap::parseTable(std::string_view tableText) {
   std::stringstream stream{std::string(tableText)};
   std::string token;
   std::size_t index = 0;
-  while (stream >> token && index < table_.size()) {
-    token = sanitizeToken(token);
-    if (token.empty()) {
-      continue;
+  auto applyToken = [&](std::string_view rawToken) {
+    if (index >= table_.size()) {
+      return;
     }
-    const std::uint32_t value = parseHex(token);
+    std::string tokenValue = sanitizeToken(std::string(rawToken));
+    if (tokenValue.empty()) {
+      return;
+    }
+    const std::uint32_t value = parseHex(tokenValue);
     std::array<std::uint8_t, 4> entry{};
-    if (token.size() <= 6) {
+    if (tokenValue.size() <= 6) {
       entry[0] = static_cast<std::uint8_t>((value >> 16) & 0xFFu);
       entry[1] = static_cast<std::uint8_t>((value >> 8) & 0xFFu);
       entry[2] = static_cast<std::uint8_t>(value & 0xFFu);
@@ -92,6 +95,22 @@ void ColorMap::parseTable(std::string_view tableText) {
       entry[2] = static_cast<std::uint8_t>(value & 0xFFu);
     }
     table_[index++] = entry;
+  };
+
+  while (stream >> token && index < table_.size()) {
+    if (token.empty()) {
+      continue;
+    }
+    std::size_t start = 0;
+    while (start < token.size() && index < table_.size()) {
+      const std::size_t end = token.find_first_of(",;", start);
+      const std::size_t length = (end == std::string::npos) ? token.size() - start : end - start;
+      applyToken(std::string_view(token).substr(start, length));
+      if (end == std::string::npos) {
+        break;
+      }
+      start = end + 1;
+    }
   }
 
   if (index > 0 && index < table_.size()) {

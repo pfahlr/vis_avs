@@ -3,7 +3,7 @@
 #include <array>
 #include <vector>
 
-#include "avs/audio_portaudio_internal.hpp"
+#include <avs/audio_portaudio_internal.hpp>
 
 namespace {
 

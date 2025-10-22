@@ -4,7 +4,7 @@
 #include <cmath>
 #include <vector>
 
-#include "audio/analyzer.h"
+#include <avs/audio/analyzer.h>
 
 namespace {
 

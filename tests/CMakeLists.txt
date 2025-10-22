@@ -10,8 +10,21 @@ if(NOT GTest_FOUND)
 endif()
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
+set(AVS_EFFECTS_LINK_LIBS
+  avs::base
+  avs::math
+  avs::core
+  avs::audio-dsp
+  avs::audio-io
+  avs::compat
+  avs::dsl
+  avs::render-gl
+  avs::effects-legacy
+  avs::testing
+  avs::preset)
+
 add_executable(avs_core_tests avs_core_tests.cpp)
-target_link_libraries(avs_core_tests PRIVATE avs-core avs-platform GTest::gtest_main)
+target_link_libraries(avs_core_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
 target_compile_options(avs_core_tests PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(avs_core_tests PRIVATE
   BUILD_DIR="${CMAKE_BINARY_DIR}"
@@ -19,7 +32,7 @@ target_compile_definitions(avs_core_tests PRIVATE
   AVS_BUILD_AUDIO=$<BOOL:${AVS_BUILD_AUDIO}>
   AVS_BUILD_PLATFORM=$<BOOL:${AVS_BUILD_PLATFORM}>)
 
-target_include_directories(avs_core_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/third_party ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(avs_core_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/third_party)
 
 add_test(NAME avs_core_tests COMMAND $<TARGET_FILE:avs_core_tests>)
 
@@ -37,7 +50,6 @@ if(AVS_BUILD_AUDIO)
   add_executable(audio_analyzer_tests audio/test_analyzer.cpp)
   target_link_libraries(audio_analyzer_tests PRIVATE avs-platform avs-audio GTest::gtest_main)
   target_compile_options(audio_analyzer_tests PRIVATE -Wall -Wextra -Werror)
-  target_include_directories(audio_analyzer_tests PRIVATE ${CMAKE_SOURCE_DIR}/src)
   add_test(NAME audio_analyzer_tests COMMAND $<TARGET_FILE:audio_analyzer_tests>)
 endif()
 
@@ -82,35 +94,38 @@ add_executable(core_effects_tests
   core/test_video_delay.cpp
   core/test_color_modifier.cpp)
 
-target_link_libraries(core_effects_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
+target_link_libraries(core_effects_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
 target_compile_options(core_effects_tests PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(core_effects_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
-target_include_directories(core_effects_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs/effects/src)
+target_include_directories(core_effects_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
 add_test(NAME core_effects_tests COMMAND $<TARGET_FILE:core_effects_tests>)
 
 if(AVS_BUILD_AUDIO)
   add_executable(audio_vis_tests
     presets/audio_vis/test_audio_vis.cpp)
-  target_link_libraries(audio_vis_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
+  target_link_libraries(audio_vis_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
   target_compile_options(audio_vis_tests PRIVATE -Wall -Wextra -Werror)
   target_compile_definitions(audio_vis_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+  target_include_directories(audio_vis_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
   add_test(NAME audio_vis_tests COMMAND $<TARGET_FILE:audio_vis_tests>)
 endif()
 
 add_executable(dynamic_effects_tests
   presets/dynamic/test_dynamic.cpp
   presets/fb_ops/md5_helper.cpp)
-target_link_libraries(dynamic_effects_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
+target_link_libraries(dynamic_effects_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
 target_compile_options(dynamic_effects_tests PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(dynamic_effects_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_include_directories(dynamic_effects_tests PRIVATE ${CMAKE_SOURCE_DIR}/tests/presets/fb_ops)
+target_include_directories(dynamic_effects_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
 add_test(NAME dynamic_effects_tests COMMAND $<TARGET_FILE:dynamic_effects_tests>)
 
 add_executable(filter_effects_tests
   presets/filters/test_filters.cpp)
-target_link_libraries(filter_effects_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
+target_link_libraries(filter_effects_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
 target_compile_options(filter_effects_tests PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(filter_effects_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(filter_effects_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
 add_test(NAME filter_effects_tests COMMAND $<TARGET_FILE:filter_effects_tests>)
 
 add_executable(trans_effects_tests
@@ -118,16 +133,18 @@ add_executable(trans_effects_tests
   presets/trans/test_trans.cpp
   presets/trans/test_trans_blur.cpp)
 
-target_link_libraries(trans_effects_tests PRIVATE avs-effects-core avs-core-runtime avs-offscreen GTest::gtest_main)
+target_link_libraries(trans_effects_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
 target_compile_options(trans_effects_tests PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(trans_effects_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(trans_effects_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
 add_test(NAME trans_effects_tests COMMAND $<TARGET_FILE:trans_effects_tests>)
 
 add_executable(runtime_resource_tests
   runtime/test_resources.cpp)
-target_link_libraries(runtime_resource_tests PRIVATE avs-runtime GTest::gtest_main)
+target_link_libraries(runtime_resource_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
 target_compile_options(runtime_resource_tests PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(runtime_resource_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(runtime_resource_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
 add_test(NAME runtime_resource_tests COMMAND $<TARGET_FILE:runtime_resource_tests>)
 if(TARGET avs-resources)
   add_dependencies(runtime_resource_tests avs-resources)
@@ -135,9 +152,10 @@ endif()
 
 add_executable(runtime_effect_list_parser_tests
   runtime/parser/effect_list_parser_tests.cpp)
-target_link_libraries(runtime_effect_list_parser_tests PRIVATE avs-core avs-runtime GTest::gtest_main)
+target_link_libraries(runtime_effect_list_parser_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
 target_compile_options(runtime_effect_list_parser_tests PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(runtime_effect_list_parser_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(runtime_effect_list_parser_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
 add_test(NAME runtime_effect_list_parser_tests COMMAND $<TARGET_FILE:runtime_effect_list_parser_tests>)
 
 
@@ -152,10 +170,11 @@ endif()
 
 add_executable(runtime_compositing_tests
   runtime/test_runtime_compositing.cpp)
-target_link_libraries(runtime_compositing_tests PRIVATE avs-core avs-runtime GTest::gtest_main)
+target_link_libraries(runtime_compositing_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
 target_compile_options(runtime_compositing_tests PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(runtime_compositing_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
-target_include_directories(runtime_compositing_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/third_party ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(runtime_compositing_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/third_party)
+target_include_directories(runtime_compositing_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
 add_test(NAME runtime_compositing_tests COMMAND $<TARGET_FILE:runtime_compositing_tests>)
 
 
@@ -163,9 +182,10 @@ add_test(NAME runtime_compositing_tests COMMAND $<TARGET_FILE:runtime_compositin
 add_executable(fb_ops_tests
   presets/fb_ops/test_fb_ops.cpp
   presets/fb_ops/md5_helper.cpp)
-target_link_libraries(fb_ops_tests PRIVATE avs-runtime GTest::gtest_main)
+target_link_libraries(fb_ops_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
 target_compile_options(fb_ops_tests PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(fb_ops_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(fb_ops_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
 add_test(NAME fb_ops_tests COMMAND $<TARGET_FILE:fb_ops_tests>)
 
 if(TARGET gen_golden_md5)

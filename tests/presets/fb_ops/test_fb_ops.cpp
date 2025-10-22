@@ -9,7 +9,7 @@
 #include <string_view>
 #include <vector>
 
-#include "avs/runtime/framebuffers.h"
+#include <avs/runtime/framebuffers.h>
 #include "md5_helper.hpp"
 
 namespace {

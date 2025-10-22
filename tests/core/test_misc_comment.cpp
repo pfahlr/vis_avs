@@ -5,9 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "avs/core/ParamBlock.hpp"
-#include "avs/core/RenderContext.hpp"
-#include "avs/effects/micro_preset_parser.hpp"
+#include <avs/core/ParamBlock.hpp>
+#include <avs/core/RenderContext.hpp>
+#include <avs/effects/micro_preset_parser.hpp>
 #include "effects/misc/effect_comment.h"
 
 namespace {

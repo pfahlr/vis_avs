@@ -5,8 +5,8 @@
 #include <string_view>
 #include <vector>
 
-#include "avs/effect.hpp"
-#include "avs/effects_misc.hpp"
+#include <avs/effect.hpp>
+#include <avs/effects_misc.hpp>
 
 namespace {
 

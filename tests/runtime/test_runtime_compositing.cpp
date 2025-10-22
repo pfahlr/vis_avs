@@ -19,12 +19,12 @@
 #include <string>
 #include <vector>
 
-#include "avs/core.hpp"
-#include "avs/effect.hpp"
-#include "avs/effects_misc.hpp"
-#include "avs/effects_render.hpp"
-#include "avs/effects_trans.hpp"
-#include "avs/runtime/framebuffers.h"
+#include <avs/core.hpp>
+#include <avs/effect.hpp>
+#include <avs/effects_misc.hpp>
+#include <avs/effects_render.hpp>
+#include <avs/effects_trans.hpp>
+#include <avs/runtime/framebuffers.h>
 #include "runtime/framebuffers.h"
 
 namespace {

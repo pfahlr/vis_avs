@@ -5,7 +5,7 @@
 #include <fstream>
 #include <string>
 
-#include "avs/runtime/ResourceManager.hpp"
+#include <avs/runtime/ResourceManager.hpp>
 
 namespace {
 std::filesystem::path buildResourcesRoot() {

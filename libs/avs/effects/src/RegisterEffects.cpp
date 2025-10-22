@@ -39,7 +39,7 @@
 #include "effects/render/effect_timescope.h"
 #include "effects/stubs/effect_render_avi.h"
 #include "effects/trans/effect_scatter.h"
-#include "effects/stubs/effect_trans_water_bump.h"
+#include "effects/trans/effect_water_bump.h"
 #include "effects/trans/effect_blitter_feedback.h"
 #include "effects/trans/effect_blur.h"
 #include "effects/trans/effect_brightness.h"
@@ -168,8 +168,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("trans / unique tone", []() { return std::make_unique<trans::UniqueTone>(); });
   registry.registerFactory("Trans / Water", []() { return std::make_unique<trans::Water>(); });
   registry.registerFactory("trans / water", []() { return std::make_unique<trans::Water>(); });
-  registry.registerFactory("Trans / Water Bump", []() { return std::make_unique<Effect_TransWaterBump>(); });
-  registry.registerFactory("trans / water bump", []() { return std::make_unique<Effect_TransWaterBump>(); });
+  registry.registerFactory("Trans / Water Bump", []() { return std::make_unique<trans::WaterBump>(); });
+  registry.registerFactory("trans / water bump", []() { return std::make_unique<trans::WaterBump>(); });
 }
 
 }  // namespace avs::effects

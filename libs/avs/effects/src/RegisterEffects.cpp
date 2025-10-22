@@ -35,9 +35,9 @@
 #include "effects/render/effect_ring.h"
 #include "effects/render/effect_rotating_stars.h"
 #include "effects/render/effect_simple_spectrum.h"
+#include "effects/render/effect_svp_loader.h"
 #include "effects/render/effect_timescope.h"
 #include "effects/stubs/effect_render_avi.h"
-#include "effects/stubs/effect_render_svp_loader.h"
 #include "effects/trans/effect_scatter.h"
 #include "effects/stubs/effect_trans_water_bump.h"
 #include "effects/trans/effect_blitter_feedback.h"
@@ -124,8 +124,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("render / rotating stars", []() { return std::make_unique<render::RotatingStars>(); });
   registry.registerFactory("Render / Simple", []() { return std::make_unique<render::SimpleSpectrum>(); });
   registry.registerFactory("render / simple", []() { return std::make_unique<render::SimpleSpectrum>(); });
-  registry.registerFactory("Render / SVP Loader", []() { return std::make_unique<Effect_RenderSvpLoader>(); });
-  registry.registerFactory("render / svp loader", []() { return std::make_unique<Effect_RenderSvpLoader>(); });
+  registry.registerFactory("Render / SVP Loader", []() { return std::make_unique<render::SvpLoader>(); });
+  registry.registerFactory("render / svp loader", []() { return std::make_unique<render::SvpLoader>(); });
   registry.registerFactory("Render / Timescope", []() { return std::make_unique<render::Timescope>(); });
   registry.registerFactory("render / timescope", []() { return std::make_unique<render::Timescope>(); });
   registry.registerFactory("Trans / Blitter Feedback", []() { return std::make_unique<trans::BlitterFeedback>(); });

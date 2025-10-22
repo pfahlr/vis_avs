@@ -57,7 +57,7 @@
 #include "effects/trans/effect_mosaic.h"
 #include "effects/trans/effect_colorfade.h"
 #include "effects/trans/effect_scatter.h"
-#include "effects/stubs/effect_trans_water_bump.h"
+#include "effects/trans/effect_water_bump.h"
 #include "effects/trans/effect_water.h"
 #include "effects/trans/effect_color_reduction.h"
 #include "effects/trans/effect_unique_tone.h"
@@ -181,13 +181,13 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("trans / colorfade", []() { return std::make_unique<trans::Colorfade>(); });
   registry.registerFactory("Trans / Scatter", []() { return std::make_unique<trans::Scatter>(); });
   registry.registerFactory("trans / scatter", []() { return std::make_unique<trans::Scatter>(); });
+  registry.registerFactory("Trans / Water Bump", []() { return std::make_unique<trans::WaterBump>(); });
+  registry.registerFactory("trans / water bump", []() { return std::make_unique<trans::WaterBump>(); });
   registry.registerFactory("Trans / Unique tone", []() { return std::make_unique<trans::UniqueTone>(); });
   registry.registerFactory("trans / unique tone", []() { return std::make_unique<trans::UniqueTone>(); });
   registry.registerFactory("Trans / Water", []() { return std::make_unique<trans::Water>(); });
   registry.registerFactory("trans / water", []() { return std::make_unique<trans::Water>(); });
-  registry.registerFactory("Trans / Water Bump", []() { return std::make_unique<Effect_TransWaterBump>(); });
-  registry.registerFactory("trans / water bump", []() { return std::make_unique<Effect_TransWaterBump>(); });
-  
+
 }
 
 }  // namespace avs::effects

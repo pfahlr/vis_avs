@@ -55,6 +55,22 @@ TEST(EffectListConfigParser, ParsesSingleEffect) {
   EXPECT_EQ(constructed, 1);
 }
 
+TEST(EffectListConfigParser, ParsesSingleEffectWithWhitespace) {
+  avs::EffectListEffect effect;
+  int constructed = 0;
+  std::vector<std::string> ids;
+  effect.setFactory([&](std::string_view id) {
+    ids.emplace_back(id);
+    return std::make_unique<CountingEffect>(constructed);
+  });
+
+  effect.set_parameter("config", std::string("[ {\"effect\" : \"foo\"} ]"));
+
+  ASSERT_EQ(ids.size(), 1u);
+  EXPECT_EQ(ids.front(), "foo");
+  EXPECT_EQ(constructed, 1);
+}
+
 TEST(EffectListConfigParser, ParsesMultipleEffects) {
   avs::EffectListEffect effect;
   int constructed = 0;

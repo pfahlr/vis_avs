@@ -219,10 +219,12 @@ void DotPlane::updateHeightField(const std::array<float, kGridSize>& previousTop
       const std::size_t src =
           static_cast<std::size_t>(row - 1) * kGridSize + static_cast<std::size_t>(column);
       float value = height_[src] + velocity_[src];
-      value = std::clamp(value, 0.0f, 255.0f);
-      height_[dst] = value;
+      if (value < 0.0f) {
+        value = 0.0f;
+      }
+      height_[dst] = std::min(value, 255.0f);
       velocity_[dst] = velocity_[src] - kDampingFactor * (value / 255.0f);
-      colorRows_[dst] = gradientColorForValue(value);
+      colorRows_[dst] = colorRows_[src];
     }
   }
 

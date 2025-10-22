@@ -56,7 +56,7 @@
 #include "effects/trans/effect_roto_blitter.h"
 #include "effects/trans/effect_mosaic.h"
 #include "effects/trans/effect_colorfade.h"
-#include "effects/stubs/effect_trans_scatter.h"
+#include "effects/trans/effect_scatter.h"
 #include "effects/stubs/effect_trans_unique_tone.h"
 #include "effects/stubs/effect_trans_water_bump.h"
 #include "effects/trans/effect_water.h"
@@ -179,8 +179,8 @@ void registerCoreEffects(avs::core::EffectRegistry& registry) {
   registry.registerFactory("trans / mosaic", []() { return std::make_unique<trans::Mosaic>(); });
   registry.registerFactory("Trans / Colorfade", []() { return std::make_unique<trans::Colorfade>(); });
   registry.registerFactory("trans / colorfade", []() { return std::make_unique<trans::Colorfade>(); });
-  registry.registerFactory("Trans / Scatter", []() { return std::make_unique<Effect_TransScatter>(); });
-  registry.registerFactory("trans / scatter", []() { return std::make_unique<Effect_TransScatter>(); });
+  registry.registerFactory("Trans / Scatter", []() { return std::make_unique<trans::Scatter>(); });
+  registry.registerFactory("trans / scatter", []() { return std::make_unique<trans::Scatter>(); });
   registry.registerFactory("Trans / Unique tone", []() { return std::make_unique<Effect_TransUniqueTone>(); });
   registry.registerFactory("trans / unique tone", []() { return std::make_unique<Effect_TransUniqueTone>(); });
   registry.registerFactory("Trans / Water", []() { return std::make_unique<trans::Water>(); });

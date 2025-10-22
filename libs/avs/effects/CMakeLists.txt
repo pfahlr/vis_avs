@@ -10,7 +10,6 @@ set(AVS_EFFECT_STUB_SOURCES
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_color_clip.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_colorfade.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_mosaic.cpp
-  ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_scatter.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_unique_tone.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/stubs/effect_trans_water_bump.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/dynamic/frame_warp.cpp
@@ -83,6 +82,7 @@ add_library(avs-effects-core
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_multi_delay.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_video_delay.cpp
   ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_color_reduction.cpp
+  ${CMAKE_SOURCE_DIR}/src/effects/trans/effect_scatter.cpp
   src/effects/primitive_dots.cpp
   src/effects/primitive_lines.cpp
   src/effects/primitive_rrect.cpp

@@ -6,441 +6,473 @@ notes: >-
 
 # Each entry is "the one true" identifier we’ll match everywhere.
 effects:
-- id: trans/color_modifier
-  original_file: r_dcolormod.cpp
-  token: "Trans / Color Modifier"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: render/avi
-  original_file: r_avi.cpp
-  token: "Render / AVI"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: trans/blitter_feedback
-  original_file: r_blit.cpp
-  token: "Trans / Blitter Feedback"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/blur
-  original_file: r_blur.cpp
-  token: "Trans / Blur"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: misc/custom_bpm
-  original_file: r_bpm.cpp
-  token: "Misc / Custom BPM"
-  category: misc
-  status: required
-  legacy: true
-
-
-- id: trans/brightness
-  original_file: r_bright.cpp
-  token: "Trans / Brightness"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: render/bass_spin
-  original_file: r_bspin.cpp
-  token: "Render / Bass Spin"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: trans/bump
-  original_file: r_bump.cpp
-  token: "Trans / Bump"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/channel_shift
-  original_file: r_chanshift.cpp
-  token: "Trans / Channel Shift"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: render/clear_screen
-  original_file: r_clear.cpp
-  token: "Render / Clear screen"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: trans/colorfade
-  original_file: r_colorfade.cpp
-  token: "Trans / Colorfade"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/color_reduction
-  original_file: r_colorreduction.cpp
-  token: "Trans / Color Reduction"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/color_clip
-  original_file: r_colorreplace.cpp
-  token: "Trans / Color Clip"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: misc/comment
-  original_file: r_comment.cpp
-  token: "Misc / Comment"
-  category: misc
-  status: required
-  legacy: true
-
-
-- id: trans/color_clip
-  original_file: r_contrast.cpp
-  token: "Trans / Color Clip"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/color_modifier
-  original_file: r_dcolormod.cpp
-  token: "Trans / Color Modifier"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/dynamic_distance_modifier
-  original_file: r_ddm.cpp
-  token: "Trans / Dynamic Distance Modifier"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/dynamic_movement
-  original_file: r_dmove.cpp
-  token: "Trans / Dynamic Movement"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: render/dot_fountain
-  original_file: r_dotfnt.cpp
-  token: "Render / Dot Fountain"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: render/dot_grid
-  original_file: r_dotgrid.cpp
-  token: "Render / Dot Grid"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: render/dot_plane
-  original_file: r_dotpln.cpp
-  token: "Render / Dot Plane"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: trans/fadeout
-  original_file: r_fadeout.cpp
-  token: "Trans / Fadeout"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/fast_brightness
-  original_file: r_fastbright.cpp
-  token: "Trans / Fast Brightness"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/grain
-  original_file: r_grain.cpp
-  token: "Trans / Grain"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/interferences
-  original_file: r_interf.cpp
-  token: "Trans / Interferences"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/interleave
-  original_file: r_interleave.cpp
-  token: "Trans / Interleave"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/invert
-  original_file: r_invert.cpp
-  token: "Trans / Invert"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: misc/set_render_mode
-  original_file: r_linemode.cpp
-  token: "Misc / Set render mode"
-  category: misc
-  status: required
-  legacy: true
-
-
-- id: trans/mirror
-  original_file: r_mirror.cpp
-  token: "Trans / Mirror"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/mosaic
-  original_file: r_mosaic.cpp
-  token: "Trans / Mosaic"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/multi_delay
-  original_file: r_multidelay.cpp
-  token: "Trans / Multi Delay"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/multiplier
-  original_file: r_multiplier.cpp
-  token: "Trans / Multiplier"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: render/onbeat_clear
-  original_file: r_nfclr.cpp
-  token: "Render / OnBeat Clear"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: trans/unique_tone
-  original_file: r_onetone.cpp
-  token: "Trans / Unique tone"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: render/ring
-  original_file: r_oscring.cpp
-  token: "Render / Ring"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: render/oscilliscope_star
-  original_file: r_oscstar.cpp
-  token: "Render / Oscilliscope Star"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: render/moving_particle
-  original_file: r_parts.cpp
-  token: "Render / Moving Particle"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: render/picture
-  original_file: r_picture.cpp
-  token: "Render / Picture"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: trans/roto_blitter
-  original_file: r_rotblit.cpp
-  token: "Trans / Roto Blitter"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: render/rotating_stars
-  original_file: r_rotstar.cpp
-  token: "Render / Rotating Stars"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: trans/scatter
-  original_file: r_scat.cpp
-  token: "Trans / Scatter"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/dynamic_shift
-  original_file: r_shift.cpp
-  token: "Trans / Dynamic Shift"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: render/simple
-  original_file: r_simple.cpp
-  token: "Render / Simple"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: render/superscope
-  original_file: r_sscope.cpp
-  token: "Render / SuperScope"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: misc/buffer_save
-  original_file: r_stack.cpp
-  token: "Misc / Buffer Save"
-  category: misc
-  status: required
-  legacy: true
-
-
-- id: render/starfield
-  original_file: r_stars.cpp
-  token: "Render / Starfield"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: render/svp_loader
-  original_file: r_svp.cpp
-  token: "Render / SVP Loader"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: render/text
-  original_file: r_text.cpp
-  token: "Render / Text"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: render/timescope
-  original_file: r_timescope.cpp
-  token: "Render / Timescope"
-  category: render
-  status: required
-  legacy: true
-
-
-- id: trans/movement
-  original_file: r_trans.cpp
-  token: "Trans / Movement"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: unknown_render_object
-  original_file: r_unkn.cpp
-  token: "Unknown Render Object"
-  category: unknown_render_object
-  status: required
-  legacy: true
-
-
-- id: trans/video_delay
-  original_file: r_videodelay.cpp
-  token: "Trans / Video Delay"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/water
-  original_file: r_water.cpp
-  token: "Trans / Water"
-  category: trans
-  status: required
-  legacy: true
-
-
-- id: trans/water_bump
-  original_file: r_waterbump.cpp
-  token: "Trans / Water Bump"
-  category: trans
-  status: required
-  legacy: true
-
-
-
-
-
-
-
-
+  # Transitions (one effect, many modes)
+  - id: trans/transition
+    original_file: r_transition.cpp
+    token: "Trans / Transition"
+    category: trans
+    kind: effect
+    status: required
+    modes:
+      - "Random"
+      - "Cross dissolve"
+      - "L/R Push"
+      - "R/L Push"
+      - "T/B Push"
+      - "B/T Push"
+      - "9 Random Blocks"
+      - "Split L/R Push"
+      - "L/R to Center Push"
+      - "L/R to Center Squeeze"
+      - "L/R Wipe"
+      - "R/L Wipe"
+      - "T/B Wipe"
+      - "B/T Wipe"
+      - "Dot Dissolve"
+
+  # Unknown sentinel
+  - id: misc/unknown_render_object
+    original_file: r_unkn.cpp
+    token: "Unknown Render Object"
+    category: misc
+    kind: sentinel
+    status: required
+
+  - id: trans/color_modifier
+    original_file: r_dcolormod.cpp
+    token: "Trans / Color Modifier"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/avi
+    original_file: r_avi.cpp
+    token: "Render / AVI"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/blitter_feedback
+    original_file: r_blit.cpp
+    token: "Trans / Blitter Feedback"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/blur
+    original_file: r_blur.cpp
+    token: "Trans / Blur"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: misc/custom_bpm
+    original_file: r_bpm.cpp
+    token: "Misc / Custom BPM"
+    category: misc
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/brightness
+    original_file: r_bright.cpp
+    token: "Trans / Brightness"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/bass_spin
+    original_file: r_bspin.cpp
+    token: "Render / Bass Spin"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/bump
+    original_file: r_bump.cpp
+    token: "Trans / Bump"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/channel_shift
+    original_file: r_chanshift.cpp
+    token: "Trans / Channel Shift"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/clear_screen
+    original_file: r_clear.cpp
+    token: "Render / Clear screen"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/colorfade
+    original_file: r_colorfade.cpp
+    token: "Trans / Colorfade"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/color_reduction
+    original_file: r_colorreduction.cpp
+    token: "Trans / Color Reduction"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/color_clip
+    original_file: r_colorreplace.cpp
+    token: "Trans / Color Clip"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: misc/comment
+    original_file: r_comment.cpp
+    token: "Misc / Comment"
+    category: misc
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/color_clip
+    original_file: r_contrast.cpp
+    token: "Trans / Color Clip"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/color_modifier
+    original_file: r_dcolormod.cpp
+    token: "Trans / Color Modifier"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/dynamic_distance_modifier
+    original_file: r_ddm.cpp
+    token: "Trans / Dynamic Distance Modifier"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/dynamic_movement
+    original_file: r_dmove.cpp
+    token: "Trans / Dynamic Movement"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/dot_fountain
+    original_file: r_dotfnt.cpp
+    token: "Render / Dot Fountain"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/dot_grid
+    original_file: r_dotgrid.cpp
+    token: "Render / Dot Grid"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/dot_plane
+    original_file: r_dotpln.cpp
+    token: "Render / Dot Plane"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/fadeout
+    original_file: r_fadeout.cpp
+    token: "Trans / Fadeout"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/fast_brightness
+    original_file: r_fastbright.cpp
+    token: "Trans / Fast Brightness"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/grain
+    original_file: r_grain.cpp
+    token: "Trans / Grain"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/interferences
+    original_file: r_interf.cpp
+    token: "Trans / Interferences"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/interleave
+    original_file: r_interleave.cpp
+    token: "Trans / Interleave"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/invert
+    original_file: r_invert.cpp
+    token: "Trans / Invert"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: misc/set_render_mode
+    original_file: r_linemode.cpp
+    token: "Misc / Set render mode"
+    category: misc
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/mirror
+    original_file: r_mirror.cpp
+    token: "Trans / Mirror"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/mosaic
+    original_file: r_mosaic.cpp
+    token: "Trans / Mosaic"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/multi_delay
+    original_file: r_multidelay.cpp
+    token: "Trans / Multi Delay"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/multiplier
+    original_file: r_multiplier.cpp
+    token: "Trans / Multiplier"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/onbeat_clear
+    original_file: r_nfclr.cpp
+    token: "Render / OnBeat Clear"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/unique_tone
+    original_file: r_onetone.cpp
+    token: "Trans / Unique tone"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/ring
+    original_file: r_oscring.cpp
+    token: "Render / Ring"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/oscilliscope_star
+    original_file: r_oscstar.cpp
+    token: "Render / Oscilliscope Star"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/moving_particle
+    original_file: r_parts.cpp
+    token: "Render / Moving Particle"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/picture
+    original_file: r_picture.cpp
+    token: "Render / Picture"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/roto_blitter
+    original_file: r_rotblit.cpp
+    token: "Trans / Roto Blitter"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/rotating_stars
+    original_file: r_rotstar.cpp
+    token: "Render / Rotating Stars"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/scatter
+    original_file: r_scat.cpp
+    token: "Trans / Scatter"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/dynamic_shift
+    original_file: r_shift.cpp
+    token: "Trans / Dynamic Shift"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/simple
+    original_file: r_simple.cpp
+    token: "Render / Simple"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/superscope
+    original_file: r_sscope.cpp
+    token: "Render / SuperScope"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: misc/buffer_save
+    original_file: r_stack.cpp
+    token: "Misc / Buffer Save"
+    category: misc
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/starfield
+    original_file: r_stars.cpp
+    token: "Render / Starfield"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/svp_loader
+    original_file: r_svp.cpp
+    token: "Render / SVP Loader"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/text
+    original_file: r_text.cpp
+    token: "Render / Text"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: render/timescope
+    original_file: r_timescope.cpp
+    token: "Render / Timescope"
+    category: render
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/movement
+    original_file: r_trans.cpp
+    token: "Trans / Movement"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: unknown_render_object
+    original_file: r_unkn.cpp
+    token: "Unknown Render Object"
+    category: unknown_render_object
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/video_delay
+    original_file: r_videodelay.cpp
+    token: "Trans / Video Delay"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/water
+    original_file: r_water.cpp
+    token: "Trans / Water"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+  - id: trans/water_bump
+    original_file: r_waterbump.cpp
+    token: "Trans / Water Bump"
+    category: trans
+    status: required
+    kind: effect
+    legacy: true
+
+support:
+  - file: r_defs.cpp
+    header: r_defs.h
+    purpose: "Original shared macros/inline helpers. Not an effect."
+  - file: r_list.cpp
+    purpose: "Original module inventory list. Superseded by registry."

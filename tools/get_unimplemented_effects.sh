@@ -14,16 +14,26 @@ from collections import defaultdict
 repo = pathlib.Path(os.environ["REPO_ROOT"])
 
 registry_path = repo / "libs/avs-compat/src/registry.cpp"
-source_paths = [
-    repo / "libs/avs-compat/src/effects_render.cpp",
-    repo / "libs/avs-compat/src/effects_trans.cpp",
-    repo / "libs/avs-compat/src/effects_misc.cpp",
-]
-header_paths = [
-    repo / "libs/avs-compat/include/avs/compat/effects_render.hpp",
-    repo / "libs/avs-compat/include/avs/compat/effects_trans.hpp",
-    repo / "libs/avs-compat/include/avs/compat/effects_misc.hpp",
-]
+
+
+def gather_files(root: pathlib.Path, patterns: list[str]) -> list[pathlib.Path]:
+    paths: list[pathlib.Path] = []
+    for pattern in patterns:
+        paths.extend(root.rglob(pattern))
+    return paths
+
+
+compat_source_paths = gather_files(repo / "libs/avs-compat/src", ["*.cpp"])
+legacy_source_paths = gather_files(repo / "libs/avs-effects-legacy/src", ["*.cpp"])
+source_paths = compat_source_paths + legacy_source_paths
+
+compat_header_paths = gather_files(
+    repo / "libs/avs-compat/include", ["*.hpp", "*.h"]
+)
+legacy_header_paths = gather_files(
+    repo / "libs/avs-effects-legacy/include", ["*.hpp", "*.h"]
+)
+header_paths = compat_header_paths + legacy_header_paths
 
 dev_plan_path = repo / "codex/specs/visual_effects/components/core_visual_effects.yaml"
 original_root = repo / "docs/avs_original_source/vis_avs"
@@ -32,6 +42,12 @@ preset_source_path = repo / "libs/avs-compat/src/preset.cpp"
 
 def read_text(path: pathlib.Path) -> str:
     return path.read_text(errors="ignore") if path.is_file() else ""
+
+
+def canonical_class_name(name: str | None) -> str | None:
+    if not name:
+        return None
+    return name.split("::")[-1]
 
 
 def normalize_tokens(label: str) -> tuple[str, ...]:
@@ -121,7 +137,10 @@ for header in header_paths:
         if not class_match:
             i += 1
             continue
-        cls = class_match.group(1)
+        cls = canonical_class_name(class_match.group(1))
+        if not cls:
+            i += 1
+            continue
         metadata = class_metadata.setdefault(
             cls,
             {
@@ -154,13 +173,25 @@ class_to_source: dict[str, str] = {}
 parameters_by_class: dict[str, list[dict[str, str]]] = {}
 keywords = ("stub", "placeholder", "todo", "unimplemented")
 
+method_pattern = re.compile(
+    r"([A-Za-z0-9_:]+)::([A-Za-z0-9_]+)\s*\([^)]*\)\s*\{"
+)
+
 for path in source_paths:
     text = read_text(path)
     if not text:
         continue
-    for match in re.finditer(r"void\s+([A-Za-z0-9_]+)::process\s*\([^)]*\)\s*\{", text):
-        cls = match.group(1)
-        body, end_idx = extract_block(text, match.end())
+    rel_path = str(path.relative_to(repo))
+    for match in method_pattern.finditer(text):
+        qualified = match.group(1)
+        method_name = match.group(2)
+        cls = canonical_class_name(qualified)
+        if not cls:
+            continue
+        class_to_source.setdefault(cls, rel_path)
+        if method_name not in {"process", "render"}:
+            continue
+        body, _ = extract_block(text, match.end())
         comment_text = preceding_comment(text, match.start())
         body_lower = body.lower()
         comment_lower = comment_text.lower()
@@ -183,9 +214,14 @@ for path in source_paths:
             if not tmp:
                 is_stub = True
         class_to_stub[cls] = is_stub
-        class_to_source[cls] = str(path.relative_to(repo))
-    for match in re.finditer(r"std::vector<Param>\s+([A-Za-z0-9_]+)::parameters\(\) const\s*\{", text):
-        cls = match.group(1)
+    for match in re.finditer(
+        r"std::vector<Param>\s+([A-Za-z0-9_:]+)::parameters\(\) const\s*\{",
+        text,
+    ):
+        qualified = match.group(1)
+        cls = canonical_class_name(qualified)
+        if not cls:
+            continue
         body, _ = extract_block(text, match.end())
         params: list[dict[str, str]] = []
         for pm in re.finditer(r'Param\s*\{\s*"([^"]+)"\s*,\s*ParamKind::([A-Za-z0-9_]+)', body):
@@ -199,6 +235,43 @@ if registry_path.is_file():
     for match in re.finditer(r'REG\("([^"]+)",\s*([A-Za-z0-9_]+),\s*EffectGroup::([A-Za-z]+)\)', text):
         effect_id, cls, group = match.groups()
         registry_entries.append((effect_id, cls, group.lower()))
+
+
+def parse_legacy_register() -> list[dict[str, object]]:
+    legacy_register_path = repo / "libs/avs-effects-legacy/src/prime/RegisterEffects.cpp"
+    text = read_text(legacy_register_path)
+    if not text:
+        return []
+    pattern = re.compile(
+        r'registry\.registerFactory\(\s*"([^"]+)"\s*,\s*\[\s*\]\s*\(\s*\)\s*\{\s*return\s+std::make_unique<\s*([A-Za-z0-9_:]+)'
+    )
+    entries: list[dict[str, object]] = []
+    seen: set[str] = set()
+    for match in pattern.finditer(text):
+        label, cls = match.groups()
+        norm = label.strip().lower()
+        if norm in seen:
+            continue
+        seen.add(norm)
+        tokens = normalize_tokens(label)
+        entries.append(
+            {
+                "label": label,
+                "class": cls,
+                "class_key": canonical_class_name(cls),
+                "tokens": tokens,
+            }
+        )
+    return entries
+
+
+legacy_registry_entries = parse_legacy_register()
+legacy_registry_by_tokens: dict[tuple[str, ...], dict[str, object]] = {}
+for entry in legacy_registry_entries:
+    tokens = entry.get("tokens")
+    if not tokens:
+        continue
+    legacy_registry_by_tokens.setdefault(tuple(tokens), entry)
 
 
 def parse_original_effects() -> list[dict[str, str]]:
@@ -493,7 +566,8 @@ effects: list[dict[str, object]] = []
 covered_tokens: set[tuple[str, ...]] = set()
 
 for effect_id, cls, group in registry_entries:
-    metadata = class_metadata.get(cls, {})
+    canonical_cls = canonical_class_name(cls) or cls
+    metadata = class_metadata.get(canonical_cls, {})
     display_name = metadata.get("display_name") if metadata else None
     tokens = normalize_tokens(display_name or effect_id)
     if not tokens:
@@ -505,10 +579,10 @@ for effect_id, cls, group in registry_entries:
     header_path = metadata.get("header") if metadata else None
     if header_path:
         implementation_files["header"] = header_path
-    source_path = class_to_source.get(cls)
+    source_path = class_to_source.get(canonical_cls)
     if source_path:
         implementation_files["source"] = source_path
-    parameters = parameters_by_class.get(cls, [])
+    parameters = parameters_by_class.get(canonical_cls, [])
     references = gather_references(
         [
             effect_id,
@@ -552,17 +626,55 @@ for tokens, entries in original_by_tokens.items():
         continue
     plan_entry = plan_by_tokens.get(tokens)
     category = plan_entry.get("category") if plan_entry else None
+    legacy_info = legacy_registry_by_tokens.get(tokens)
+    legacy_class = legacy_info.get("class") if legacy_info else None
+    legacy_class_key = legacy_info.get("class_key") if legacy_info else None
+    legacy_metadata = (
+        class_metadata.get(legacy_class_key) if legacy_class_key else None
+    )
+    header_path = (
+        legacy_metadata.get("header") if legacy_metadata and legacy_metadata.get("header") else None
+    )
+    source_path = (
+        class_to_source.get(legacy_class_key) if legacy_class_key else None
+    )
+    legacy_group = None
+    if legacy_info and legacy_info.get("label"):
+        label_text = str(legacy_info.get("label"))
+        if "/" in label_text:
+            prefix = label_text.split("/", 1)[0].strip().lower()
+            if prefix in {"render", "trans", "misc"}:
+                legacy_group = prefix
+    if not legacy_group and legacy_class:
+        if "render::" in legacy_class or "Effect_Render" in legacy_class:
+            legacy_group = "render"
+        elif "trans::" in legacy_class or "Effect_Trans" in legacy_class:
+            legacy_group = "trans"
+        elif "misc::" in legacy_class:
+            legacy_group = "misc"
+    implementation_files = {}
+    if header_path:
+        implementation_files["header"] = header_path
+    if source_path:
+        implementation_files["source"] = source_path
+    if not implementation_files:
+        implementation_files = None
     for entry in entries:
         machine_suffix = "_".join(tokens) if tokens else entry["function"].lower()
         references = gather_references([entry["name"], entry["function"]])
+        group_value = None
+        if legacy_group:
+            group_value = legacy_group
+        elif category:
+            group_value = category.lower()
         effects.append(
             {
                 "machine_readable_effect_name": f"legacy/{machine_suffix}",
                 "status": "missing",
                 "implementation_complete": False,
-                "group": category.lower() if category else None,
+                "group": group_value,
                 "registry_id": None,
-                "class_name": None,
+                "class_name": legacy_class,
                 "display_name": entry["name"],
                 "origin": "winamp_original",
                 "tokens": list(tokens),
@@ -575,7 +687,7 @@ for tokens, entries in original_by_tokens.items():
                     if plan_entry
                     else None
                 ),
-                "implementation_files": None,
+                "implementation_files": implementation_files,
                 "parameters": [],
                 "original_sources": [entry],
                 "preset_references_count": len(references),

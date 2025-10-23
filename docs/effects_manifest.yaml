@@ -1,4 +1,4 @@
-version: 1
+version: 2
 notes: >-
   Canonical list of AVS effects mirrored from docs/avs_original_source (r_*.cpp).
   This manifest is used to validate implementation coverage, registry wiring,

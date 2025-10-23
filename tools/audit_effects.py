@@ -73,4 +73,36 @@ def main():
     print(json.dumps(report, indent=2))
 
 if __name__ == "__main__":
-    main()
+    import argparse, json, sys, os
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", default=None, help="Write full JSON report to this path")
+    ap.add_argument("--ci", action="store_true", help="Exit non-zero on drift")
+    args = ap.parse_args()
+
+    report = main()  # <-- your existing scan function should return the dict
+
+    # Write JSON report if requested
+    if args.out:
+        os.makedirs(os.path.dirname(args.out), exist_ok=True)
+        with open(args.out, "w") as f:
+            json.dump(report, f, indent=2)
+
+    failures = []
+    if report.get("missing_tokens"):
+        failures.append(f"missing_tokens: {len(report['missing_tokens'])}")
+    if report.get("duplicate_tokens"):
+        failures.append(f"duplicate_tokens: {len(report['duplicate_tokens'])}")
+    monolith_hits = [e for e in report.get("monolith_hits", []) if "libs/avs-compat/src/" in e.get("path","")]
+    if monolith_hits:
+        failures.append(f"monolith_hits: {len(monolith_hits)} (compat contains effect logic)")
+
+    if args.ci:
+        if failures:
+            print("Effect audit FAILED:")
+            for line in failures:
+                print(f" - {line}")
+            # Keep it short; full details live in the JSON artifact
+            sys.exit(1)
+        else:
+            print("Effect audit passed.")
+            sys.exit(0)

@@ -129,6 +129,24 @@ jobs:
         env:
           DISTRO: ${{ matrix.distro }}
         run: .github/scripts/verify_googletest_path.sh
+
+      - name: Audit AVS effects structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          # audit writes the full JSON report and exits non-zero on drift
+          python3 tools/audit_effects.py --out build/effects_audit.json --ci
+
+      - name: Upload effects audit artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          # one artifact per matrix distro
+          name: effects-audit-${{ matrix.distro }}
+          path: build/effects_audit.json
+          if-no-files-found: warn
+
       - name: Configure
         shell: bash
         env:

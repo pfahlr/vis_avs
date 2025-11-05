@@ -29,7 +29,9 @@ case "${DISTRO}" in
       libportaudio2 \
       portaudio19-dev \
       libsamplerate0-dev \
-      libfftw3-dev
+      libfftw3-dev \ 
+      libsdl2-2.0-0 \
+      libsdl2-dev
     ;;
   fedora)
     dnf -y makecache
@@ -44,6 +46,8 @@ case "${DISTRO}" in
       pkgconf-pkg-config \
       python3 \
       SDL2-devel \
+      SDL2 \
+      sdl2-compat \
       mesa-libGL-devel \
       mesa-libGLU-devel \
       alsa-lib-devel \

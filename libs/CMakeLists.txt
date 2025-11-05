@@ -1,5 +1,6 @@
 add_subdirectory(third_party/ns-eel)
 add_subdirectory(avs-effects-legacy)
+add_subdirectory(avs-compat)
 add_subdirectory(avs-core)
 option(AVS_BUILD_PLATFORM "Build SDL/OpenGL platform layer" ON)
 if(AVS_BUILD_PLATFORM)

@@ -18,6 +18,8 @@ entries:
       - T/B Wipe
       - B/T Wipe
       - Dot Dissolve
+  - token: "Trans / Fadeout"
+    kind: effect
   - token: "Unknown Render Object"
     kind: sentinel
   - token: "Render / Oscilloscope Star"

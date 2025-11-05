@@ -8,9 +8,9 @@
 
 namespace avs::effects::misc {
 
-class EffectUnknownObject : public LegacyEffect {
+class EffectUnknownRenderObject : public LegacyEffect {
  public:
-  EffectUnknownObject() = default;
+  EffectUnknownRenderObject() = default;
 
   void render(LegacyRenderContext& context) override;
   void loadConfig(const std::uint8_t* data, std::size_t size) override;
@@ -25,3 +25,4 @@ class EffectUnknownObject : public LegacyEffect {
 };
 
 }  // namespace avs::effects::misc
+

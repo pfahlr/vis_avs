@@ -1,7 +1,7 @@
 add_library(avs-effects-legacy STATIC
   src/effect_registry.cpp
   src/trans/effect_transition.cpp
-  src/misc/effect_unknown_object.cpp
+  src/misc/effect_unknown_render_object.cpp
   src/render/effect_oscilloscope_star.cpp
 )
 

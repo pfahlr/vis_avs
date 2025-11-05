@@ -198,4 +198,18 @@ class ScriptedEffect : public Effect {
   std::array<float, 576> waveform_{};
 };
 
+class UnknownRenderObjectEffect : public Effect {
+ public:
+  UnknownRenderObjectEffect(std::string token, std::vector<std::uint8_t> payload);
+  void init(int w, int h) override;
+  void process(const Framebuffer& in, Framebuffer& out) override;
+
+  const std::string& originalToken() const noexcept { return token_; }
+  const std::vector<std::uint8_t>& rawPayload() const noexcept { return payload_; }
+
+ private:
+  std::string token_;
+  std::vector<std::uint8_t> payload_;
+};
+
 }  // namespace avs

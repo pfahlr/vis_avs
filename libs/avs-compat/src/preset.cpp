@@ -1,5 +1,7 @@
 #include <avs/preset.hpp>
 
+#include <avs/effects/effect_registry.hpp>
+
 #include <algorithm>
 #include <array>
 #include <cctype>
@@ -21,11 +23,6 @@ std::string trim(const std::string& s) {
   while (e > b && std::isspace(static_cast<unsigned char>(s[e - 1]))) --e;
   return s.substr(b, e - b);
 }
-
-class PassThroughEffect : public Effect {
- public:
-  void process(const Framebuffer& in, Framebuffer& out) override { out = in; }
-};
 
 std::string effectNameForId(std::uint32_t effectId) {
   constexpr std::array<std::string_view, 46> kRegisteredEffectNames = {
@@ -198,49 +195,6 @@ bool parseRenderListChunk(Reader& r,
                           ParsedPreset& result,
                           std::vector<std::unique_ptr<Effect>>& chain);
 
-bool parseColorModifier(Reader& r, size_t chunkEnd, std::unique_ptr<Effect>& effect) {
-  std::uint8_t version = 0;
-  if (!readByteBounded(r, chunkEnd, version)) return false;
-  if (version != 1) {
-    r.pos = chunkEnd;
-    return false;
-  }
-  std::array<std::string, 4> scripts;
-  for (size_t i = 0; i < scripts.size(); ++i) {
-    std::uint32_t slen = 0;
-    if (!readU32Bounded(r, chunkEnd, slen)) {
-      r.pos = chunkEnd;
-      return false;
-    }
-    size_t remaining = chunkEnd - r.pos;
-    if (slen > remaining) {
-      r.pos = chunkEnd;
-      return false;
-    }
-    if (slen > 0) {
-      const char* begin = r.data.data() + r.pos;
-      scripts[i].assign(begin, begin + slen);
-      if (!scripts[i].empty() && scripts[i].back() == '\0') scripts[i].pop_back();
-      r.pos += slen;
-    } else {
-      scripts[i].clear();
-    }
-  }
-  std::uint32_t recompute = 0;
-  if (!readU32Bounded(r, chunkEnd, recompute)) {
-    r.pos = chunkEnd;
-    return false;
-  }
-  r.pos = chunkEnd;
-  effect = std::make_unique<ScriptedEffect>(scripts[3],
-                                            scripts[1],
-                                            scripts[2],
-                                            scripts[0],
-                                            ScriptedEffect::Mode::kColorModifier,
-                                            recompute != 0);
-  return true;
-}
-
 bool parseCommentEffect(Reader& r, size_t chunkEnd, ParsedPreset& result) {
   std::uint32_t rawLen = 0;
   if (!readU32Bounded(r, chunkEnd, rawLen)) {
@@ -274,6 +228,8 @@ bool parseRenderListChunk(Reader& r,
     return false;
   }
   if (r.pos >= chunkEnd) return true;
+
+  const auto& registry = avs::effects::legacy::GetEffectRegistry();
 
   std::uint8_t modeByte = 0;
   if (!readByteBounded(r, chunkEnd, modeByte)) {
@@ -338,7 +294,7 @@ bool parseRenderListChunk(Reader& r,
 
     Reader chunkReader{r.data, payloadStart};
     std::unique_ptr<Effect> parsedEffect;
-    bool knownEffect = false;
+    bool handledEffect = false;
     bool success = false;
 
     LegacyEffectEntry entry;
@@ -349,14 +305,17 @@ bool parseRenderListChunk(Reader& r,
       entry.payload.assign(payloadPtr, payloadPtr + payloadLen);
     }
 
-    if (effectId == 45u) {
-      knownEffect = true;
-      success = parseColorModifier(chunkReader, payloadEnd, parsedEffect);
-    } else if (effectId == 21u) {
-      knownEffect = true;
+    auto makeUnknown = [&](const std::string& token) {
+      const std::string label = token.empty() ? describeEffect(effectId) : token;
+      result.unknown.push_back("effect:" + label);
+      return std::make_unique<UnknownRenderObjectEffect>(label, entry.payload);
+    };
+
+    if (effectId == 21u) {
+      handledEffect = true;
       success = parseCommentEffect(chunkReader, payloadEnd, result);
     } else if (effectId == kListId) {
-      knownEffect = true;
+      handledEffect = true;
       std::vector<std::unique_ptr<Effect>> nestedChain;
       success = parseRenderListChunk(chunkReader, payloadEnd, result, nestedChain);
       if (success) {
@@ -366,30 +325,41 @@ bool parseRenderListChunk(Reader& r,
         }
         parsedEffect = std::move(composite);
       }
+    } else {
+      if (!entry.effectName.empty()) {
+        const std::string key = avs::effects::legacy::normalizeLegacyToken(entry.effectName);
+        auto it = registry.find(key);
+        if (it != registry.end()) {
+          handledEffect = true;
+          parsedEffect = it->second(entry, result);
+          success = static_cast<bool>(parsedEffect);
+          if (!success) {
+            result.warnings.push_back("failed to parse effect index: " + describeEffect(effectId));
+          }
+        }
+      }
     }
 
-    if (!entry.payload.empty() || effectId == 21u || effectId == 45u || effectId == kListId ||
-        !entry.effectName.empty()) {
-      result.effects.push_back(std::move(entry));
+    if (!entry.payload.empty() || effectId == 21u || effectId == kListId || !entry.effectName.empty()) {
+      result.effects.push_back(entry);
     }
 
-    if (knownEffect) {
+    if (handledEffect) {
       if (success) {
         if (parsedEffect) {
           chain.push_back(std::move(parsedEffect));
         }
-      } else {
-        result.warnings.push_back("failed to parse effect index: " + describeEffect(effectId));
+      } else if (effectId != 21u) {
+        chain.push_back(makeUnknown(entry.effectName));
       }
     } else {
-      if (!effectNameForId(effectId).empty()) {
+      if (!entry.effectName.empty()) {
         result.warnings.push_back("preset loader does not yet decode effect: " +
                                   describeEffect(effectId));
       } else {
         result.warnings.push_back("unsupported effect index: " + describeEffect(effectId));
       }
-      chain.push_back(std::make_unique<PassThroughEffect>());
-      result.unknown.push_back("effect:" + std::to_string(effectId));
+      chain.push_back(makeUnknown(entry.effectName));
     }
 
     r.pos = payloadEnd;
@@ -534,7 +504,9 @@ ParsedPreset parseTextPreset(const std::string& text) {
           std::make_unique<ScriptedEffect>(initScript, frameScript, beatScript, pixelScript, mode, recompute));
     } else {
       result.warnings.push_back("unsupported effect: " + type);
-      result.chain.push_back(std::make_unique<PassThroughEffect>());
+      std::vector<std::uint8_t> payload(t.begin(), t.end());
+      result.chain.push_back(
+          std::make_unique<UnknownRenderObjectEffect>(type, std::move(payload)));
       result.unknown.push_back(t);
     }
   }

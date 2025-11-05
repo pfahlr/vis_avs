@@ -1,4 +1,5 @@
 #include <avs/effects_misc.hpp>
+#include <avs/effects.hpp>
 
 #include <avs/core.hpp>
 #include <avs/params.hpp>
@@ -368,6 +369,16 @@ void ClearScreenEffect::process(const ProcessContext&, FrameBufferView& dst) {
       row[x * 4 + 3] = 255;
     }
   }
+}
+
+UnknownRenderObjectEffect::UnknownRenderObjectEffect(std::string token,
+                                                     std::vector<std::uint8_t> payload)
+    : token_(std::move(token)), payload_(std::move(payload)) {}
+
+void UnknownRenderObjectEffect::init(int, int) {}
+
+void UnknownRenderObjectEffect::process(const Framebuffer& in, Framebuffer& out) {
+  out = in;
 }
 
 }  // namespace avs

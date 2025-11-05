@@ -367,6 +367,14 @@ TEST(PresetParser, WarnsWhenEffectIsUndecodedButRecognized) {
   const std::string& warning = preset.warnings.front();
   EXPECT_NE(warning.find("preset loader does not yet decode effect: 3 (Trans / Fadeout)"),
             std::string::npos);
+  ASSERT_EQ(preset.chain.size(), 1u);
+  auto* unknown = dynamic_cast<avs::UnknownRenderObjectEffect*>(preset.chain.front().get());
+  ASSERT_NE(unknown, nullptr);
+  EXPECT_EQ(unknown->originalToken(), "Trans / Fadeout");
+  EXPECT_FALSE(unknown->rawPayload().empty());
+  ASSERT_FALSE(preset.effects.empty());
+  EXPECT_EQ(preset.effects.front().effectId, 3u);
+  EXPECT_EQ(preset.effects.front().payload, unknown->rawPayload());
 }
 
 TEST(PresetParser, ParsesNestedRenderLists) {
@@ -940,4 +948,3 @@ TEST(RenderGeometryEffects, SuperscopeSineWaveSnapshot) {
   effect.process(fixture.ctx, frame.view);
   EXPECT_EQ(hashBytes(frame.data), "a7ea528ce862219f");
 }
-

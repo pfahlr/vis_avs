@@ -1,26 +1,38 @@
 #pragma once
-#include <string>
-#include <memory>
-#include <unordered_map>
+
+#include <avs/compat/effects.hpp>
+#include <avs/compat/preset.hpp>
+
 #include <functional>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <unordered_map>
 
-// Every effect subclass implements IEffect (or your existing base)
-struct IEffect { virtual ~IEffect() = default; /* process(), etc. */ };
+namespace avs::effects::legacy {
 
-using EffectFactory = std::function<std::unique_ptr<IEffect>()>;
+using EffectFactory =
+    std::function<std::unique_ptr<avs::Effect>(const LegacyEffectEntry&, ParsedPreset&)>;
+
+void RegisterEffectFactory(std::string token, EffectFactory factory);
 const std::unordered_map<std::string, EffectFactory>& GetEffectRegistry();
+std::string normalizeLegacyToken(std::string_view token);
 
-// Helper macro each effect uses exactly once, with canonical token:
-#define AVS_EFFECT_TOKEN(TOK) \
-  static const char* kAvsEffectToken() { return TOK; }
+}  // namespace avs::effects::legacy
 
-#define REGISTER_AVS_EFFECT(CLASS, TOKEN) \
-  namespace { \
-    struct CLASS##__AutoReg { \
-      CLASS##__AutoReg() { \
-        RegisterEffectFactory(TOKEN, [](){ return std::make_unique<CLASS>(); }); \
-      } \
-    }; \
-    static CLASS##__AutoReg g_##CLASS##_AutoReg; \
+#define AVS_LEGACY_CONCAT_IMPL(a, b) a##b
+#define AVS_LEGACY_CONCAT(a, b) AVS_LEGACY_CONCAT_IMPL(a, b)
+
+#define AVS_LEGACY_REGISTER_EFFECT(TOKEN, FACTORY) \
+  AVS_LEGACY_REGISTER_EFFECT_IMPL(TOKEN, FACTORY, __COUNTER__)
+
+#define AVS_LEGACY_REGISTER_EFFECT_IMPL(TOKEN, FACTORY, COUNT)                                     \
+  namespace {                                                                                     \
+  struct AVS_LEGACY_CONCAT(AvsLegacyAutoReg_, COUNT) {                                            \
+    AVS_LEGACY_CONCAT(AvsLegacyAutoReg_, COUNT)() {                                               \
+      ::avs::effects::legacy::RegisterEffectFactory(TOKEN, FACTORY);                              \
+    }                                                                                             \
+  };                                                                                               \
+  static AVS_LEGACY_CONCAT(AvsLegacyAutoReg_, COUNT)                                              \
+      AVS_LEGACY_CONCAT(gAvsLegacyAutoRegInstance_, COUNT);                                       \
   }
-void RegisterEffectFactory(const std::string& token, EffectFactory f);

@@ -21,7 +21,6 @@ case "${DISTRO}" in
       ninja-build \
       pkg-config \
       python3 \
-      libsdl2-dev \
       libgl1-mesa-dev \
       libglu1-mesa-dev \
       libasound2-dev \

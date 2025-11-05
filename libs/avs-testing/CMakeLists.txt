@@ -31,6 +31,7 @@ target_link_libraries(avs-testing
     avs::audio-io
     avs::audio-dsp
     avs::compat
+    avs::effects-legacy
     avs::preset
     avs::render-gl
 )

@@ -58,6 +58,7 @@ set(AVS_COMPAT_SOURCES
   src/effects_render.cpp
   src/effects_render_geometry.cpp
   src/effects_trans.cpp
+  src/effect_registry.cpp
   src/engine.cpp
   src/eel.cpp
   src/headless_main.cpp
@@ -95,7 +96,8 @@ target_include_directories(avs-compat
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
   PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/../avs-effects-legacy/include)
 
 install(TARGETS avs-compat
   EXPORT ${AVS_EXPORT_NAME}

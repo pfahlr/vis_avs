@@ -151,3 +151,20 @@ pipeline.render(ctx);
 Set the `AVS_SEED` environment variable (defaults to `0`) to guarantee
 deterministic random number generation across runs when effects rely on the
 provided `avs::core::DeterministicRng`.
+
+### Legacy Effect Registry
+
+- Each legacy implementation resides in `libs/avs-effects-legacy/src/<category>/effect_*.cpp`.
+  New code must register the factory with `AVS_LEGACY_REGISTER_EFFECT` so the
+  preset loader can resolve legacy tokens without hard-coded switch tables.
+- `libs/avs-effects-legacy/src/effect_registry.cpp` maintains the registry and
+  exposes `GetEffectRegistry()`; the corresponding public headers live under
+  `libs/avs-effects-legacy/include`.
+- When the loader cannot match a token, it instantiates
+  `avs::UnknownRenderObjectEffect`, storing the original token string and raw
+  payload bytes to guarantee lossless round-trips when saving presets.
+- Transition-style modules are expressed as single registry entries that expose
+  mode parameters instead of duplicating dozens of near-identical effect IDs.
+- The compatibility layer in `libs/avs-compat` now focuses on translating
+  legacy preset payloads into registry lookups, leaving implementation details
+  to the `avs-effects-legacy` library.

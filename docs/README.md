@@ -14,6 +14,10 @@ sudo apt-get install cmake g++ clang-format git pkg-config \
   libjack-dev libasound2-dev
 ```
 
+If your distribution only provides an SDL2 package older than 2.28, the
+top-level CMake project will automatically fetch and build SDL 2.28.5 during
+configuration so that development in clean containers continues to succeed.
+
 ## Build Instructions
 
 ```bash

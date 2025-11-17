@@ -1,0 +1,34 @@
+id: effects-implement-transition
+title: Implement Transition effect with 15 blend modes
+status: TODO
+labels: [effects, render, trans, high-priority]
+depends_on:
+  - presets-complete-binary-parser
+goal: >
+  Implement the Transition effect (r_transition.cpp), one of the most commonly used effects
+  in AVS presets. Supports 15 blend modes for transitioning between two effect chains.
+steps:
+  - Study original implementation in docs/avs_original_source/vis_avs/r_transition.cpp.
+  - Study AVS2K25 implementation in /tmp/AVS2K25/avs/vis_avs/e_transition.cpp.
+  - Create effect_transition.h/cpp in libs/avs-effects-legacy/src/trans/.
+  - Implement 15 blend modes (Replace, Additive, Maximum, 50/50, Sub1, Sub2, Multiply, etc.).
+  - Add ParamBlock serialization for mode, enabled state, and timing parameters.
+  - Implement render() method with dual buffer handling (A/B chain blending).
+  - Add effect registration to RegisterEffects.cpp.
+  - Create comprehensive tests covering all 15 blend modes.
+  - Add golden hash tests with preset fixtures.
+acceptance_criteria:
+  - Transition effect renders all 15 blend modes correctly.
+  - Visual output matches original AVS behavior (within tolerance).
+  - Binary preset parser correctly loads Transition effect parameters.
+  - Effect integrates with registry and preset binding system.
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: core_effects_tests with test_transition.cpp covering all modes."
+  - "Golden hash tests with presets using Transition effect."
+files_touched:
+  - libs/avs-effects-legacy/include/avs/effects/trans/effect_transition.h
+  - libs/avs-effects-legacy/src/trans/effect_transition.cpp
+  - libs/avs-effects-legacy/src/prime/RegisterEffects.cpp
+  - tests/core/test_transition.cpp
+  - tests/data/presets/transition_*.avs

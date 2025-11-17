@@ -1,0 +1,37 @@
+id: effects-implement-superscope
+title: Implement Superscope programmable waveform effect
+status: TODO
+labels: [effects, render, scripting, high-priority]
+depends_on:
+  - presets-complete-binary-parser
+goal: >
+  Implement Superscope effect (r_superscope.cpp), the most powerful and commonly used
+  programmable effect in AVS. Allows users to write EEL scripts to generate custom waveforms.
+steps:
+  - Study original implementation in docs/avs_original_source/vis_avs/r_superscope.cpp (850+ lines).
+  - Study AVS2K25 implementation in /tmp/AVS2K25/avs/vis_avs/e_superscope.cpp.
+  - Create effect_superscope.h/cpp in libs/avs-effects-legacy/src/render/.
+  - Implement EEL script contexts (init, frame, beat, point) with proper variable scoping.
+  - Support audio data access via getspec/getosc EEL functions.
+  - Implement point rendering modes (dots, lines, solid) with color control.
+  - Add parameters - num points, thickness, colors, blend mode, drawing mode.
+  - Handle coordinate transformations (normalized -1..1 to screen coordinates).
+  - Integrate with existing EEL/DSL infrastructure (libs/avs-dsl).
+  - Create tests with example scripts (circle, spiral, audio-reactive patterns).
+acceptance_criteria:
+  - Superscope renders programmable waveforms matching original AVS output.
+  - EEL scripts execute with correct variable contexts and audio data access.
+  - Point/line/solid rendering modes all functional.
+  - Binary preset parser loads Superscope scripts and parameters correctly.
+  - Performance acceptable (>30fps for typical scripts at 640x480).
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: core_effects_tests with test_superscope.cpp using various script patterns."
+  - "Golden hash tests with community Superscope presets."
+files_touched:
+  - libs/avs-effects-legacy/include/avs/effects/render/effect_superscope.h
+  - libs/avs-effects-legacy/src/render/effect_superscope.cpp
+  - libs/avs-effects-legacy/src/prime/RegisterEffects.cpp
+  - libs/avs-dsl/src/eel_context.cpp
+  - tests/core/test_superscope.cpp
+  - tests/data/presets/superscope_*.avs

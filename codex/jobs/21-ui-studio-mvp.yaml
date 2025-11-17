@@ -1,0 +1,43 @@
+id: ui-studio-mvp
+title: Build Studio UI MVP with preset editor
+status: TODO
+labels: [ui, studio, user-facing]
+depends_on:
+  - presets-json-format-support
+  - effects-implement-core-missing
+goal: >
+  Implement basic Studio UI application for interactive preset editing. Currently apps/avs-studio
+  is just a stub. Build minimal viable product with preset browser, effect list editor, and parameter controls.
+steps:
+  - Choose UI framework - ImGui (recommended - immediate mode, SDL2 compatible, MIT license).
+  - Integrate ImGui into apps/avs-studio (add dependency to CMakeLists.txt).
+  - Implement main window layout (left - effect tree, center - preview, right - parameters).
+  - Add effect tree view with drag-drop reordering (matches AVS 2.x editor).
+  - Implement parameter editing panels (sliders, checkboxes, text fields, color pickers).
+  - Add preset file browser (load/save .avs and .json files).
+  - Implement live preview rendering (update on parameter change).
+  - Add basic controls (play/pause, beat trigger, fullscreen toggle).
+  - Implement effect add/remove/duplicate operations.
+  - Add keyboard shortcuts (Ctrl+S save, Ctrl+O open, Space beat).
+  - Basic undo/redo for effect tree operations (optional for MVP).
+acceptance_criteria:
+  - Studio UI launches and displays preset editor interface.
+  - User can load existing presets and see live preview.
+  - Effect tree editing (add/remove/reorder) works correctly.
+  - Parameter changes update preview in real-time.
+  - Presets can be saved in both binary and JSON formats.
+  - UI is responsive on 1920x1080 displays.
+  - Builds on Linux with SDL2 + OpenGL + ImGui dependencies.
+test_hook:
+  - "Manual UI testing with checklist of core workflows."
+  - "ctest: headless rendering tests ensure backend still works."
+files_touched:
+  - apps/avs-studio/main.cpp
+  - apps/avs-studio/CMakeLists.txt
+  - apps/avs-studio/ui/MainWindow.cpp
+  - apps/avs-studio/ui/EffectTreeView.cpp
+  - apps/avs-studio/ui/ParameterEditor.cpp
+  - apps/avs-studio/ui/PresetBrowser.cpp
+  - libs/third_party/imgui/
+  - docs/studio_guide.md
+  - README.md

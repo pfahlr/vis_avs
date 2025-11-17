@@ -1,0 +1,27 @@
+id: data-fix-manifest-duplicates
+title: Fix effects_manifest.yaml duplicate entries
+status: TODO
+labels: [data, manifest, critical]
+depends_on:
+  - engine-eel-scripted-parity
+goal: >
+  Remove duplicate and conflicting effect entries from effects_manifest.yaml to ensure registry
+  consistency and prevent effect resolution ambiguity.
+steps:
+  - Remove duplicate trans/color_modifier entry (lines 161-167).
+  - Investigate trans/color_clip conflict (lines 137-143 vs 153-159) by examining original source.
+  - Determine if r_colorreplace.cpp and r_contrast.cpp are two different effects or same effect.
+  - Keep only one trans/color_clip entry with correct original_file mapping.
+  - Standardize unknown_render_object entries (ensure consistent namespace and category).
+  - Validate manifest YAML syntax and check for any other duplicates.
+acceptance_criteria:
+  - No duplicate effect IDs in effects_manifest.yaml.
+  - Each effect maps to exactly one original source file.
+  - YAML parses without errors.
+  - Effect registry loads all 56 effects without conflicts.
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: effects_registry_tests validates unique IDs and successful binding."
+files_touched:
+  - docs/effects_manifest.yaml
+  - tests/effects_registry_tests.cpp

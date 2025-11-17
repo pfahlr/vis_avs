@@ -1,0 +1,36 @@
+id: cleanup-registry-consolidation
+title: Consolidate effect registration system
+status: TODO
+labels: [cleanup, architecture, technical-debt]
+depends_on:
+  - data-fix-manifest-duplicates
+goal: >
+  Resolve dual registration system confusion. Currently effects are registered in both
+  RegisterEffects.cpp (111 factories) and register_all.cpp (1 factory stub). Consolidate
+  to single canonical registration mechanism.
+steps:
+  - Document current registration flow (trace from main.cpp to effect instantiation).
+  - Determine if register_all.cpp is legacy stub or intended parallel system.
+  - Decide consolidation strategy (Option A - delete register_all.cpp; Option B - complete it).
+  - If Option A - ensure all 56 effects registered in RegisterEffects.cpp (audit).
+  - If Option B - implement all 56 register_*() functions in register_all.cpp.
+  - Update documentation explaining canonical registration pattern.
+  - Remove unused registration code paths.
+  - Add registration completeness test (verify all manifest effects have factory).
+  - Standardize effect namespaces (avs::effects vs avs::effects::legacy).
+acceptance_criteria:
+  - Single clear registration mechanism documented.
+  - All 56 manifest effects have registered factories.
+  - No duplicate registrations or namespace conflicts.
+  - Registration completeness test catches missing effects.
+  - Code comments explain registration pattern for new effect authors.
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: effects_registry_tests validates registration completeness."
+files_touched:
+  - libs/avs-effects-legacy/src/register_all.cpp
+  - libs/avs-effects-legacy/src/prime/RegisterEffects.cpp
+  - libs/avs-effects-legacy/include/avs/effects/legacy/register_all.h
+  - libs/avs-core/src/EffectRegistry.cpp
+  - tests/effects_registry_tests.cpp
+  - docs/effect_development_guide.md

@@ -1,0 +1,41 @@
+id: render-framebuffer-abstraction
+title: Abstract framebuffer output for multiple rendering backends
+status: TODO
+labels: [rendering, architecture, vulkan]
+depends_on:
+  - render-multithreaded-effects
+goal: >
+  Decouple rendering from OpenGL to support multiple backends (OpenGL, Vulkan, CPU framebuffer, headless).
+  Enables video encoding, image export, and future Vulkan migration for enhanced graphics.
+steps:
+  - Define IFramebuffer interface in avs-core (width, height, pixel data access, present).
+  - Implement OpenGLFramebuffer (current backend, wraps existing GL code).
+  - Implement CPUFramebuffer (in-memory RGBA buffer, no GPU required).
+  - Implement FileFramebuffer (writes frames to PNG/MP4 sequence).
+  - Update RenderContext to use IFramebuffer abstraction instead of direct GL calls.
+  - Refactor avs-render-gl to implement backend interface (not hardcode in effects).
+  - Add experimental Vulkan backend stub (AVS_ENABLE_VULKAN flag, future work).
+  - Add --render-backend CLI option to avs-player (opengl|cpu|file).
+  - Add --output-frames option for headless rendering to image sequence.
+  - Update effects to use framebuffer abstraction (avoid direct glTexImage2D calls).
+  - Document framebuffer interface for future backend implementers.
+acceptance_criteria:
+  - Effects render identically across OpenGL and CPU backends (golden hash match).
+  - Headless rendering (CPU backend) produces correct output without display.
+  - File backend exports frame sequences correctly.
+  - Performance impact <5% for abstraction overhead.
+  - Future Vulkan backend can be implemented without touching effect code.
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: offscreen_golden_test validates CPU and OpenGL backends match."
+  - "Regression tests ensure no performance degradation."
+files_touched:
+  - libs/avs-core/include/avs/core/IFramebuffer.h
+  - libs/avs-core/src/RenderContext.cpp
+  - libs/avs-render-gl/src/OpenGLFramebuffer.cpp
+  - libs/avs-render-cpu/CMakeLists.txt
+  - libs/avs-render-cpu/src/CPUFramebuffer.cpp
+  - libs/avs-render-file/src/FileFramebuffer.cpp
+  - apps/avs-player/main.cpp
+  - tests/offscreen_golden_test.cpp
+  - docs/rendering_backends.md

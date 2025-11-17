@@ -4,11 +4,13 @@ add_library(avs::preset ALIAS avs-preset)
 set(AVS_PRESET_HEADERS
   include/avs/preset/binder.h
   include/avs/preset/ir.h
+  include/avs/preset/json.h
   include/avs/preset/parser.h
 )
 
 set(AVS_PRESET_SOURCES
   src/binder.cpp
+  src/json_serializer.cpp
   src/parser.cpp
 )
 
@@ -35,6 +37,10 @@ target_compile_options(avs-preset PRIVATE -Wall -Wextra -Werror)
 target_include_directories(avs-preset PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+# Add third_party directory for nlohmann/json
+target_include_directories(avs-preset PRIVATE
+  ${CMAKE_SOURCE_DIR}/libs/third_party)
 
 install(TARGETS avs-preset
   EXPORT ${AVS_EXPORT_NAME}

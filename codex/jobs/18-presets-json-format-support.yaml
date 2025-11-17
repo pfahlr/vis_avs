@@ -1,6 +1,6 @@
 id: presets-json-format-support
 title: Add JSON preset format support (read/write)
-status: TODO
+status: DONE
 labels: [presets, format, architecture]
 depends_on:
   - presets-complete-binary-parser

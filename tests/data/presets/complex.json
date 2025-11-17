@@ -1,0 +1,118 @@
+{
+  "version": "1.0",
+  "compat": "strict",
+  "effects": [
+    {
+      "effect": "Render / Superscope",
+      "params": [
+        {
+          "name": "init",
+          "type": "string",
+          "value": "n=100"
+        },
+        {
+          "name": "frame",
+          "type": "string",
+          "value": "t=t+0.01"
+        },
+        {
+          "name": "beat",
+          "type": "string",
+          "value": ""
+        },
+        {
+          "name": "point",
+          "type": "string",
+          "value": "x=cos(i*$PI*2+t);y=sin(i*$PI*2+t)"
+        },
+        {
+          "name": "enabled",
+          "type": "bool",
+          "value": true
+        }
+      ]
+    },
+    {
+      "effect": "Trans / Movement",
+      "params": [
+        {
+          "name": "blend_mode",
+          "type": "int",
+          "value": 0
+        },
+        {
+          "name": "source_blend",
+          "type": "int",
+          "value": 1
+        },
+        {
+          "name": "dest_blend",
+          "type": "int",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "effect": "Misc / Effect List",
+      "params": [
+        {
+          "name": "enabled",
+          "type": "bool",
+          "value": true
+        },
+        {
+          "name": "input_mode",
+          "type": "int",
+          "value": 0
+        },
+        {
+          "name": "output_mode",
+          "type": "int",
+          "value": 0
+        }
+      ],
+      "children": [
+        {
+          "effect": "Trans / Blur",
+          "params": [
+            {
+              "name": "radius",
+              "type": "int",
+              "value": 5
+            }
+          ]
+        },
+        {
+          "effect": "Trans / Water",
+          "params": [
+            {
+              "name": "enabled",
+              "type": "bool",
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "effect": "Trans / Color Modifier",
+      "params": [
+        {
+          "name": "red_adjust",
+          "type": "float",
+          "value": 1.0
+        },
+        {
+          "name": "green_adjust",
+          "type": "float",
+          "value": 0.8
+        },
+        {
+          "name": "blue_adjust",
+          "type": "float",
+          "value": 0.6
+        }
+      ]
+    }
+  ]
+}

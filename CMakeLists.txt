@@ -25,6 +25,9 @@ endif()
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
+# Find threading library for multi-threaded rendering
+find_package(Threads REQUIRED)
+
 set(CMAKE_INSTALL_INCLUDEDIR "include/vis_avs" CACHE PATH "" FORCE)
 set(CMAKE_INSTALL_LIBDIR "lib/vis_avs" CACHE PATH "" FORCE)
 

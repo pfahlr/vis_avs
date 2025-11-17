@@ -1,6 +1,6 @@
 id: render-multithreaded-effects
 title: Implement multi-threaded effect rendering
-status: TODO
+status: IN_PROGRESS
 labels: [rendering, performance, architecture]
 depends_on:
   - effects-implement-core-missing

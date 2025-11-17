@@ -9,12 +9,14 @@ set(AVS_CORE_HEADERS
   include/avs/core/ParamBlock.hpp
   include/avs/core/Pipeline.hpp
   include/avs/core/RenderContext.hpp
+  include/avs/core/ThreadPool.hpp
 )
 
 set(AVS_CORE_SOURCES
   src/DeterministicRng.cpp
   src/EffectRegistry.cpp
   src/Pipeline.cpp
+  src/ThreadPool.cpp
 )
 
 target_sources(avs-core
@@ -31,6 +33,8 @@ target_link_libraries(avs-core
   PUBLIC
     avs::base
     avs::math
+  PRIVATE
+    Threads::Threads
 )
 
 target_compile_features(avs-core PUBLIC cxx_std_20)

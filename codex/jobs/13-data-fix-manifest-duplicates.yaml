@@ -1,7 +1,7 @@
 id: data-fix-manifest-duplicates
 title: Fix effects_manifest.yaml duplicate entries
 status: DONE
-labels: [data, manifest, critical]
+# labels: [data, manifest, critical]  # Labels commented out - create in GitHub first
 depends_on:
   - engine-eel-scripted-parity
 goal: >

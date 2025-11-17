@@ -1,6 +1,6 @@
 id: ui-studio-mvp
 title: Build Studio UI MVP with preset editor
-status: TODO
+status: IN_PROGRESS
 labels: [ui, studio, user-facing]
 depends_on:
   - presets-json-format-support

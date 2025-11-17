@@ -1,0 +1,26 @@
+{
+  "version": "1.0",
+  "compat": "strict",
+  "effects": [
+    {
+      "effect": "Render / Simple",
+      "params": [
+        {
+          "name": "draw_mode",
+          "type": "int",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "effect": "Trans / Blur",
+      "params": [
+        {
+          "name": "radius",
+          "type": "int",
+          "value": 3
+        }
+      ]
+    }
+  ]
+}

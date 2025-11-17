@@ -245,14 +245,169 @@ std::unique_ptr<avs::Effect> makeMovement(const LegacyEffectEntry& entry, Parsed
   return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Movement", entry.payload);
 }
 
+//=============================================================================
+// Trans / Fadeout (ID 3)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeFadeout(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  PayloadReader reader(entry.payload);
+
+  std::int32_t fadelen = 0;
+  std::int32_t color = 0;
+
+  if (!reader.readI32(fadelen)) {
+    preset.warnings.push_back("fadeout: truncated payload");
+    return nullptr;
+  }
+  reader.readI32(color);  // Optional
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Fadeout", entry.payload);
+}
+
+//=============================================================================
+// Trans / Colorfade (ID 11)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeColorfade(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1;
+  std::int32_t faders[3] = {0, 0, 0};
+  std::int32_t beatfaders[3] = {0, 0, 0};
+
+  if (!reader.readI32(enabled)) {
+    preset.warnings.push_back("colorfade: truncated payload");
+    return nullptr;
+  }
+  reader.readI32(faders[0]);
+  reader.readI32(faders[1]);
+  reader.readI32(faders[2]);
+  reader.readI32(beatfaders[0]);
+  reader.readI32(beatfaders[1]);
+  reader.readI32(beatfaders[2]);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Colorfade", entry.payload);
+}
+
+//=============================================================================
+// Trans / Water (ID 20)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeWater(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1;
+
+  if (!reader.readI32(enabled)) {
+    preset.warnings.push_back("water: truncated payload");
+    return nullptr;
+  }
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Water", entry.payload);
+}
+
+//=============================================================================
+// Trans / Grain (ID 24)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeGrain(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1;
+  std::int32_t blend = 0;
+  std::int32_t blendavg = 0;
+  std::int32_t smax = 0;
+  std::int32_t staticgrain = 0;
+
+  if (!reader.readI32(enabled)) {
+    preset.warnings.push_back("grain: truncated payload");
+    return nullptr;
+  }
+  reader.readI32(blend);
+  reader.readI32(blendavg);
+  reader.readI32(smax);
+  reader.readI32(staticgrain);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Grain", entry.payload);
+}
+
+//=============================================================================
+// Trans / Mirror (ID 26)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeMirror(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1;
+  std::int32_t mode = 0;
+  std::int32_t onbeat = 0;
+  std::int32_t smooth = 0;
+  std::int32_t slower = 4;
+
+  if (!reader.readI32(enabled)) {
+    preset.warnings.push_back("mirror: truncated payload");
+    return nullptr;
+  }
+  reader.readI32(mode);
+  reader.readI32(onbeat);
+  reader.readI32(smooth);
+  reader.readI32(slower);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Mirror", entry.payload);
+}
+
+//=============================================================================
+// Trans / Bump (ID 29)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeBump(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1;
+  std::int32_t onbeat = 0;
+  std::int32_t durFrames = 15;
+  std::int32_t depth = 1;
+  std::int32_t depth2 = 1;
+  std::int32_t blend = 0;
+
+  if (!reader.readI32(enabled)) {
+    preset.warnings.push_back("bump: truncated payload");
+    return nullptr;
+  }
+  reader.readI32(onbeat);
+  reader.readI32(durFrames);
+  reader.readI32(depth);
+  reader.readI32(depth2);
+  reader.readI32(blend);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Bump", entry.payload);
+}
+
+//=============================================================================
+// Trans / Invert (ID 37)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeInvert(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1;
+
+  if (!reader.readI32(enabled)) {
+    preset.warnings.push_back("invert: truncated payload");
+    return nullptr;
+  }
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Invert", entry.payload);
+}
+
 }  // namespace
 
 AVS_LEGACY_REGISTER_EFFECT("Render / Simple", makeSimple);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Movement", makeMovement);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Fadeout", makeFadeout);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Blur", makeBlur);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Colorfade", makeColorfade);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Scatter", makeScatter);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Water", makeWater);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Grain", makeGrain);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Mirror", makeMirror);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Bump", makeBump);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Mosaic", makeMosaic);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Brightness", makeBrightness);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Invert", makeInvert);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Color Modifier", makeColorModifier);
 
 }  // namespace avs::effects::legacy

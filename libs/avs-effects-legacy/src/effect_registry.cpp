@@ -958,4 +958,86 @@ AVS_LEGACY_REGISTER_EFFECT("Trans / Dynamic Movement", makeDynamicMovement);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Fast Brightness", makeFastBrightness);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Color Modifier", makeColorModifier);
 
+//=============================================================================
+// Trans / Channel Shift (APE)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeChannelShift(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t mode = 0, onbeat = 0;
+
+  reader.readI32(mode);
+  reader.readI32(onbeat);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Channel Shift", entry.payload);
+}
+
+//=============================================================================
+// Trans / Color Reduction (APE)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeColorReduction(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  // Format: char fname[260] + int32 levels = 264 bytes
+  // Just preserve binary data as this is complex
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Color Reduction", entry.payload);
+}
+
+//=============================================================================
+// Trans / Multiplier (APE)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeMultiplier(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t ml = 0;
+
+  reader.readI32(ml);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Multiplier", entry.payload);
+}
+
+//=============================================================================
+// Trans / Multi Delay (APE)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeMultiDelay(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t mode = 0, activebuffer = 0;
+  std::int32_t usebeats[6] = {0, 0, 0, 0, 0, 0};
+  std::int32_t delay[6] = {0, 0, 0, 0, 0, 0};
+
+  reader.readI32(mode);
+  reader.readI32(activebuffer);
+  for (int i = 0; i < 6; ++i) {
+    reader.readI32(usebeats[i]);
+    reader.readI32(delay[i]);
+  }
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Multi Delay", entry.payload);
+}
+
+//=============================================================================
+// Trans / Video Delay (APE)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeVideoDelay(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 0, usebeats = 0, delay = 0;
+
+  reader.readI32(enabled);
+  reader.readI32(usebeats);
+  reader.readI32(delay);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Video Delay", entry.payload);
+}
+
+AVS_LEGACY_REGISTER_EFFECT("Trans / Channel Shift", makeChannelShift);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Color Reduction", makeColorReduction);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Multiplier", makeMultiplier);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Multi Delay", makeMultiDelay);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Video Delay", makeVideoDelay);
+
 }  // namespace avs::effects::legacy

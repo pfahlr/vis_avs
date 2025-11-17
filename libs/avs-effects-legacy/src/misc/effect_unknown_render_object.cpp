@@ -4,7 +4,10 @@
 
 namespace avs::effects::misc {
 
-// TODO: Register in libs/avs-effects-legacy/src/prime/RegisterEffects.cpp
+// NOTE: This effect uses the LegacyEffect interface which is incompatible with
+// the development-branch EffectRegistry that expects IEffect-derived classes.
+// To register this effect, it needs to be adapted to implement IEffect or
+// wrapped in an adapter factory function (see effect_registry.cpp for examples).
 
 void EffectUnknownRenderObject::render(LegacyRenderContext& context) {
   (void)context;

@@ -4,6 +4,10 @@
 
 namespace avs::effects::trans {
 
+// NOTE: This effect uses the LegacyEffect interface which is incompatible with
+// the development-branch EffectRegistry that expects IEffect-derived classes.
+// To register this effect, it needs to be adapted to implement IEffect or
+// wrapped in an adapter factory function (see effect_registry.cpp for examples).
 
 namespace {
 constexpr std::uint8_t kMaxModeIndex = static_cast<std::uint8_t>(EffectTransition::Mode::kDotDissolve);

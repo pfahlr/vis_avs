@@ -1,0 +1,33 @@
+id: presets-complete-binary-parser
+title: Complete binary preset parser for all 56 effect types
+status: TODO
+labels: [presets, parser, compatibility, critical]
+depends_on:
+  - data-fix-manifest-duplicates
+goal: >
+  Extend preset binary parser from 2/56 effect coverage to 56/56 (100% compatibility).
+  Currently only Comment (ID 21) and Color Modifier (ID 45) fully parse. Need to add
+  deserialization for all remaining 54 effect types to load original AVS presets.
+steps:
+  - Audit original AVS source (docs/avs_original_source/r_*.cpp) for effect binary formats.
+  - Reference AVS2K25 /tmp/AVS2K25/avs/vis_avs/files.cpp for proven parsing implementation.
+  - Implement parse_effect_params() for each effect ID (systematic, one-by-one approach).
+  - Priority order - Transition (multiple modes), Movement, Blur, Superscope, Mirror, Text, Fadeout.
+  - Add validation and error handling for malformed preset data.
+  - Create regression test fixtures from known-good original AVS presets.
+  - Document binary format in comments for each effect parser.
+acceptance_criteria:
+  - All 56 effect types parse from binary preset format without "does not yet decode" warnings.
+  - Test presets load with all effects bound to correct implementations.
+  - Round-trip test - load preset, save, load again produces identical effect tree.
+  - Golden hash tests pass for multi-effect presets.
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: preset_binder_tests with fixtures covering all 56 effect types."
+  - "Regression test with 10+ original AVS presets from community."
+files_touched:
+  - libs/avs-preset/src/parse.cpp
+  - libs/avs-preset/include/avs/preset/ir.h
+  - tests/data/presets/*.avs
+  - tests/preset_binder_tests.cpp
+  - docs/preset_loader_missing_effects.md

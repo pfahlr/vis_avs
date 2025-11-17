@@ -1,0 +1,40 @@
+id: presets-json-format-support
+title: Add JSON preset format support (read/write)
+status: TODO
+labels: [presets, format, architecture]
+depends_on:
+  - presets-complete-binary-parser
+goal: >
+  Add human-readable JSON preset format alongside binary .avs format. Enables version control,
+  hand-editing, and easier debugging. Bidirectional conversion between binary and JSON.
+steps:
+  - Add nlohmann/json header-only library to libs/third_party/ (MIT license, single header).
+  - Design JSON schema matching AVS effect tree structure (reference AVS2K25 schema).
+  - Implement JSON serializer for IRPreset and all effect ParamBlock types.
+  - Implement JSON deserializer with validation and error reporting.
+  - Add preset format auto-detection (binary signature vs JSON).
+  - Update avs-player to support --preset with both .avs and .json extensions.
+  - Add conversion tool - avs-convert --input preset.avs --output preset.json.
+  - Document JSON schema in docs/preset_json_schema.md.
+  - Create example JSON presets for testing and documentation.
+acceptance_criteria:
+  - Binary presets convert to JSON and back without data loss (round-trip test).
+  - JSON presets load and render identically to binary equivalents.
+  - Schema validation catches malformed JSON with helpful error messages.
+  - JSON is human-readable with proper indentation and structure.
+  - avs-player accepts both .avs and .json files transparently.
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: preset format conversion tests with round-trip validation."
+  - "Golden hash tests ensure JSON and binary presets produce identical output."
+files_touched:
+  - libs/third_party/json.hpp
+  - libs/avs-preset/include/avs/preset/json.h
+  - libs/avs-preset/src/json_serializer.cpp
+  - libs/avs-preset/src/json_deserializer.cpp
+  - libs/avs-preset/src/parse.cpp
+  - apps/avs-player/main.cpp
+  - tools/avs-convert.cpp
+  - tests/preset_format_tests.cpp
+  - docs/preset_json_schema.md
+  - tests/data/presets/*.json

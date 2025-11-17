@@ -1,0 +1,40 @@
+id: render-multithreaded-effects
+title: Implement multi-threaded effect rendering
+status: TODO
+labels: [rendering, performance, architecture]
+depends_on:
+  - effects-implement-core-missing
+goal: >
+  Add multi-threaded rendering support to distribute effect processing across CPU cores.
+  Target 2-4x performance improvement on modern multi-core systems. Based on AVS2K25 smp_render pattern.
+steps:
+  - Extend IEffect interface with optional smp_render(thread_id, max_threads, context) method.
+  - Implement thread pool in avs-core RenderContext with configurable thread count.
+  - Add framebuffer row-based work distribution (divide height by thread count).
+  - Implement multi-threaded versions for CPU-intensive effects (Blur, Water, Convolution, Movement).
+  - Ensure thread-safety for shared state (audio data, random generators, global variables).
+  - Add thread-local RNG seeding for deterministic multi-threaded rendering.
+  - Implement fallback to single-threaded render() for effects without smp_render().
+  - Add performance benchmarking tool to measure single vs multi-threaded speedup.
+  - Add --threads CLI option to avs-player (default - auto-detect CPU cores).
+acceptance_criteria:
+  - Multi-threaded effects achieve 2x+ speedup on 4+ core systems.
+  - Rendering output is identical between single and multi-threaded modes (deterministic).
+  - No race conditions or data corruption under stress testing.
+  - Thread count configurable at runtime via CLI and API.
+  - Performance benchmarks document speedup per effect type.
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: deterministic_render_test validates single vs multi-threaded output equivalence."
+  - "Performance regression tests track rendering throughput."
+files_touched:
+  - libs/avs-core/include/avs/core/IEffect.h
+  - libs/avs-core/src/RenderContext.cpp
+  - libs/avs-core/src/ThreadPool.cpp
+  - libs/avs-effects-legacy/src/trans/effect_blur.cpp
+  - libs/avs-effects-legacy/src/trans/effect_water.cpp
+  - libs/avs-effects-legacy/src/core/movement.cpp
+  - apps/avs-player/main.cpp
+  - tools/benchmark_effects.cpp
+  - tests/deterministic_render_test.cpp
+  - docs/performance_guide.md

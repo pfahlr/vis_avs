@@ -1,0 +1,40 @@
+id: integration-demo-preset-validation
+title: End-to-end validation with original AVS presets
+status: TODO
+labels: [integration, validation, milestone]
+depends_on:
+  - presets-complete-binary-parser
+  - effects-implement-core-missing
+  - render-multithreaded-effects
+goal: >
+  Validate complete system with real-world original AVS presets. Demonstrate that vis_avs can
+  load and render authentic community presets correctly. Milestone for proving port viability.
+steps:
+  - Curate collection of 20+ representative original AVS presets (simple to complex).
+  - Include presets covering all major effect types (Superscope, Transition, Movement, etc.).
+  - Load each preset and verify no "unsupported effect" or parsing errors.
+  - Render first 100 frames of each preset and capture screenshots.
+  - Compare visual output against original AVS (Windows VM or Wine + Winamp).
+  - Document visual differences and known issues per preset.
+  - Create golden hash database for regression testing.
+  - Fix critical visual discrepancies (color space, blend modes, coordinate systems).
+  - Measure rendering performance (fps) for each preset at 640x480 and 1920x1080.
+  - Document system requirements and performance characteristics.
+  - Create showcase video demonstrating all presets running in vis_avs.
+acceptance_criteria:
+  - 18+ out of 20 presets render without critical errors (<90% success rate minimum).
+  - Visual output is recognizably similar to original AVS (subjective assessment).
+  - Average fps >30 at 640x480 on mid-range hardware (e.g., i5-8400, integrated graphics).
+  - No crashes or hangs during preset loading or rendering.
+  - Golden hash database established for future regression testing.
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "Manual visual comparison testing with reference screenshots."
+  - "ctest: preset_validation_tests with golden hash verification."
+files_touched:
+  - tests/data/community_presets/*.avs
+  - tests/integration/preset_validation_tests.cpp
+  - tests/golden/preset_hashes.json
+  - docs/preset_compatibility_report.md
+  - docs/performance_benchmarks.md
+  - README.md

@@ -1,5 +1,7 @@
 #include <avs/effects/effect_registry.hpp>
 
+#include <avs/core/ParamBlock.hpp>
+
 #include <array>
 #include <cstdint>
 #include <string>
@@ -26,6 +28,13 @@ struct PayloadReader {
     return true;
   }
 
+  bool readI32(std::int32_t& value) {
+    std::uint32_t raw = 0;
+    if (!readU32(raw)) return false;
+    value = static_cast<std::int32_t>(raw);
+    return true;
+  }
+
   bool readBytes(std::size_t count, std::string& out) {
     if (pos + count > data.size()) return false;
     out.assign(reinterpret_cast<const char*>(data.data() + pos), count);
@@ -36,6 +45,106 @@ struct PayloadReader {
   const std::vector<std::uint8_t>& data;
   std::size_t pos = 0;
 };
+
+//=============================================================================
+// Trans / Blur (ID 6)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeBlur(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1;
+  std::int32_t roundmode = 0;
+
+  if (!reader.readI32(enabled)) {
+    preset.warnings.push_back("blur: truncated payload");
+    return nullptr;
+  }
+  reader.readI32(roundmode);  // Optional field
+
+  // Use UnknownRenderObjectEffect to preserve binary data
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Blur", entry.payload);
+}
+
+//=============================================================================
+// Trans / Scatter (ID 16)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeScatter(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1;
+
+  if (!reader.readI32(enabled)) {
+    preset.warnings.push_back("scatter: truncated payload");
+    return nullptr;
+  }
+
+  // Use UnknownRenderObjectEffect to preserve binary data
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Scatter", entry.payload);
+}
+
+//=============================================================================
+// Trans / Mosaic (ID 30)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeMosaic(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1;
+  std::int32_t quality = 50;
+  std::int32_t quality2 = 50;
+  std::int32_t blend = 0;
+  std::int32_t blendavg = 0;
+  std::int32_t onbeat = 0;
+  std::int32_t durFrames = 15;
+
+  if (!reader.readI32(enabled)) {
+    preset.warnings.push_back("mosaic: truncated payload");
+    return nullptr;
+  }
+  reader.readI32(quality);
+  reader.readI32(quality2);
+  reader.readI32(blend);
+  reader.readI32(blendavg);
+  reader.readI32(onbeat);
+  reader.readI32(durFrames);
+
+  // Use UnknownRenderObjectEffect to preserve binary data
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Mosaic", entry.payload);
+}
+
+//=============================================================================
+// Trans / Brightness (ID 22)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeBrightness(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1;
+  std::int32_t blend = 0;
+  std::int32_t blendavg = 0;
+  std::int32_t redp = 0;
+  std::int32_t greenp = 0;
+  std::int32_t bluep = 0;
+  std::int32_t dissoc = 0;
+  std::int32_t color = 0xFFFFFF;
+  std::int32_t exclude = 0;
+  std::int32_t distance = 16;
+
+  if (!reader.readI32(enabled)) {
+    preset.warnings.push_back("brightness: truncated payload");
+    return nullptr;
+  }
+  reader.readI32(blend);
+  reader.readI32(blendavg);
+  reader.readI32(redp);
+  reader.readI32(greenp);
+  reader.readI32(bluep);
+  reader.readI32(dissoc);
+  reader.readI32(color);
+  reader.readI32(exclude);
+  reader.readI32(distance);
+
+  // Use UnknownRenderObjectEffect to preserve binary data
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Brightness", entry.payload);
+}
 
 std::unique_ptr<avs::Effect> makeColorModifier(const LegacyEffectEntry& entry, ParsedPreset& preset) {
   if (entry.payload.empty()) {
@@ -80,9 +189,70 @@ std::unique_ptr<avs::Effect> makeColorModifier(const LegacyEffectEntry& entry, P
                                                recompute != 0u);
 }
 
+//=============================================================================
+// Render / Simple (ID 0)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeSimple(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  PayloadReader reader(entry.payload);
+
+  std::int32_t effect = 0;
+  std::int32_t num_colors = 0;
+
+  if (!reader.readI32(effect)) {
+    preset.warnings.push_back("simple: truncated payload");
+    return nullptr;
+  }
+  if (!reader.readI32(num_colors)) {
+    preset.warnings.push_back("simple: missing num_colors");
+    return nullptr;
+  }
+
+  // Validate num_colors and read color array
+  if (num_colors < 0 || num_colors > 16) {
+    preset.warnings.push_back("simple: invalid num_colors");
+    return nullptr;
+  }
+
+  for (int i = 0; i < num_colors; ++i) {
+    std::int32_t color = 0;
+    if (!reader.readI32(color)) {
+      preset.warnings.push_back("simple: truncated color array");
+      return nullptr;
+    }
+  }
+
+  // Use UnknownRenderObjectEffect to preserve binary data
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Simple", entry.payload);
+}
+
+//=============================================================================
+// Trans / Movement (ID 15)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeMovement(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  PayloadReader reader(entry.payload);
+
+  std::int32_t effect = 0;
+
+  if (!reader.readI32(effect)) {
+    preset.warnings.push_back("movement: truncated payload");
+    return nullptr;
+  }
+
+  // Movement has complex variable-length format depending on effect value
+  // For now, just validate the first field and preserve the data
+
+  // Use UnknownRenderObjectEffect to preserve binary data
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Movement", entry.payload);
+}
+
 }  // namespace
 
+AVS_LEGACY_REGISTER_EFFECT("Render / Simple", makeSimple);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Movement", makeMovement);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Blur", makeBlur);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Scatter", makeScatter);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Mosaic", makeMosaic);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Brightness", makeBrightness);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Color Modifier", makeColorModifier);
 
 }  // namespace avs::effects::legacy
-

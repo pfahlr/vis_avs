@@ -34,5 +34,4 @@ std::string normalizeLegacyToken(std::string_view token);
   };                                                                                               \
   static AVS_LEGACY_CONCAT(AvsLegacyAutoReg_, COUNT)                                              \
       AVS_LEGACY_CONCAT(gAvsLegacyAutoRegInstance_, COUNT);                                       \
-
-}
+  }

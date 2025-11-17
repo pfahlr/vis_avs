@@ -12,6 +12,11 @@ add_subdirectory(avs-effects-modern)
 add_subdirectory(avs-preset)
 add_subdirectory(avs-testing)
 
+# Optional audio backend
+if(UNIX AND NOT APPLE)
+  add_subdirectory(avs-audio-pipewire)
+endif()
+
 add_library(avs-platform INTERFACE)
 target_link_libraries(avs-platform INTERFACE
   avs::render-gl

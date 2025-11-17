@@ -1,6 +1,6 @@
 id: audio-pipewire-backend
 title: Add Pipewire audio backend for modern Linux
-status: IN_PROGRESS
+status: DONE
 labels: [audio, linux, platform]
 depends_on:
   - engine-input-device-select

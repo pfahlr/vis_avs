@@ -4,6 +4,7 @@
 
 #include <array>
 #include <cstdint>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -32,6 +33,13 @@ struct PayloadReader {
     std::uint32_t raw = 0;
     if (!readU32(raw)) return false;
     value = static_cast<std::int32_t>(raw);
+    return true;
+  }
+
+  bool readFloat(float& value) {
+    std::uint32_t raw = 0;
+    if (!readU32(raw)) return false;
+    std::memcpy(&value, &raw, sizeof(float));
     return true;
   }
 
@@ -512,13 +520,199 @@ std::unique_ptr<avs::Effect> makeInterleave(const LegacyEffectEntry& entry, Pars
   return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Interleave", entry.payload);
 }
 
+//=============================================================================
+// Trans / Blitter Feedback (ID 4)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeBlitterFeedback(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t scale = 0, scale2 = 0, blend = 0, beatch = 0, subpixel = 0;
+
+  reader.readI32(scale);
+  reader.readI32(scale2);
+  reader.readI32(blend);
+  reader.readI32(beatch);
+  reader.readI32(subpixel);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Blitter Feedback", entry.payload);
+}
+
+//=============================================================================
+// Trans / Roto Blitter (ID 9)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeRotoBlitter(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t zoom_scale = 0, rot_dir = 0, blend = 0, beatch = 0;
+  std::int32_t beatch_speed = 0, zoom_scale2 = 0, beatch_scale = 0, subpixel = 0;
+
+  reader.readI32(zoom_scale);
+  reader.readI32(rot_dir);
+  reader.readI32(blend);
+  reader.readI32(beatch);
+  reader.readI32(beatch_speed);
+  reader.readI32(zoom_scale2);
+  reader.readI32(beatch_scale);
+  reader.readI32(subpixel);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Roto Blitter", entry.payload);
+}
+
+//=============================================================================
+// Render / Clear screen (ID 25)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeClearScreen(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1, color = 0, blend = 0, blendavg = 0, onlyfirst = 0;
+
+  reader.readI32(enabled);
+  reader.readI32(color);
+  reader.readI32(blend);
+  reader.readI32(blendavg);
+  reader.readI32(onlyfirst);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Clear screen", entry.payload);
+}
+
+//=============================================================================
+// Render / Starfield (ID 27)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeStarfield(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1, color = 0, blend = 0, blendavg = 0, MaxStars_set = 0;
+  std::int32_t onbeat = 0, durFrames = 0;
+  float WarpSpeed = 0.0f, spdBeat = 0.0f;
+
+  reader.readI32(enabled);
+  reader.readI32(color);
+  reader.readI32(blend);
+  reader.readI32(blendavg);
+  reader.readFloat(WarpSpeed);
+  reader.readI32(MaxStars_set);
+  reader.readI32(onbeat);
+  reader.readFloat(spdBeat);
+  reader.readI32(durFrames);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Starfield", entry.payload);
+}
+
+//=============================================================================
+// Trans / Water Bump (ID 31)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeWaterBump(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1, density = 0, depth = 0, random_drop = 0;
+  std::int32_t drop_position_x = 0, drop_position_y = 0, drop_radius = 0, method = 0;
+
+  reader.readI32(enabled);
+  reader.readI32(density);
+  reader.readI32(depth);
+  reader.readI32(random_drop);
+  reader.readI32(drop_position_x);
+  reader.readI32(drop_position_y);
+  reader.readI32(drop_radius);
+  reader.readI32(method);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Water Bump", entry.payload);
+}
+
+//=============================================================================
+// Trans / Unique tone (ID 38)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeUniqueTone(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1, color = 0, blend = 0, blendavg = 0, invert = 0;
+
+  reader.readI32(enabled);
+  reader.readI32(color);
+  reader.readI32(blend);
+  reader.readI32(blendavg);
+  reader.readI32(invert);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Unique tone", entry.payload);
+}
+
+//=============================================================================
+// Trans / Interferences (ID 41)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeInterferences(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1, nPoints = 2, rotation = 0, distance = 20, alpha = 128;
+  std::int32_t rotationinc = 0, blend = 0, blendavg = 0;
+  std::int32_t distance2 = 20, alpha2 = 128, rotationinc2 = 0, rgb = 0, onbeat = 0;
+  float speed = 0.0f;
+
+  reader.readI32(enabled);
+  reader.readI32(nPoints);
+  reader.readI32(rotation);
+  reader.readI32(distance);
+  reader.readI32(alpha);
+  reader.readI32(rotationinc);
+  reader.readI32(blend);
+  reader.readI32(blendavg);
+  reader.readI32(distance2);
+  reader.readI32(alpha2);
+  reader.readI32(rotationinc2);
+  reader.readI32(rgb);
+  reader.readI32(onbeat);
+  reader.readFloat(speed);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Interferences", entry.payload);
+}
+
+//=============================================================================
+// Trans / Dynamic Shift (ID 42)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeDynamicShift(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  // Complex variable-length format with EEL strings - just preserve binary data
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Dynamic Shift", entry.payload);
+}
+
+//=============================================================================
+// Trans / Dynamic Movement (ID 43)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeDynamicMovement(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  // Complex variable-length format with EEL strings - just preserve binary data
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Dynamic Movement", entry.payload);
+}
+
+//=============================================================================
+// Trans / Fast Brightness (ID 44)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeFastBrightness(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t dir = 0;
+
+  reader.readI32(dir);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Fast Brightness", entry.payload);
+}
+
 }  // namespace
 
 AVS_LEGACY_REGISTER_EFFECT("Render / Simple", makeSimple);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Movement", makeMovement);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Fadeout", makeFadeout);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Blitter Feedback", makeBlitterFeedback);
 AVS_LEGACY_REGISTER_EFFECT("Render / OnBeat Clear", makeOnBeatClear);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Blur", makeBlur);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Roto Blitter", makeRotoBlitter);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Colorfade", makeColorfade);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Color Clip", makeColorClip);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Scatter", makeScatter);
@@ -527,11 +721,19 @@ AVS_LEGACY_REGISTER_EFFECT("Render / Dot Fountain", makeDotFountain);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Water", makeWater);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Interleave", makeInterleave);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Grain", makeGrain);
+AVS_LEGACY_REGISTER_EFFECT("Render / Clear screen", makeClearScreen);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Mirror", makeMirror);
+AVS_LEGACY_REGISTER_EFFECT("Render / Starfield", makeStarfield);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Bump", makeBump);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Mosaic", makeMosaic);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Water Bump", makeWaterBump);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Brightness", makeBrightness);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Invert", makeInvert);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Unique tone", makeUniqueTone);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Interferences", makeInterferences);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Dynamic Shift", makeDynamicShift);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Dynamic Movement", makeDynamicMovement);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Fast Brightness", makeFastBrightness);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Color Modifier", makeColorModifier);
 
 }  // namespace avs::effects::legacy

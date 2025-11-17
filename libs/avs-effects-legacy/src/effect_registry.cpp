@@ -393,15 +393,139 @@ std::unique_ptr<avs::Effect> makeInvert(const LegacyEffectEntry& entry, ParsedPr
   return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Invert", entry.payload);
 }
 
+//=============================================================================
+// Render / OnBeat Clear (ID 5)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeOnBeatClear(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t color = 0;
+  std::int32_t blend = 0;
+  std::int32_t nf = 0;
+
+  reader.readI32(color);
+  reader.readI32(blend);
+  reader.readI32(nf);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / OnBeat Clear", entry.payload);
+}
+
+//=============================================================================
+// Trans / Color Clip (ID 12)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeColorClip(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1;
+  std::int32_t color_clip = 0;
+  std::int32_t color_clip_out = 0;
+  std::int32_t color_dist = 0;
+
+  reader.readI32(enabled);
+  reader.readI32(color_clip);
+  reader.readI32(color_clip_out);
+  reader.readI32(color_dist);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Color Clip", entry.payload);
+}
+
+//=============================================================================
+// Render / Dot Grid (ID 17)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeDotGrid(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  PayloadReader reader(entry.payload);
+
+  std::int32_t num_colors = 0;
+
+  if (!reader.readI32(num_colors)) {
+    return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Dot Grid", entry.payload);
+  }
+
+  // Validate and read color array (max 16 colors)
+  if (num_colors < 0 || num_colors > 16) {
+    preset.warnings.push_back("dot grid: invalid num_colors");
+    return nullptr;
+  }
+
+  for (int i = 0; i < num_colors; ++i) {
+    std::int32_t color = 0;
+    reader.readI32(color);
+  }
+
+  std::int32_t spacing = 0, x_move = 0, y_move = 0, blend = 0;
+  reader.readI32(spacing);
+  reader.readI32(x_move);
+  reader.readI32(y_move);
+  reader.readI32(blend);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Dot Grid", entry.payload);
+}
+
+//=============================================================================
+// Render / Dot Fountain (ID 19)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeDotFountain(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t rotvel = 0;
+  std::int32_t colors[5] = {0, 0, 0, 0, 0};
+  std::int32_t angle = 0;
+  std::int32_t r = 0;
+
+  reader.readI32(rotvel);
+  for (int i = 0; i < 5; ++i) {
+    reader.readI32(colors[i]);
+  }
+  reader.readI32(angle);
+  reader.readI32(r);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Dot Fountain", entry.payload);
+}
+
+//=============================================================================
+// Trans / Interleave (ID 23)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeInterleave(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1;
+  std::int32_t x = 1, y = 1;
+  std::int32_t color = 0;
+  std::int32_t blend = 0, blendavg = 0;
+  std::int32_t onbeat = 0, x2 = 1, y2 = 1, beatdur = 4;
+
+  reader.readI32(enabled);
+  reader.readI32(x);
+  reader.readI32(y);
+  reader.readI32(color);
+  reader.readI32(blend);
+  reader.readI32(blendavg);
+  reader.readI32(onbeat);
+  reader.readI32(x2);
+  reader.readI32(y2);
+  reader.readI32(beatdur);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Interleave", entry.payload);
+}
+
 }  // namespace
 
 AVS_LEGACY_REGISTER_EFFECT("Render / Simple", makeSimple);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Movement", makeMovement);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Fadeout", makeFadeout);
+AVS_LEGACY_REGISTER_EFFECT("Render / OnBeat Clear", makeOnBeatClear);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Blur", makeBlur);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Colorfade", makeColorfade);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Color Clip", makeColorClip);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Scatter", makeScatter);
+AVS_LEGACY_REGISTER_EFFECT("Render / Dot Grid", makeDotGrid);
+AVS_LEGACY_REGISTER_EFFECT("Render / Dot Fountain", makeDotFountain);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Water", makeWater);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Interleave", makeInterleave);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Grain", makeGrain);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Mirror", makeMirror);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Bump", makeBump);

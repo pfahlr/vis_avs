@@ -1,6 +1,6 @@
 id: data-fix-manifest-duplicates
 title: Fix effects_manifest.yaml duplicate entries
-status: TODO
+status: DONE
 labels: [data, manifest, critical]
 depends_on:
   - engine-eel-scripted-parity

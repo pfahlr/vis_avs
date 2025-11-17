@@ -704,19 +704,233 @@ std::unique_ptr<avs::Effect> makeFastBrightness(const LegacyEffectEntry& entry, 
   return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Fast Brightness", entry.payload);
 }
 
+//=============================================================================
+// Render / Dot Plane (ID 1)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeDotPlane(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t rotvel = 0;
+  std::int32_t colors[5] = {0, 0, 0, 0, 0};
+  std::int32_t angle = 0, r_scaled_int = 0;
+
+  reader.readI32(rotvel);
+  for (int i = 0; i < 5; ++i) reader.readI32(colors[i]);
+  reader.readI32(angle);
+  reader.readI32(r_scaled_int);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Dot Plane", entry.payload);
+}
+
+//=============================================================================
+// Render / Oscilliscope Star (ID 2)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeOscilloscopeStar(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  // Variable-length format - preserve binary data
+  (void)preset;
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Oscilliscope Star", entry.payload);
+}
+
+//=============================================================================
+// Render / Bass Spin (ID 7)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeBassSpin(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1, colors[2] = {0, 0}, mode = 0;
+
+  reader.readI32(enabled);
+  reader.readI32(colors[0]);
+  reader.readI32(colors[1]);
+  reader.readI32(mode);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Bass Spin", entry.payload);
+}
+
+//=============================================================================
+// Render / Moving Particle (ID 8)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeMovingParticle(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1, colors = 0, maxdist = 0, size = 0, size2 = 0, blend = 0;
+
+  reader.readI32(enabled);
+  reader.readI32(colors);
+  reader.readI32(maxdist);
+  reader.readI32(size);
+  reader.readI32(size2);
+  reader.readI32(blend);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Moving Particle", entry.payload);
+}
+
+//=============================================================================
+// Render / SVP Loader (ID 10)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeSVPLoader(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  // Variable-length string format - preserve binary data
+  (void)preset;
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / SVP Loader", entry.payload);
+}
+
+//=============================================================================
+// Render / Rotating Stars (ID 13)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeRotatingStars(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  // Variable-length format - preserve binary data
+  (void)preset;
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Rotating Stars", entry.payload);
+}
+
+//=============================================================================
+// Render / Ring (ID 14)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeRing(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  // Variable-length format - preserve binary data
+  (void)preset;
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Ring", entry.payload);
+}
+
+//=============================================================================
+// Misc / Buffer Save (ID 18)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeBufferSave(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t dir = 0, which = 0, blend = 0, adjblend_val = 0;
+
+  reader.readI32(dir);
+  reader.readI32(which);
+  reader.readI32(blend);
+  reader.readI32(adjblend_val);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Misc / Buffer Save", entry.payload);
+}
+
+//=============================================================================
+// Render / Text (ID 28)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeText(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  // Complex variable-length format with structs and strings - preserve binary data
+  (void)preset;
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Text", entry.payload);
+}
+
+//=============================================================================
+// Render / AVI (ID 32)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeAVI(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  // Variable-length filename - preserve binary data
+  (void)preset;
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / AVI", entry.payload);
+}
+
+//=============================================================================
+// Misc / Custom BPM (ID 33)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeCustomBPM(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1, arbitrary = 0, skip = 0, invert = 0, arbVal = 60, skipVal = 2, skipfirst = 0;
+
+  reader.readI32(enabled);
+  reader.readI32(arbitrary);
+  reader.readI32(skip);
+  reader.readI32(invert);
+  reader.readI32(arbVal);
+  reader.readI32(skipVal);
+  reader.readI32(skipfirst);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Misc / Custom BPM", entry.payload);
+}
+
+//=============================================================================
+// Render / Picture (ID 34)
+//=============================================================================
+std::unique_ptr<avs::Effect> makePicture(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  // Variable-length filename - preserve binary data
+  (void)preset;
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Picture", entry.payload);
+}
+
+//=============================================================================
+// Trans / Dynamic Distance Modifier (ID 35)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeDynamicDistanceModifier(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  // Complex variable-length EEL expressions - preserve binary data
+  (void)preset;
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Dynamic Distance Modifier", entry.payload);
+}
+
+//=============================================================================
+// Render / SuperScope (ID 36)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeSuperScope(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  // Complex variable-length format with EEL + colors - preserve binary data
+  (void)preset;
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / SuperScope", entry.payload);
+}
+
+//=============================================================================
+// Render / Timescope (ID 39)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeTimescope(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1, color = 0, blend = 0, blendavg = 0, which_ch = 0, nbands = 0;
+
+  reader.readI32(enabled);
+  reader.readI32(color);
+  reader.readI32(blend);
+  reader.readI32(blendavg);
+  reader.readI32(which_ch);
+  reader.readI32(nbands);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Timescope", entry.payload);
+}
+
+//=============================================================================
+// Misc / Set render mode (ID 40)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeSetRenderMode(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t newmode = 0;  // Packed bitfield
+
+  reader.readI32(newmode);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Misc / Set render mode", entry.payload);
+}
+
 }  // namespace
 
 AVS_LEGACY_REGISTER_EFFECT("Render / Simple", makeSimple);
+AVS_LEGACY_REGISTER_EFFECT("Render / Dot Plane", makeDotPlane);
+AVS_LEGACY_REGISTER_EFFECT("Render / Oscilliscope Star", makeOscilloscopeStar);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Movement", makeMovement);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Fadeout", makeFadeout);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Blitter Feedback", makeBlitterFeedback);
 AVS_LEGACY_REGISTER_EFFECT("Render / OnBeat Clear", makeOnBeatClear);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Blur", makeBlur);
+AVS_LEGACY_REGISTER_EFFECT("Render / Bass Spin", makeBassSpin);
+AVS_LEGACY_REGISTER_EFFECT("Render / Moving Particle", makeMovingParticle);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Roto Blitter", makeRotoBlitter);
+AVS_LEGACY_REGISTER_EFFECT("Render / SVP Loader", makeSVPLoader);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Colorfade", makeColorfade);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Color Clip", makeColorClip);
+AVS_LEGACY_REGISTER_EFFECT("Render / Rotating Stars", makeRotatingStars);
+AVS_LEGACY_REGISTER_EFFECT("Render / Ring", makeRing);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Scatter", makeScatter);
 AVS_LEGACY_REGISTER_EFFECT("Render / Dot Grid", makeDotGrid);
+AVS_LEGACY_REGISTER_EFFECT("Misc / Buffer Save", makeBufferSave);
 AVS_LEGACY_REGISTER_EFFECT("Render / Dot Fountain", makeDotFountain);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Water", makeWater);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Interleave", makeInterleave);
@@ -724,12 +938,20 @@ AVS_LEGACY_REGISTER_EFFECT("Trans / Grain", makeGrain);
 AVS_LEGACY_REGISTER_EFFECT("Render / Clear screen", makeClearScreen);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Mirror", makeMirror);
 AVS_LEGACY_REGISTER_EFFECT("Render / Starfield", makeStarfield);
+AVS_LEGACY_REGISTER_EFFECT("Render / Text", makeText);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Bump", makeBump);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Mosaic", makeMosaic);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Water Bump", makeWaterBump);
+AVS_LEGACY_REGISTER_EFFECT("Render / AVI", makeAVI);
+AVS_LEGACY_REGISTER_EFFECT("Misc / Custom BPM", makeCustomBPM);
+AVS_LEGACY_REGISTER_EFFECT("Render / Picture", makePicture);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Dynamic Distance Modifier", makeDynamicDistanceModifier);
+AVS_LEGACY_REGISTER_EFFECT("Render / SuperScope", makeSuperScope);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Brightness", makeBrightness);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Invert", makeInvert);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Unique tone", makeUniqueTone);
+AVS_LEGACY_REGISTER_EFFECT("Render / Timescope", makeTimescope);
+AVS_LEGACY_REGISTER_EFFECT("Misc / Set render mode", makeSetRenderMode);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Interferences", makeInterferences);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Dynamic Shift", makeDynamicShift);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Dynamic Movement", makeDynamicMovement);

@@ -134,14 +134,6 @@ effects:
     kind: effect
     legacy: true
 
-  - id: trans/color_clip
-    original_file: r_colorreplace.cpp
-    token: "Trans / Color Clip"
-    category: trans
-    status: required
-    kind: effect
-    legacy: true
-
   - id: misc/comment
     original_file: r_comment.cpp
     token: "Misc / Comment"
@@ -157,14 +149,7 @@ effects:
     status: required
     kind: effect
     legacy: true
-
-  - id: trans/color_modifier
-    original_file: r_dcolormod.cpp
-    token: "Trans / Color Modifier"
-    category: trans
-    status: required
-    kind: effect
-    legacy: true
+    notes: "Uses r_contrast.cpp (enhanced version with color_clip_out and color_dist params). r_colorreplace.cpp is older simpler version not used in original build."
 
   - id: trans/dynamic_distance_modifier
     original_file: r_ddm.cpp
@@ -434,14 +419,6 @@ effects:
     original_file: r_trans.cpp
     token: "Trans / Movement"
     category: trans
-    status: required
-    kind: effect
-    legacy: true
-
-  - id: unknown_render_object
-    original_file: r_unkn.cpp
-    token: "Unknown Render Object"
-    category: unknown_render_object
     status: required
     kind: effect
     legacy: true

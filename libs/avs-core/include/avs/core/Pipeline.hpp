@@ -6,6 +6,7 @@
 
 #include <avs/core/EffectRegistry.hpp>
 #include <avs/core/ParamBlock.hpp>
+#include <avs/core/ThreadPool.hpp>
 
 namespace avs::core {
 
@@ -14,7 +15,7 @@ namespace avs::core {
  */
 class Pipeline {
  public:
-  explicit Pipeline(EffectRegistry& registry);
+  explicit Pipeline(EffectRegistry& registry, int numThreads = 1);
 
   /**
    * @brief Instantiate an effect and append it to the execution chain.
@@ -34,6 +35,17 @@ class Pipeline {
    */
   void clear();
 
+  /**
+   * @brief Set the number of threads for parallel rendering.
+   * @param numThreads Number of threads (1 = single-threaded)
+   */
+  void setThreadCount(int numThreads);
+
+  /**
+   * @brief Get the current thread count.
+   */
+  int getThreadCount() const { return threadPool_ ? threadPool_->getThreadCount() : 1; }
+
  private:
   struct Node {
     std::string key;
@@ -43,6 +55,7 @@ class Pipeline {
 
   EffectRegistry& registry_;
   std::vector<Node> nodes_;
+  std::unique_ptr<ThreadPool> threadPool_;
 };
 
 }  // namespace avs::core

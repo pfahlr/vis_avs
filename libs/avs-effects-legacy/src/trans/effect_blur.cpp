@@ -285,5 +285,218 @@ std::uint8_t R_Blur::clampByte(int value) {
   return static_cast<std::uint8_t>(value);
 }
 
+// ============================================================================
+// Multi-threaded rendering implementation
+// ============================================================================
+
+bool R_Blur::smp_render(avs::core::RenderContext& context, int threadId, int maxThreads) {
+  if (!hasFramebuffer(context)) {
+    return true;
+  }
+  return renderBoxThreaded(context, threadId, maxThreads);
+}
+
+bool R_Blur::renderBoxThreaded(avs::core::RenderContext& context, int threadId, int maxThreads) {
+  if (radius_ <= 0 || strength_ <= 0) {
+    return true;
+  }
+  if (!horizontal_ && !vertical_) {
+    return true;
+  }
+
+  const int width = std::max(0, context.width);
+  const int height = std::max(0, context.height);
+  if (width == 0 || height == 0) {
+    return true;
+  }
+
+  // Thread 0 prepares buffers
+  if (threadId == 0) {
+    ensureBuffers(width, height);
+    std::uint8_t* framebuffer = context.framebuffer.data;
+    const std::size_t total = static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 4u;
+    std::memcpy(original_.data(), framebuffer, total);
+  }
+
+  // Wait for all threads (implicit barrier in ThreadPool)
+
+  // Divide work by rows
+  const int rowsPerThread = height / maxThreads;
+  const int startRow = threadId * rowsPerThread;
+  const int endRow = (threadId == maxThreads - 1) ? height : startRow + rowsPerThread;
+
+  std::uint8_t* firstPassDst = vertical_ ? temp_.data() : blurred_.data();
+
+  // Horizontal pass (row-parallel)
+  if (horizontal_) {
+    horizontalPassThreaded(original_.data(), firstPassDst, width, height, startRow, endRow);
+  } else if (threadId == 0) {
+    const std::size_t total = static_cast<std::size_t>(width) * static_cast<std::size_t>(height) * 4u;
+    std::memcpy(firstPassDst, original_.data(), total);
+  }
+
+  // Vertical pass (also row-parallel, processing different rows)
+  if (vertical_) {
+    const std::uint8_t* verticalSrc = horizontal_ ? temp_.data() : original_.data();
+    verticalPassThreaded(verticalSrc, blurred_.data(), width, height, startRow, endRow);
+  }
+
+  // Blend (row-parallel)
+  blendThreaded(context.framebuffer.data, original_.data(), blurred_.data(), width, height, startRow, endRow);
+
+  return true;
+}
+
+void R_Blur::horizontalPassThreaded(const std::uint8_t* src, std::uint8_t* dst,
+                                    int width, int /* height */,
+                                    int startRow, int endRow) const {
+  if (!horizontal_ || radius_ <= 0) {
+    const std::size_t stride = static_cast<std::size_t>(width) * 4u;
+    const std::size_t rowBytes = stride;
+    for (int y = startRow; y < endRow; ++y) {
+      const std::size_t offset = static_cast<std::size_t>(y) * stride;
+      std::memcpy(dst + offset, src + offset, rowBytes);
+    }
+    return;
+  }
+
+  const int window = radius_ * 2 + 1;
+  const std::size_t stride = static_cast<std::size_t>(width) * 4u;
+  std::vector<int> localPrefixRow((width + 1) * 4);
+
+  for (int y = startRow; y < endRow; ++y) {
+    std::fill(localPrefixRow.begin(), localPrefixRow.end(), 0);
+    const std::uint8_t* row = src + static_cast<std::size_t>(y) * stride;
+    for (int x = 0; x < width; ++x) {
+      const std::size_t srcIndex = static_cast<std::size_t>(x) * 4u;
+      const std::size_t prefixIndex = static_cast<std::size_t>(x + 1) * 4u;
+      localPrefixRow[prefixIndex + 0] = localPrefixRow[prefixIndex - 4] + row[srcIndex + 0];
+      localPrefixRow[prefixIndex + 1] = localPrefixRow[prefixIndex - 3] + row[srcIndex + 1];
+      localPrefixRow[prefixIndex + 2] = localPrefixRow[prefixIndex - 2] + row[srcIndex + 2];
+      localPrefixRow[prefixIndex + 3] = localPrefixRow[prefixIndex - 1] + row[srcIndex + 3];
+    }
+
+    std::uint8_t* dstRow = dst + static_cast<std::size_t>(y) * stride;
+    const std::uint8_t* firstPx = row;
+    const std::uint8_t* lastPx = row + static_cast<std::size_t>(width - 1) * 4u;
+
+    for (int x = 0; x < width; ++x) {
+      const int left = x - radius_;
+      const int right = x + radius_;
+      const int clampedLeft = clampIndex(left, 0, width - 1);
+      const int clampedRight = clampIndex(right, 0, width - 1);
+      const int leftPadding = clampedLeft - left;
+      const int rightPadding = right - clampedRight;
+      const std::size_t prefixLeft = static_cast<std::size_t>(clampedLeft) * 4u;
+      const std::size_t prefixRight = static_cast<std::size_t>(clampedRight + 1) * 4u;
+      std::uint8_t* dstPx = dstRow + static_cast<std::size_t>(x) * 4u;
+
+      for (int channel = 0; channel < 4; ++channel) {
+        int sum = localPrefixRow[prefixRight + channel] - localPrefixRow[prefixLeft + channel];
+        if (leftPadding > 0) {
+          sum += leftPadding * static_cast<int>(firstPx[channel]);
+        }
+        if (rightPadding > 0) {
+          sum += rightPadding * static_cast<int>(lastPx[channel]);
+        }
+        const int rounding = roundMode_ ? window / 2 : 0;
+        dstPx[channel] = clampByte((sum + rounding) / window);
+      }
+    }
+  }
+}
+
+void R_Blur::verticalPassThreaded(const std::uint8_t* src, std::uint8_t* dst,
+                                  int width, int height,
+                                  int startRow, int endRow) const {
+  if (!vertical_ || radius_ <= 0) {
+    const std::size_t stride = static_cast<std::size_t>(width) * 4u;
+    for (int y = startRow; y < endRow; ++y) {
+      const std::size_t offset = static_cast<std::size_t>(y) * stride;
+      std::memcpy(dst + offset, src + offset, stride);
+    }
+    return;
+  }
+
+  const int window = radius_ * 2 + 1;
+  std::vector<int> localPrefixColumn((height + 1) * 4);
+
+  // Process columns within the assigned row range
+  for (int x = 0; x < width; ++x) {
+    std::fill(localPrefixColumn.begin(), localPrefixColumn.end(), 0);
+
+    // Build prefix sum for this column (full height needed)
+    for (int y = 0; y < height; ++y) {
+      const std::size_t srcIndex =
+          (static_cast<std::size_t>(y) * static_cast<std::size_t>(width) + static_cast<std::size_t>(x)) * 4u;
+      const std::size_t prefixIndex = static_cast<std::size_t>(y + 1) * 4u;
+      localPrefixColumn[prefixIndex + 0] = localPrefixColumn[prefixIndex - 4] + src[srcIndex + 0];
+      localPrefixColumn[prefixIndex + 1] = localPrefixColumn[prefixIndex - 3] + src[srcIndex + 1];
+      localPrefixColumn[prefixIndex + 2] = localPrefixColumn[prefixIndex - 2] + src[srcIndex + 2];
+      localPrefixColumn[prefixIndex + 3] = localPrefixColumn[prefixIndex - 1] + src[srcIndex + 3];
+    }
+
+    const std::uint8_t* firstPx = src + static_cast<std::size_t>(x) * 4u;
+    const std::uint8_t* lastPx =
+        src + (static_cast<std::size_t>(height - 1) * static_cast<std::size_t>(width) + static_cast<std::size_t>(x)) * 4u;
+
+    // Only process rows assigned to this thread
+    for (int y = startRow; y < endRow; ++y) {
+      const int top = y - radius_;
+      const int bottom = y + radius_;
+      const int clampedTop = clampIndex(top, 0, height - 1);
+      const int clampedBottom = clampIndex(bottom, 0, height - 1);
+      const int topPadding = clampedTop - top;
+      const int bottomPadding = bottom - clampedBottom;
+      const std::size_t prefixTop = static_cast<std::size_t>(clampedTop) * 4u;
+      const std::size_t prefixBottom = static_cast<std::size_t>(clampedBottom + 1) * 4u;
+      std::uint8_t* dstPx = dst +
+                             (static_cast<std::size_t>(y) * static_cast<std::size_t>(width) +
+                              static_cast<std::size_t>(x)) *
+                                 4u;
+
+      for (int channel = 0; channel < 4; ++channel) {
+        int sum = localPrefixColumn[prefixBottom + channel] - localPrefixColumn[prefixTop + channel];
+        if (topPadding > 0) {
+          sum += topPadding * static_cast<int>(firstPx[channel]);
+        }
+        if (bottomPadding > 0) {
+          sum += bottomPadding * static_cast<int>(lastPx[channel]);
+        }
+        const int rounding = roundMode_ ? window / 2 : 0;
+        dstPx[channel] = clampByte((sum + rounding) / window);
+      }
+    }
+  }
+}
+
+void R_Blur::blendThreaded(std::uint8_t* dst,
+                           const std::uint8_t* original,
+                           const std::uint8_t* blurred,
+                           int width,
+                           int /* height */,
+                           int startRow,
+                           int endRow) const {
+  const std::size_t stride = static_cast<std::size_t>(width) * 4u;
+  const std::size_t startOffset = static_cast<std::size_t>(startRow) * stride;
+  const std::size_t endOffset = static_cast<std::size_t>(endRow) * stride;
+
+  if (strength_ >= 256) {
+    std::memcpy(dst + startOffset, blurred + startOffset, endOffset - startOffset);
+    return;
+  }
+  if (strength_ <= 0) {
+    std::memcpy(dst + startOffset, original + startOffset, endOffset - startOffset);
+    return;
+  }
+
+  const int invStrength = 256 - strength_;
+  const int rounding = roundMode_ ? 128 : 0;
+  for (std::size_t i = startOffset; i < endOffset; ++i) {
+    const int value = static_cast<int>(blurred[i]) * strength_ + static_cast<int>(original[i]) * invStrength + rounding;
+    dst[i] = clampByte(value >> 8);
+  }
+}
+
 }  // namespace avs::effects::trans
 

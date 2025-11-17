@@ -13,18 +13,32 @@ class R_Blur : public avs::core::IEffect {
   ~R_Blur() override = default;
 
   bool render(avs::core::RenderContext& context) override;
+  bool smp_render(avs::core::RenderContext& context, int threadId, int maxThreads) override;
+  bool supportsMultiThreaded() const override { return true; }
   void setParams(const avs::core::ParamBlock& params) override;
 
  private:
   void ensureBuffers(int width, int height);
   bool renderBox(avs::core::RenderContext& context);
+  bool renderBoxThreaded(avs::core::RenderContext& context, int threadId, int maxThreads);
   void horizontalPass(const std::uint8_t* src, std::uint8_t* dst, int width, int height) const;
+  void horizontalPassThreaded(const std::uint8_t* src, std::uint8_t* dst, int width, int height,
+                              int startRow, int endRow) const;
   void verticalPass(const std::uint8_t* src, std::uint8_t* dst, int width, int height) const;
+  void verticalPassThreaded(const std::uint8_t* src, std::uint8_t* dst, int width, int height,
+                            int startRow, int endRow) const;
   void blend(std::uint8_t* dst,
              const std::uint8_t* original,
              const std::uint8_t* blurred,
              int width,
              int height) const;
+  void blendThreaded(std::uint8_t* dst,
+                     const std::uint8_t* original,
+                     const std::uint8_t* blurred,
+                     int width,
+                     int height,
+                     int startRow,
+                     int endRow) const;
 
   static int clampIndex(int value, int minValue, int maxValue);
   static std::uint8_t clampByte(int value);

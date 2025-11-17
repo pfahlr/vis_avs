@@ -1040,4 +1040,99 @@ AVS_LEGACY_REGISTER_EFFECT("Trans / Multiplier", makeMultiplier);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Multi Delay", makeMultiDelay);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Video Delay", makeVideoDelay);
 
+//=============================================================================
+// Misc / Beat Hold (Laser)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeBeatHold(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t decayMS = 0, beatSkip = 0;
+
+  reader.readI32(decayMS);
+  reader.readI32(beatSkip);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Misc / Beat Hold", entry.payload);
+}
+
+//=============================================================================
+// Render / Brennan's Effect (Laser)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeBrennan(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  // No configuration data - returns empty config
+  (void)preset;
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Brennan's Effect", entry.payload);
+}
+
+//=============================================================================
+// Render / Moving Cone (Laser)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeMovingCone(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  // Variable-length format: num_colors + colors array + 6 int32s
+  std::int32_t num_colors = 0;
+  reader.readI32(num_colors);
+
+  // Skip color array (variable length, up to 16 colors)
+  for (int i = 0; i < num_colors && i < 16; ++i) {
+    std::int32_t color = 0;
+    reader.readI32(color);
+  }
+
+  std::int32_t maxdist = 0, size = 0, size2 = 0, num_seg = 0, mode = 0, maxdist2 = 0;
+  reader.readI32(maxdist);
+  reader.readI32(size);
+  reader.readI32(size2);
+  reader.readI32(num_seg);
+  reader.readI32(mode);
+  reader.readI32(maxdist2);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Moving Cone", entry.payload);
+}
+
+//=============================================================================
+// Render / Moving Line (Laser)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeMovingLine(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  // Variable-length format: num_colors + colors array + 4 int32s
+  std::int32_t num_colors = 0;
+  reader.readI32(num_colors);
+
+  // Skip color array (variable length, up to 16 colors)
+  for (int i = 0; i < num_colors && i < 16; ++i) {
+    std::int32_t color = 0;
+    reader.readI32(color);
+  }
+
+  std::int32_t maxdist = 0, size = 0, size2 = 0, maxbeatcnt = 0;
+  reader.readI32(maxdist);
+  reader.readI32(size);
+  reader.readI32(size2);
+  reader.readI32(maxbeatcnt);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Moving Line", entry.payload);
+}
+
+//=============================================================================
+// Misc / Transform (Laser)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeTransform(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  // Complex variable-length format with EEL expressions
+  // Format: int32 rectangular + byte version_flag + variable strings
+  // Just preserve binary data as this is complex
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Misc / Transform", entry.payload);
+}
+
+AVS_LEGACY_REGISTER_EFFECT("Misc / Beat Hold", makeBeatHold);
+AVS_LEGACY_REGISTER_EFFECT("Render / Brennan's Effect", makeBrennan);
+AVS_LEGACY_REGISTER_EFFECT("Render / Moving Cone", makeMovingCone);
+AVS_LEGACY_REGISTER_EFFECT("Render / Moving Line", makeMovingLine);
+AVS_LEGACY_REGISTER_EFFECT("Misc / Transform", makeTransform);
+
 }  // namespace avs::effects::legacy

@@ -23,7 +23,14 @@ effect so that we can exercise end-to-end decoding.
      --out build/captures/phase1/<preset>
    ```
    The command emits `hashes.txt` plus `frame_00000.png … frame_00179.png` in the
-   chosen output directory.
+   chosen output directory. Developers who only need the shorter 10-frame capture
+   expected by the automated tests can instead run the helper script:
+   ```bash
+   python3 tests/scripts/generate_phase1_goldens.py --install-to-golden --overwrite
+   ```
+   The script drives the same `avs-player` binary, defaults to ten frames per
+   preset, and mirrors the results into the golden directories when
+   `--install-to-golden` is supplied.
 3. Copy the resulting files into the matching folder under
    `tests/golden/phase1/<preset>/` (replacing the placeholder README).  The
    integration tests expect:

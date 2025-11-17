@@ -1,0 +1,520 @@
+avs_spec:
+  version: 1.0
+  title: "AVS Base Effects: Linux Implementation Master Spec"
+  target_os: linux
+
+  scope:
+    summary: >
+      Implement the canonical AVS rendering pipeline and base components on Linux
+      (buffers, blending, timing, EEL-driven effects) with parity to AVS 2.81d.
+    targets:
+      - lib: libavs.so
+      - frontends:
+          - headless_cli: avs-render (JSON/YAML preset in, frames/video out)
+          - live_view: SDL2/SDL3 window (optional)
+    non_goals:
+      - Full Winamp UI/editor parity
+      - Rare/third-party APEs beyond the listed built-in subset
+
+  preset_model:
+    component_tree:
+      groups: ["Render", "Trans", "Misc"]
+      output_modes: ["Replace", "Add", "50/50", "Max", "Min", "Ignore"]
+      sampling:
+        filter: ["Nearest", "Bilinear"]
+        wrap: ["Clamp", "Wrap", "Mirror"]
+      coordinates:
+        normalized_xy: true
+        pixel_space: true
+    parameters:
+      primitive_types: ["bool", "int", "float", "color", "string", "select", "resource"]
+      compound_types: ["list"]
+
+  engine:
+    timing:
+      timebase: audio_driven
+      fps_mode: "vsync | fixed | uncapped"
+      fps_hint: 60
+      dt_source: audio_block_duration
+      time_vars:
+        t: "seconds since preset load"
+        beat: "beat gate 0/1 with hold_ms, cooldown_ms"
+    buffers:
+      color_format: RGBA8888
+      gamma: sRGB
+      origin: top_left
+      storage: row_major
+      main: "RGBA8888"
+      prev: true
+      temp: true
+      extra_buffers: ["A", "B"]  # user buffers
+      registers: ["A", "B", "C", "D", "E"]  # for Save/Restore components
+    color:
+      premultiplied_alpha: false
+      colorspace: sRGB
+      channel_depth: 8bit
+      overflow: clamp
+    audio:
+      capture_backends: ["pipewire_pulse", "portaudio", "jack (optional)"]
+      sample_spec:
+        sample_rate: 44100
+        channels: 2
+        format: f32
+      stream:
+        block_size: 1024
+      features:
+        windows: ["hann", "hamming", "blackman"]
+        fft_impl: ["kissFFT", "FFTW3"]
+        nfft: [512, 1024, 2048, 4096]
+        outputs:
+          - { name: "oscL/oscR", desc: "time-domain wave for scopes" }
+          - { name: "specL/specR", desc: "magnitude spectrum (linear & log bins)" }
+          - { name: "beat", desc: "energy-based beat gate with decay/hold" }
+      beat_detection:
+        method: energy_envelope_adaptive_threshold
+        window_ms: 12
+        decay: 0.97
+        sensitivity: medium
+        outputs: ["beat_flag", "bpm_estimate", "peak_strength"]
+    scripting:
+      language: "EEL2 (NSEEL-compatible)"
+      precision: f32
+      variables_common:
+        per_frame: ["frame", "t", "beat", "bass", "mid", "treb", "w", "h", "iw", "ih", "q1..q8", "t1..t8"]
+        per_point: ["i", "n", "x", "y", "r", "d", "v"]
+      builtins:
+        trig: ["sin", "cos", "tan", "atan2"]
+        math: ["abs", "min", "max", "pow", "sqrt", "log", "exp", "rand", "randf"]
+        mix: ["lerp(a,b,k)"]
+        signal: ["getosc(ch,bin)", "getspec(ch,bin,log)"]
+        cond: ["if(cond,a,b)", "select(idx,...)"]
+      coord_spaces:
+        - pixel_xy: [0..w-1, 0..h-1]
+        - norm_uv: [0..1, 0..1]
+        - centered_xy: [-1..1, -1..1]
+      safety:
+        max_ops_per_frame: 2000000
+        timeout_ms: 8
+        max_memory_kb: 256
+        sanitize:
+          division_by_zero: clamp_eps
+          NaN: sanitize_to_zero
+        loop_guards: true
+      jit: false  # interpreter default; optional JIT later
+    renderer:
+      api: ["CPU blitter", "OpenGL 3.x (optional)"]
+      sdl:
+        version: ["SDL2", "SDL3"]
+        window: "Resizable, vsync toggle"
+        texture_upload: "streaming RGBA"
+      threading:
+        model: double_buffered
+        worker_threads: "min(cores, 4)"
+      perf:
+        multithread: true
+        tiling: "row/column tiles for CPU effects"
+
+  io_and_cli:
+    preset_io:
+      formats:
+        - avs_binary: read_only
+        - avs_json: read_write
+        - avs_yaml: read_write
+    media_output:
+      - images: ["png", "ppm"]
+      - video: ["y4m", "ffmpeg_pipe (optional)"]
+    cli_flags:
+      - "--in <preset.json|.yaml|.avsbin>"
+      - "--audio-device \"<id|name>\""
+      - "--list-input-devices"
+      - "--frames N | --seconds S"
+      - "--out-dir ./out"
+      - "--out-video ./out/out.y4m"
+      - "--seed <int>"
+      - "--headless | --windowed"
+      - "--profile"
+      - "--deterministic"
+      - "--fps <int>"
+
+  render_pipeline:
+    order_of_operations: |
+      For each frame:
+        1) Pull audio block; update beat detector and analysis buffers (FFT if needed).
+        2) Evaluate per-frame EEL for active effects top→bottom.
+        3) For draw-style effects (e.g., Superscope), run per-point/per-pixel loops.
+        4) For transforms, sample from input buffer(s) into output with defined wrap/blend.
+        5) Composite into current framebuffer using the effect’s blend mode.
+        6) Swap current→prev; maintain A/B registers and user buffers as needed.
+    blending:
+      default: src_over
+      modes: ["Add", "Subtract", "Multiply", "Max", "Min", "Average", "Xor", "Replace", "50/50"]
+    sampling:
+      default_filter: Nearest
+      optional_filter: Bilinear
+      default_wrap: Clamp
+      movement_wrap_default: Wrap
+    determinism:
+      random_source: xoshiro128**
+      seed_scopes: ["preset", "effect"]
+
+  effects:
+    Render:
+      - name: "Oscilloscope"
+        params:
+          source: { type: "select", options: ["Left", "Right", "Mix"] }
+          draw_mode: { type: "select", options: ["Dots", "Lines"] }
+          thickness: { type: "int", min: 1, max: 8 }
+          color: { type: "color" }
+          alpha: { type: "float", min: 0.0, max: 1.0 }
+          smoothing: { type: "float", min: 0.0, max: 1.0 }
+        impl:
+          path: "Time-domain osc → polyline/dots; EMA smoothing"
+        output: "blended"
+      - name: "Spectrum Analyzer"
+        params:
+          scale: { type: "select", options: ["Linear", "Log"] }
+          falloff: { type: "float", min: 0.0, max: 1.0 }
+          color: { type: "color" }
+          bars: { type: "int", min: 32, max: 512 }
+          alpha: { type: "float", min: 0.0, max: 1.0 }
+        impl:
+          path: "FFT magnitudes → bars/lines with peak hold/falloff"
+        output: "blended"
+      - name: "Dots/Lines"
+        params:
+          count: { type: "int", min: 1, max: 4096 }
+          distribution: { type: "select", options: ["Random", "Circle", "Grid"] }
+          color: { type: "color" }
+          thickness: { type: "int", min: 1, max: 8 }
+        impl:
+          path: "Deterministic RNG seeded per frame"
+        output: "blended"
+      - name: "Starfield"
+        params:
+          stars: { type: "int", min: 64, max: 8192 }
+          speed: { type: "float", min: 0.0, max: 5.0 }
+          warp_center: { type: "float", min: 0.0, max: 1.0 }
+          color: { type: "color" }
+        impl:
+          path: "Project Z-moving points with perspective; respawn on exit"
+        output: "blended"
+      - name: "Text"
+        params:
+          string: { type: "string" }
+          font: { type: "resource" }
+          size_px: { type: "int", min: 6, max: 256 }
+          align: { type: "select", options: ["Left", "Center", "Right"] }
+          color: { type: "color" }
+          shadow: { type: "bool" }
+          pixel_snap: { type: "bool" }
+          position_px: { type: "list", children: [{ name: "x", type: "int" }, { name: "y", type: "int" }] }
+        impl:
+          path: "FreeType/SDL_ttf → alpha blend"
+        output: "blended"
+      - name: "Picture"
+        params:
+          image: { type: "resource" }
+          fit: { type: "select", options: ["Stretch", "Contain", "Cover", "Tile"] }
+          alpha: { type: "float", min: 0.0, max: 1.0 }
+          sampling: { type: "select", options: ["Nearest", "Bilinear"] }
+        impl:
+          path: "Upload or swizzle; blit/quad"
+        output: "blended"
+      - name: "Superscope"
+        params:
+          n: { type: "int", min: 1, max: 32768 }
+          mode: { type: "select", options: ["Dots", "Lines"] }
+          thickness: { type: "int", min: 1, max: 8 }
+          color: { type: "color" }
+          code:
+            type: "list"
+            children:
+              - { name: "init", type: "string" }
+              - { name: "per_frame", type: "string" }
+              - { name: "per_point", type: "string" }
+        impl:
+          path: "Run EEL2 init/per_frame; per_point for i∈[0..n) → x,y[,col,thick]"
+          perf: "Hoist invariants; vectorize point loop"
+        tests:
+          - { name: "circle_lines", preset: "samples/superscope_circle.json", expect: "golden/superscope_circle.png" }
+        output: "blended"
+      - name: "Triangles"
+        params:
+          code: { type: "list", children: [{ name: "init", type: "string" }, { name: "frame", type: "string" }, { name: "beat", type: "string" }] }
+          edges: { type: "int", min: 3, max: 3 }
+          filled: { type: "bool" }
+        output: "blended"
+      - name: "Shapes"
+        params:
+          sides: { type: "int", min: 3, max: 64 }
+          radius: { type: "float", min: 0.0, max: 1.0 }
+          rotate_speed: { type: "float", min: -10.0, max: 10.0 }
+          color: { type: "color" }
+        output: "blended"
+      - name: "Dot Grid"
+        params:
+          spacing: { type: "int", min: 2, max: 64 }
+          gain: { type: "float", min: 0.0, max: 4.0 }
+          color: { type: "color" }
+        output: "blended"
+
+    Trans:
+      - name: "Movement"
+        params:
+          source_mapped: { type: "bool" }
+          bilinear: { type: "bool" }
+          wrap: { type: "bool" }
+          code:
+            type: "list"
+            children:
+              - { name: "init", type: "string" }
+              - { name: "per_frame", type: "string" }
+              - { name: "per_pixel", type: "string", description: "set x,y (or r,d) to sample source" }
+        impl:
+          path: "Dest pixel eval → sample src(x,y) with filter/wrap"
+          coords: "Normalized [-1..1] + polar r,d"
+        output: "Replace"
+      - name: "Dynamic Movement"
+        params:
+          code:
+            type: "list"
+            children:
+              - { name: "init", type: "string" }
+              - { name: "on_beat", type: "string" }
+              - { name: "per_frame", type: "string" }
+              - { name: "per_pixel", type: "string" }
+          bilinear: { type: "bool" }
+          wrap: { type: "bool" }
+        impl:
+          path: "Movement + beat-driven state"
+        output: "Replace"
+      - name: "Dynamic Distance Modifier"
+        params:
+          code: { type: "list", children: [{ name: "init", type: "string" }, { name: "per_frame", type: "string" }, { name: "per_pixel", type: "string" }] }
+          bilinear: { type: "bool" }
+          wrap: { type: "bool" }
+        output: "Replace"
+      - name: "Dynamic Shift"
+        params:
+          code: { type: "list", children: [{ name: "init", type: "string" }, { name: "per_frame", type: "string" }, { name: "per_pixel", type: "string" }] }
+        output: "Replace"
+      - name: "Zoom/Rotate"
+        params:
+          zoom: { type: "float", min: 0.1, max: 5.0 }
+          rotate_deg: { type: "float", min: -360, max: 360 }
+          center: { type: "list", children: [{ name: "x", type: "float" }, { name: "y", type: "float" }] }
+          bilinear: { type: "bool" }
+          wrap: { type: "bool" }
+        impl:
+          path: "Affine inverse map with bilinear sample"
+        output: "Replace"
+      - name: "Mirror"
+        params:
+          axis: { type: "select", options: ["Horizontal", "Vertical", "Quad"] }
+        impl:
+          path: "Sample from mirrored coordinates"
+        output: "Replace"
+      - name: "Convolution 3x3"
+        params:
+          kernel:
+            type: "list"
+            children:
+              - { name: "k00", type: "float" } # ... through k22
+          normalize: { type: "bool" }
+          clamp: { type: "bool" }
+        impl:
+          path: "Tiled separable fast path for Gaussian; general 3x3 fallback"
+        output: "Replace"
+      - name: "Blur (Box)"
+        params:
+          radius: { type: "int", min: 1, max: 16 }
+          passes: { type: "int", min: 1, max: 4 }
+        impl:
+          path: "Separable horizontal+vertical box blur"
+        output: "Replace"
+      - name: "Color Map"
+        params:
+          palette: { type: "list", children: [{ name: "stop", type: "float" }, { name: "color", type: "color" }] }
+          channel_mode: { type: "select", options: ["Luma", "RGB"] }
+        impl:
+          path: "Palette lookup by luma or per-channel"
+        output: "Replace"
+      - name: "Invert"
+        params: {}
+        impl:
+          path: "c = 1 - c"
+        output: "Replace"
+      - name: "Fadeout"
+        params:
+          amount: { type: "float", min: 0.0, max: 1.0 }
+        impl:
+          path: "dst = lerp(src, black, amount)"
+        output: "Replace"
+      - name: "Bump"
+        params:
+          height_source: { type: "select", options: ["Luma", "R", "G", "B"] }
+          amount: { type: "float", min: -2.0, max: 2.0 }
+          light_dir: { type: "list", children: [{ name: "x", type: "float" }, { name: "y", type: "float" }] }
+        impl:
+          path: "Sobel gradients; perturb sample along light_dir"
+        output: "Replace"
+      - name: "Interferences"
+        params:
+          freq: { type: "float", min: 0.0, max: 20.0 }
+          amplitude: { type: "float", min: 0.0, max: 2.0 }
+        impl:
+          path: "Sine/cos moiré field layered and animated"
+        output: "Replace"
+      - name: "Fast Brightness"
+        params:
+          gain: { type: "float", min: 0.0, max: 4.0 }
+        impl:
+          path: "Per-channel multiply + clamp"
+        output: "Replace"
+      - name: "Grain"
+        params:
+          strength: { type: "float", min: 0.0, max: 1.0 }
+          seed: { type: "int", min: 0, max: 2147483647 }
+        impl:
+          path: "Additive noise (deterministic RNG)"
+        output: "Replace"
+      - name: "Interleave"
+        params:
+          mode: { type: "select", options: ["Rows", "Columns"] }
+        impl:
+          path: "Alternate from A/B buffers"
+        output: "Replace"
+
+    Misc:
+      - name: "Effect List"
+        can_have_children: true
+        params:
+          clear_frame: { type: "bool" }
+          code: { type: "list", children: [{ name: "enabled", type: "bool" }, { name: "init", type: "string" }, { name: "per_frame", type: "string" }] }
+          output: { type: "select", options: ["Replace", "Add", "50/50", "Max", "Min", "Ignore"] }
+        impl:
+          path: "Exec children in order; blend into parent according to output"
+      - name: "Global Variables"
+        params:
+          variables: { type: "list", children: [{ name: "name", type: "string" }, { name: "init", type: "string" }] }
+        impl:
+          path: "Shared EEL2 symbols across components"
+      - name: "Save Buffer"
+        params:
+          register: { type: "select", options: ["A", "B", "C", "D", "E"] }
+        impl:
+          path: "Copy main → register"
+      - name: "Restore Buffer"
+        params:
+          register: { type: "select", options: ["A", "B", "C", "D", "E"] }
+          op: { type: "select", options: ["Replace", "Add", "50/50", "Max", "Min"] }
+        impl:
+          path: "Blend register → main using op"
+      - name: "OnBeat Clear"
+        params:
+          amount: { type: "float", min: 0.0, max: 1.0 }
+        impl:
+          path: "If beat gate: fade to black by amount (one-shot)"
+      - name: "Clear Screen"
+        params:
+          color: { type: "color" }
+          on_beat_only: { type: "bool" }
+        impl:
+          path: "Clear to color (optionally gated by beat)"
+
+  builtin_apes_on_linux:
+    note: >
+      Historically third-party APEs shipped as built-ins in modern Linux forks.
+      Include them to satisfy many popular presets.
+    list:
+      - ConvolutionFilter
+      - Texer
+      - TexerII
+      - AVSTrans
+      - PictureII
+      - Normalise
+      - Colormap
+      - AddBorders
+      - Triangle
+      - GlobalVariables
+      - MultiFilter
+      - FramerateLimiter
+
+  compatibility_matrix:
+    target_version: "AVS 2.81d semantics"
+    pixel_math: "8-bit clamp; channel-wise"
+    wrap_defaults: "Wrap for movement-like transforms; Clamp otherwise"
+    superscope:
+      line_join: none
+      aa: optional
+    text:
+      font_metrics: "FreeType; minor glyph differences vs GDI acceptable"
+    performance:
+      sse2: enabled
+      neon: optional
+    deterministic_mode:
+      description: "Fixed dt and seeded RNG for golden tests"
+      flags: ["--deterministic", "--seed N", "--fps 60"]
+
+  golden_testing:
+    renderer:
+      output: png
+      size: [640, 480]
+    vectors:
+      - id: t_superscope_circle
+        preset: tests/presets/superscope_circle.json
+        frames: 120
+        expect: tests/golden/superscope_circle/frame_%04d.png
+      - id: t_dynamic_move_spinzoom
+        preset: tests/presets/dynmove_spinzoom.json
+        frames: 180
+        expect: tests/golden/dynmove_spinzoom/frame_%04d.png
+      - id: t_fadeout_chain
+        preset: tests/presets/fadeout_chain.json
+        frames: 90
+        expect: tests/golden/fadeout_chain/frame_%04d.png
+    tolerances:
+      per_pixel: exact
+      allowed_diffs: { count: 0 }
+    logs:
+      metrics: ["fps", "cpu_ms", "mem_mb"]
+      dump: runs/metrics.jsonl
+    headless_cli:
+      command: "avs-render --in <preset.json> --frames 120 --out-dir tests/golden/run"
+
+  linux_impl:
+    graphics:
+      sdl: { preferred: "SDL2 (stable) | SDL3 (ok)", texture_streaming: true, vsync_default: false }
+      gl_optional:
+        benefits: "Fast Movement/Blur with shaders"
+        fallback: "CPU tiles; AVX2 if available"
+    audio_routing:
+      default: "PipeWire (Pulse compatibility) or JACK"
+      device_selection: "Map --input-device to PortAudio/JACK device index/name"
+      loopback: "Use monitor sources or JACK graph to route player → vis_avs → speakers"
+    fonts_images:
+      fonts: "FreeType + SDL_ttf"
+      images: "stb_image"
+    eel2_runtime:
+      source: "Cockos WDL/EEL2"
+      compile_flags: ["-DEEL_USE_FP64", "-DEEL_NO_WARN"]
+      integration: "bind getosc/getspec/time/beat; sandbox per-frame; deterministic RNG"
+    packaging:
+      deps: ["kissfft|fftw3", "freetype2", "stb_image", "SDL2|SDL3"]
+      build:
+        system: "CMake"
+        generator: "Ninja|Make"
+        options:
+          - -DAVS_WITH_PIPEWIRE=ON
+          - -DAVS_WITH_SDL=ON
+          - -DAVS_WITH_TESTS=ON
+    perf_tips:
+      - "Favor separable blur"
+      - "Cache sin/cos tables for starfield/oscillators"
+      - "Hoist EEL constants from point loop to frame section"
+
+  open_questions:
+    - "Validate exact blend modes against reference DLL (2.81d)"
+    - "Confirm EEL intrinsic set vs. legacy"
+    - "Decide on bilinear sampling toggle defaults for Movement"
+

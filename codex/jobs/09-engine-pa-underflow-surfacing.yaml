@@ -1,6 +1,6 @@
 id: engine-pa-underflow-surfacing
 title: Detect and surface PortAudio input underflow
-status: READY
+status: DONE
 labels: [audio, portaudio, reliability]
 depends_on: []
 goal: >
@@ -11,6 +11,7 @@ steps:
   - Add a small unit test for the helper that processes callback data.
 acceptance_criteria:
   - UI reports an error instead of endless "rms 0.000" when capture fails.
+  - All required tests execute via ctest and pass.
 test_hook:
   - "Unit test simulating null input sets underflow flag and triggers error path."
 files_touched:

@@ -1,6 +1,6 @@
 id: engine-eel-scripted-parity
 title: Restore AVS EEL built-ins & ScriptedEffect semantics
-status: READY
+status: DONE
 labels: [scripting, eel, presets]
 depends_on:
   - presets-binary-parser
@@ -13,6 +13,7 @@ steps:
   - Add regression presets (Superscope/ColorMod) with golden hashes across resolutions.
 acceptance_criteria:
   - Scripts produce visuals matching legacy outputs within tolerance; color mods transform input frames (not clear-to-black).
+  - All required tests execute via ctest and pass.
 test_hook:
   - "ctest: golden hash tests for Superscope/ColorMod presets at multiple resolutions."
 files_touched:

@@ -1,0 +1,3 @@
+# Micro preset for additive blending: background red, foreground green
+overlay op=replace fg=0xff0000
+blend op=additive fg=0x00ff00

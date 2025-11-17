@@ -1,6 +1,9 @@
 #include <gtest/gtest.h>
+#if AVS_BUILD_AUDIO
 #include <portaudio.h>
+#endif
 
+#include <algorithm>
 #include <array>
 #include <cctype>
 #include <chrono>
@@ -8,17 +11,31 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <iomanip>
 #include <map>
 #include <optional>
 #include <sstream>
 #include <thread>
+#include <vector>
 
-#include "avs/audio_portaudio_internal.hpp"
-#include "avs/effects.hpp"
-#include "avs/engine.hpp"
-#include "avs/fs.hpp"
-#include "avs/preset.hpp"
+#if AVS_BUILD_AUDIO
+#include <avs/audio_portaudio_internal.hpp>
+#endif
+
+#include <avs/effects.hpp>
+#include <avs/effects_render.hpp>
+#include <avs/engine.hpp>
+#include <avs/fs.hpp>
+#include <avs/preset.hpp>
+#include <avs/registry.hpp>
+
+#if __has_include(<portaudio.h>)
+#include <avs/audio_portaudio_internal.hpp>
+#define AVS_TEST_HAS_PORTAUDIO 1
+#else
+#define AVS_TEST_HAS_PORTAUDIO 0
+#endif
 
 using namespace avs;
 
@@ -143,6 +160,52 @@ std::string renderPresetHash(std::vector<std::unique_ptr<Effect>> chain, int w, 
 
 }  // namespace
 
+namespace {
+
+struct FrameView {
+  std::vector<std::uint8_t> data;
+  FrameBufferView view;
+};
+
+FrameView makeFrameView(int width, int height) {
+  FrameView fv;
+  fv.data.assign(static_cast<std::size_t>(width) * height * 4u, 0);
+  fv.view.data = fv.data.data();
+  fv.view.width = width;
+  fv.view.height = height;
+  fv.view.stride = width * 4;
+  return fv;
+}
+
+struct RenderFixture {
+  TimingInfo timing{};
+  AudioFeatures audio{};
+  FrameBuffers buffers{};
+  RNG rng{};
+  ProcessContext ctx;
+
+  RenderFixture(FrameBufferView& current, FrameBufferView& previous)
+      : buffers{current, previous}, ctx{timing, audio, buffers, &rng, nullptr} {
+    timing.deterministic = true;
+    timing.fps_hint = 60;
+  }
+};
+
+std::string hashBytes(const std::vector<std::uint8_t>& data) {
+  constexpr std::uint64_t kOffset = 1469598103934665603ull;
+  constexpr std::uint64_t kPrime = 1099511628211ull;
+  std::uint64_t hash = kOffset;
+  for (std::uint8_t byte : data) {
+    hash ^= byte;
+    hash *= kPrime;
+  }
+  std::ostringstream oss;
+  oss << std::hex << std::setfill('0') << std::setw(16) << hash;
+  return oss.str();
+}
+
+}  // namespace
+
 TEST(MotionBlurEffect, AveragesWithHistory) {
   Framebuffer in;
   in.w = 1;
@@ -263,6 +326,57 @@ TEST(PresetParser, ParsesBinaryColorModifier) {
   EXPECT_EQ(scripted->pixelScript(), "red=red; green=green; blue=blue;");
 }
 
+TEST(PresetParser, ParsesLegacyBinaryPreset) {
+  namespace fs = std::filesystem;
+  auto source = fs::path(SOURCE_DIR) / "tests/data/simple.avs";
+  std::ifstream in(source, std::ios::binary);
+  ASSERT_TRUE(in);
+  std::vector<char> data((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+  const std::string prefix = "Nullsoft AVS Preset ";
+  auto prefixPos = std::search(data.begin(), data.end(), prefix.begin(), prefix.end());
+  ASSERT_NE(prefixPos, data.end());
+  auto versionBegin = prefixPos;
+  std::advance(versionBegin, static_cast<std::vector<char>::difference_type>(prefix.size()));
+  auto versionEnd = std::find(versionBegin, data.end(), '\x1a');
+  ASSERT_NE(versionEnd, data.end());
+  ASSERT_GE(std::distance(versionBegin, versionEnd), 3);
+  const std::array<char, 3> legacyVersion{'0', '.', '1'};
+  std::vector<char> legacy = data;
+  auto versionIndex = std::distance(data.begin(), versionBegin);
+  std::copy(legacyVersion.begin(), legacyVersion.end(), legacy.begin() + versionIndex);
+  auto tmp = fs::temp_directory_path() / "legacy_preset.avs";
+  {
+    std::ofstream out(tmp, std::ios::binary);
+    ASSERT_TRUE(out);
+    out.write(legacy.data(), static_cast<std::streamsize>(legacy.size()));
+  }
+  auto preset = avs::parsePreset(tmp);
+  EXPECT_TRUE(preset.warnings.empty());
+  ASSERT_EQ(preset.chain.size(), 1u);
+  auto* scripted = dynamic_cast<avs::ScriptedEffect*>(preset.chain[0].get());
+  ASSERT_NE(scripted, nullptr);
+  EXPECT_EQ(scripted->frameScript(), "red=bass; green=mid; blue=treb;");
+  EXPECT_EQ(scripted->pixelScript(), "red=red; green=green; blue=blue;");
+  fs::remove(tmp);
+}
+
+TEST(PresetParser, WarnsWhenEffectIsUndecodedButRecognized) {
+  namespace fs = std::filesystem;
+  auto preset = avs::parsePreset(fs::path(SOURCE_DIR) / "tests/data/phase1/fadeout_color.avs");
+  ASSERT_FALSE(preset.warnings.empty());
+  const std::string& warning = preset.warnings.front();
+  EXPECT_NE(warning.find("preset loader does not yet decode effect: 3 (Trans / Fadeout)"),
+            std::string::npos);
+  ASSERT_EQ(preset.chain.size(), 1u);
+  auto* unknown = dynamic_cast<avs::UnknownRenderObjectEffect*>(preset.chain.front().get());
+  ASSERT_NE(unknown, nullptr);
+  EXPECT_EQ(unknown->originalToken(), "Trans / Fadeout");
+  EXPECT_FALSE(unknown->rawPayload().empty());
+  ASSERT_FALSE(preset.effects.empty());
+  EXPECT_EQ(preset.effects.front().effectId, 3u);
+  EXPECT_EQ(preset.effects.front().payload, unknown->rawPayload());
+}
+
 TEST(PresetParser, ParsesNestedRenderLists) {
   auto preset = avs::parsePreset(std::filesystem::path(SOURCE_DIR) / "tests/data/nested_list.avs");
   EXPECT_TRUE(preset.warnings.empty());
@@ -273,6 +387,15 @@ TEST(PresetParser, ParsesNestedRenderLists) {
   EXPECT_NE(dynamic_cast<avs::ScriptedEffect*>(composite->children()[0].get()), nullptr);
   ASSERT_EQ(preset.comments.size(), 1u);
   EXPECT_EQ(preset.comments[0], "Nested list comment");
+}
+
+TEST(PresetParser, ReadsFirstEffectAfterExtendedHeader) {
+  namespace fs = std::filesystem;
+  auto preset = avs::parsePreset(fs::path(SOURCE_DIR) / "tests/data/extended_header.avs");
+  EXPECT_TRUE(preset.warnings.empty());
+  ASSERT_EQ(preset.comments.size(), 1u);
+  EXPECT_EQ(preset.comments[0], "Hello!");
+  EXPECT_TRUE(preset.unknown.empty());
 }
 
 TEST(PresetParser, HandlesExtendedRenderListHeader) {
@@ -326,6 +449,7 @@ TEST(ScriptedEffect, ColorModifierLegacyHashes) {
   }
 }
 
+#if AVS_BUILD_PLATFORM
 TEST(FileWatcher, DetectsModification) {
   auto tmp = std::filesystem::temp_directory_path() / "watch.txt";
   {
@@ -343,6 +467,10 @@ TEST(FileWatcher, DetectsModification) {
   EXPECT_TRUE(changed);
   std::filesystem::remove(tmp);
 }
+#endif  // AVS_BUILD_PLATFORM
+
+
+#if AVS_TEST_HAS_PORTAUDIO
 
 TEST(PortAudioCallback, NullInputRaisesUnderflowFlag) {
   std::vector<float> ring(8, 1.0f);
@@ -374,7 +502,7 @@ TEST(PortAudioNegotiation, FallsBackToDefaultRate) {
   request.requestedSampleRate = 44100;
   request.requestedChannels = 2;
 
-  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 2};
+  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 2, 2};
   int queryCount = 0;
   auto result =
       avs::portaudio_detail::negotiateStream(request, device, [&](int channels, double rate) {
@@ -396,7 +524,7 @@ TEST(PortAudioNegotiation, KeepsRequestedFormatWhenSupported) {
   request.requestedSampleRate = 48000;
   request.requestedChannels = 2;
 
-  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 4};
+  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 4, 4};
   auto result =
       avs::portaudio_detail::negotiateStream(request, device, [&](int channels, double rate) {
         EXPECT_EQ(channels, 2);
@@ -415,7 +543,7 @@ TEST(PortAudioNegotiation, ClampsRequestedChannelsToDeviceCapabilities) {
   request.engineChannels = 2;
   request.requestedChannels = 4;
 
-  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 2};
+  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 2, 2};
   int queryCount = 0;
   auto result =
       avs::portaudio_detail::negotiateStream(request, device, [&](int channels, double rate) {
@@ -428,6 +556,64 @@ TEST(PortAudioNegotiation, ClampsRequestedChannelsToDeviceCapabilities) {
   EXPECT_EQ(result.channelCount, 2);
   EXPECT_FALSE(result.usedFallbackRate);
   EXPECT_EQ(queryCount, 1);
+}
+
+TEST(PortAudioNegotiation, UsesDeviceDefaultSampleRateWhenRequested) {
+  avs::portaudio_detail::StreamNegotiationRequest request;
+  request.engineSampleRate = 48000;
+  request.engineChannels = 2;
+  request.useDeviceDefaultSampleRate = true;
+
+  avs::portaudio_detail::StreamNegotiationDeviceInfo device{44100.0, 2, 1};
+  int queryCount = 0;
+  auto result =
+      avs::portaudio_detail::negotiateStream(request, device, [&](int channels, double rate) {
+        ++queryCount;
+        EXPECT_EQ(channels, 2);
+        return std::fabs(rate - 44100.0) < 1e-6;
+      });
+
+  EXPECT_TRUE(result.supported);
+  EXPECT_FALSE(result.usedFallbackRate);
+  EXPECT_DOUBLE_EQ(result.sampleRate, 44100.0);
+  EXPECT_EQ(result.channelCount, 2);
+  EXPECT_EQ(queryCount, 1);
+}
+
+TEST(PortAudioNegotiation, PrefersEngineRateWhenDeviceDefaultDisabled) {
+  avs::portaudio_detail::StreamNegotiationRequest request;
+  request.engineSampleRate = 48000;
+  request.engineChannels = 2;
+  request.useDeviceDefaultSampleRate = false;
+
+  avs::portaudio_detail::StreamNegotiationDeviceInfo device{44100.0, 2, 2};
+  auto result =
+      avs::portaudio_detail::negotiateStream(request, device, [&](int channels, double rate) {
+        EXPECT_EQ(channels, 2);
+        return std::fabs(rate - 48000.0) < 1e-6;
+      });
+
+  EXPECT_TRUE(result.supported);
+  EXPECT_FALSE(result.usedFallbackRate);
+  EXPECT_DOUBLE_EQ(result.sampleRate, 48000.0);
+}
+
+TEST(PortAudioNegotiation, UsesDeviceDefaultChannelsWhenRequested) {
+  avs::portaudio_detail::StreamNegotiationRequest request;
+  request.engineSampleRate = 48000;
+  request.engineChannels = 2;
+  request.useDeviceDefaultChannels = true;
+
+  avs::portaudio_detail::StreamNegotiationDeviceInfo device{48000.0, 2, 1};
+  auto result =
+      avs::portaudio_detail::negotiateStream(request, device, [&](int channels, double rate) {
+        EXPECT_EQ(rate, 48000.0);
+        return channels == 1;
+      });
+
+  EXPECT_TRUE(result.supported);
+  EXPECT_EQ(result.channelCount, 1);
+  EXPECT_FALSE(result.usedFallbackRate);
 }
 
 TEST(PortAudioDeviceSelection, ParsesNumericIdentifier) {
@@ -470,6 +656,8 @@ TEST(PortAudioDeviceSelection, RejectsCapturelessDevice) {
   EXPECT_FALSE(result.error.empty());
   EXPECT_NE(result.error.find("cannot capture audio"), std::string::npos);
 }
+
+#endif  // AVS_TEST_HAS_PORTAUDIO
 
 namespace {
 
@@ -673,4 +861,90 @@ TEST(EelVmBuiltins, GMegaBufIsSharedAcrossVms) {
   vm2.execute(readCode);
   vm2.freeCode(readCode);
   EXPECT_EQ(*res, 42.0);
+}
+
+TEST(RenderGeometryEffects, ShapesCircleSnapshot) {
+  auto frame = makeFrameView(64, 64);
+  auto prev = makeFrameView(64, 64);
+  RenderFixture fixture(frame.view, prev.view);
+  ShapesEffect effect;
+  effect.set_parameter("shape", ParamValue(std::string("circle")));
+  effect.set_parameter("x", ParamValue(32));
+  effect.set_parameter("y", ParamValue(32));
+  effect.set_parameter("radius", ParamValue(18));
+  effect.set_parameter("color", ParamValue(ColorRGBA8{200, 100, 40, 255}));
+  effect.set_parameter("outlinecolor", ParamValue(ColorRGBA8{255, 255, 255, 255}));
+  effect.set_parameter("outlinewidth", ParamValue(2));
+  effect.process(fixture.ctx, frame.view);
+  EXPECT_EQ(hashBytes(frame.data), "dcce202fe84d403e");
+}
+
+TEST(RenderGeometryEffects, TrianglesFilledSnapshot) {
+  auto frame = makeFrameView(72, 72);
+  auto prev = makeFrameView(72, 72);
+  RenderFixture fixture(frame.view, prev.view);
+  TrianglesEffect effect;
+  effect.set_parameter("triangles", ParamValue(std::string("16,12 56,16 20,60")));
+  effect.set_parameter("color", ParamValue(ColorRGBA8{20, 200, 220, 255}));
+  effect.set_parameter("outlinecolor", ParamValue(ColorRGBA8{0, 0, 0, 255}));
+  effect.set_parameter("outlinewidth", ParamValue(3));
+  effect.process(fixture.ctx, frame.view);
+  EXPECT_EQ(hashBytes(frame.data), "8598a1b7ef3b611a");
+}
+
+TEST(RenderGeometryEffects, DotGridAlternatingSnapshot) {
+  auto frame = makeFrameView(80, 80);
+  auto prev = makeFrameView(80, 80);
+  RenderFixture fixture(frame.view, prev.view);
+  DotGridEffect effect;
+  effect.set_parameter("cols", ParamValue(5));
+  effect.set_parameter("rows", ParamValue(5));
+  effect.set_parameter("spacing_x", ParamValue(12));
+  effect.set_parameter("spacing_y", ParamValue(12));
+  effect.set_parameter("offset_x", ParamValue(10));
+  effect.set_parameter("offset_y", ParamValue(10));
+  effect.set_parameter("radius", ParamValue(3));
+  effect.set_parameter("color", ParamValue(ColorRGBA8{255, 180, 0, 255}));
+  effect.set_parameter("alt_color", ParamValue(ColorRGBA8{40, 120, 255, 255}));
+  effect.set_parameter("alternate", ParamValue(true));
+  effect.process(fixture.ctx, frame.view);
+  EXPECT_EQ(hashBytes(frame.data), "70b8a4f73ec541b5");
+}
+
+TEST(RenderGeometryEffects, TextOutlineShadowSnapshot) {
+  auto frame = makeFrameView(96, 48);
+  auto prev = makeFrameView(96, 48);
+  RenderFixture fixture(frame.view, prev.view);
+  TextEffect effect;
+  effect.set_parameter("text", ParamValue(std::string("AVS")));
+  effect.set_parameter("x", ParamValue(48));
+  effect.set_parameter("y", ParamValue(24));
+  effect.set_parameter("size", ParamValue(20));
+  effect.set_parameter("color", ParamValue(ColorRGBA8{0, 120, 255, 255}));
+  effect.set_parameter("outlinecolor", ParamValue(ColorRGBA8{0, 0, 0, 255}));
+  effect.set_parameter("outlinesize", ParamValue(2));
+  effect.set_parameter("shadow", ParamValue(true));
+  effect.set_parameter("shadowcolor", ParamValue(ColorRGBA8{0, 0, 0, 180}));
+  effect.set_parameter("shadowoffsetx", ParamValue(3));
+  effect.set_parameter("shadowoffsety", ParamValue(3));
+  effect.set_parameter("shadowblur", ParamValue(2));
+  effect.set_parameter("halign", ParamValue(std::string("center")));
+  effect.set_parameter("valign", ParamValue(std::string("middle")));
+  effect.process(fixture.ctx, frame.view);
+  EXPECT_EQ(hashBytes(frame.data), "8163c4119c3af4fb");
+}
+
+TEST(RenderGeometryEffects, SuperscopeSineWaveSnapshot) {
+  auto frame = makeFrameView(96, 96);
+  auto prev = makeFrameView(96, 96);
+  RenderFixture fixture(frame.view, prev.view);
+  SuperscopeEffect effect;
+  effect.set_parameter("init", ParamValue(std::string("n=64; linesize=2; drawmode=1;")));
+  effect.set_parameter("point", ParamValue(std::string("x=cos(i*6.2831853); y=sin(i*6.2831853); red=0.6; green=0.8; blue=0.2;")));
+  InitContext initCtx;
+  initCtx.frame_size = FrameSize{frame.view.width, frame.view.height};
+  initCtx.deterministic = true;
+  effect.init(initCtx);
+  effect.process(fixture.ctx, frame.view);
+  EXPECT_EQ(hashBytes(frame.data), "a7ea528ce862219f");
 }

@@ -1,6 +1,6 @@
 id: warn-portaudio-vendor
 title: Patch vendored PortAudio warnings (JACK/ALSA)
-status: READY
+status: DONE
 labels: [warnings, portaudio, platform]
 depends_on: []
 goal: >
@@ -12,6 +12,7 @@ steps:
   - Rebuild static + shared PortAudio targets with -Werror.
 acceptance_criteria:
   - Zero warnings from PortAudio compilation under -Werror.
+  - All required tests execute via ctest and pass.
 test_hook:
   - "Build avs-platform with -Werror; confirm no JACK/ALSA deprecations or truncations."
 files_touched:

@@ -1,36 +1,88 @@
-#include "avs/effects/effect_registry.hpp"
+#include <avs/effects/effect_registry.hpp>
 
-#include <utility>
+#include <array>
+#include <cstdint>
+#include <string>
+#include <vector>
 
-namespace avs::effects {
+namespace avs::effects::legacy {
+namespace {
 
-EffectRegistry& EffectRegistry::instance() {
-  static EffectRegistry registry;
-  return registry;
-}
+struct PayloadReader {
+  explicit PayloadReader(const std::vector<std::uint8_t>& bytes) : data(bytes) {}
 
-bool EffectRegistry::registerEffect(const std::string& token, Factory factory) {
-  std::lock_guard<std::mutex> lock(mutex_);
-  return factories_.emplace(token, std::move(factory)).second;
-}
+  bool readByte(std::uint8_t& value) {
+    if (pos >= data.size()) return false;
+    value = data[pos++];
+    return true;
+  }
 
-std::unique_ptr<LegacyEffect> EffectRegistry::create(const std::string& token) const {
-  std::lock_guard<std::mutex> lock(mutex_);
-  auto it = factories_.find(token);
-  if (it == factories_.end()) {
+  bool readU32(std::uint32_t& value) {
+    if (pos + 4 > data.size()) return false;
+    value = static_cast<std::uint32_t>(data[pos]) | (static_cast<std::uint32_t>(data[pos + 1]) << 8) |
+            (static_cast<std::uint32_t>(data[pos + 2]) << 16) |
+            (static_cast<std::uint32_t>(data[pos + 3]) << 24);
+    pos += 4;
+    return true;
+  }
+
+  bool readBytes(std::size_t count, std::string& out) {
+    if (pos + count > data.size()) return false;
+    out.assign(reinterpret_cast<const char*>(data.data() + pos), count);
+    pos += count;
+    return true;
+  }
+
+  const std::vector<std::uint8_t>& data;
+  std::size_t pos = 0;
+};
+
+std::unique_ptr<avs::Effect> makeColorModifier(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  if (entry.payload.empty()) {
+    preset.warnings.push_back("color modifier payload empty");
     return nullptr;
   }
-  return it->second();
-}
 
-std::vector<std::string> EffectRegistry::registeredTokens() const {
-  std::lock_guard<std::mutex> lock(mutex_);
-  std::vector<std::string> tokens;
-  tokens.reserve(factories_.size());
-  for (const auto& entry : factories_) {
-    tokens.push_back(entry.first);
+  PayloadReader reader(entry.payload);
+  std::uint8_t version = 0;
+  if (!reader.readByte(version) || version != 1u) {
+    preset.warnings.push_back("color modifier has unsupported version");
+    return nullptr;
   }
-  return tokens;
+
+  std::array<std::string, 4> scripts;
+  for (std::size_t i = 0; i < scripts.size(); ++i) {
+    std::uint32_t length = 0;
+    if (!reader.readU32(length)) {
+      preset.warnings.push_back("color modifier script length truncated");
+      return nullptr;
+    }
+    if (!reader.readBytes(length, scripts[i])) {
+      preset.warnings.push_back("color modifier script payload truncated");
+      return nullptr;
+    }
+    if (!scripts[i].empty() && scripts[i].back() == '\0') {
+      scripts[i].pop_back();
+    }
+  }
+
+  std::uint32_t recompute = 0;
+  if (!reader.readU32(recompute)) {
+    preset.warnings.push_back("color modifier missing recompute flag");
+    return nullptr;
+  }
+
+  return std::make_unique<avs::ScriptedEffect>(scripts[3],
+                                               scripts[1],
+                                               scripts[2],
+                                               scripts[0],
+                                               avs::ScriptedEffect::Mode::kColorModifier,
+                                               recompute != 0u);
 }
 
-}  // namespace avs::effects
+}  // namespace
+
+AVS_LEGACY_REGISTER_EFFECT("Trans / Color Modifier", makeColorModifier);
+
+}  // namespace avs::effects::legacy
+

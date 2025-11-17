@@ -2,12 +2,20 @@
 
 ## Setup Commands
 
+* **Provision dependencies (mirrors CI)**
+
+  ```bash
+  # Installs the same packages that CI pulls in, including PortAudio dev files.
+  ./run_setup_dev_environment.sh --platform ubuntu
+  # Use --platform fedora when working inside a Fedora container.
+  ```
+
 * **Clone and configure**
 
-```bash
-git clone https://github.com/pfahlr/vis_avs.git
-cd avs-port
-mkdir build && cd build
+  ```bash
+  git clone https://github.com/pfahlr/vis_avs.git
+  cd avs-port
+  mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Debug
 ```
 
@@ -28,11 +36,16 @@ cmake --build . -j"$(nproc)"
   * Build essentials: `cmake g++ clang-format git`
   * SDL2: `libsdl2-dev`
   * OpenGL: `mesa-common-dev libglu1-mesa-dev`
-  * PortAudio: `portaudio19-dev libportaudio2`
+  * PortAudio: `portaudio19-dev libportaudio2` (Ubuntu) / `portaudio-devel` (Fedora)
   * KissFFT: vendored (no system package required)
   * GoogleTest: `libgtest-dev` (or FetchContent in CMake)
   * ImGui (optional): vendored
   * **Note:** If JACK or ALSA backends are missing, install `libjack-dev` and `libasound2-dev`.
+
+  **Important:** The development container allows installing these packages. Run
+  `./run_setup_dev_environment.sh` before configuring CMake so PortAudio is
+  available; skipping this step will cause `cmake` to fail with a missing
+  PortAudio error.
 
 **All dependencies listed here must be mirrored in `/.github/workflows/ci.yml`.**
 
@@ -82,6 +95,12 @@ cmake --build . -j"$(nproc)"
 * **Golden Frame Tests:** store canonical outputs in `tests/golden/`. CI compares SHA256 frame hashes.
 * **Performance Checks:** microbenchmark effects; fail CI if regression > 20% vs baseline.
 * **CI Mirrors Local:** keep `docs/README.md` dependencies in sync with `/.github/workflows/ci.yml`.
+
+**Mandatory test execution policy**
+
+* Codex contributions must execute the automated test suite relevant to the change (typically `ctest`) before a job is considered complete.
+* Final status updates and summaries must never emit the placeholder "⚠️ Tests not run (not requested)"—always run and report an actual test command.
+* When editing Codex specs or jobs, include an explicit acceptance criterion that the required tests are executed and pass so reviewers can enforce the policy.
 
 ---
 

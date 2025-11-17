@@ -1,0 +1,4030 @@
+diff -w vis_avs/ape.h vis_avs2/ape.h
+73c73
+<   double * (*regVMvariable)(VM_CONTEXT, char *name);
+---
+>   double * (*regVMvariable)(VM_CONTEXT, const char *name);
+Common subdirectories: vis_avs/apesdk and vis_avs2/apesdk
+diff -w vis_avs/avs_eelif.cpp vis_avs2/avs_eelif.cpp
+30a31,32
+> #include "../ns-eel2/ns-eel-int.h"
+> #include "../ns-eel2/ns-eel-addfuncs.h"
+32,40d33
+< #include "../ns-eel/ns-eel-addfuncs.h"
+< 
+< #ifdef AVS_MEGABUF_SUPPORT
+< #include "../ns-eel/megabuf.h"
+< #endif
+< 
+< static void gmegabuf_cleanup();
+< void _asm_gmegabuf(void);
+< void _asm_gmegabuf_end(void);
+90c83
+< static double NSEEL_CGEN_CALL  getspec_(double *band, double *bandw, double *chan)
+---
+> static double NSEEL_CGEN_CALL  getspec_(void *_this, double *band, double *bandw, double *chan)
+96c89
+< static double NSEEL_CGEN_CALL getosc_(double *band, double *bandw, double *chan)
+---
+> static double NSEEL_CGEN_CALL getosc_(void *_this, double *band, double *bandw, double *chan)
+102c95
+< static double NSEEL_CGEN_CALL gettime_(double *sc)
+---
+> static double NSEEL_CGEN_CALL gettime_(void *_this, double *sc)
+121c114
+< static double NSEEL_CGEN_CALL setmousepos_(double *x, double *y)
+---
+> static double NSEEL_CGEN_CALL setmousepos_(void *_this, double *x, double *y)
+130c123
+< static double NSEEL_CGEN_CALL getmouse_(double *which)
+---
+> static double NSEEL_CGEN_CALL getmouse_(void *_this, double *which)
+149,164d141
+< static double (NSEEL_CGEN_CALL *__getosc)(double *,double *,double *) = &getosc_;
+< __declspec ( naked ) void _asm_getosc(void)
+< {
+<   FUNC3_ENTER
+< 
+<   *__nextBlock = __getosc(parm_c,parm_b,parm_a);
+< 
+<   FUNC_LEAVE
+< }
+< __declspec ( naked ) void _asm_getosc_end(void) {}
+< 
+< 
+< static double (NSEEL_CGEN_CALL *__getspec)(double *,double *,double *) = &getspec_;
+< __declspec ( naked ) void _asm_getspec(void)
+< {
+<   FUNC3_ENTER
+166,181d142
+<   *__nextBlock = __getspec(parm_c,parm_b,parm_a);
+< 
+<   FUNC_LEAVE
+< }
+< __declspec ( naked ) void _asm_getspec_end(void) {}
+< 
+< static double (NSEEL_CGEN_CALL *__gettime)(double *) = &gettime_;
+< __declspec ( naked ) void _asm_gettime(void)
+< {
+<   FUNC1_ENTER
+<   
+<   *__nextBlock = __gettime(parm_a);
+< 
+<   FUNC_LEAVE
+< }
+< __declspec ( naked ) void _asm_gettime_end(void) {}
+182a144
+> /////////////////////// end AVS specific script functions
+184,185c146
+< static double (NSEEL_CGEN_CALL *__getmouse)(double *) = &getmouse_;
+< __declspec ( naked ) void _asm_getmouse(void)
+---
+> void NSEEL_HOSTSTUB_EnterMutex()
+187,191c148
+<   FUNC1_ENTER
+<   
+<   *__nextBlock = __getmouse(parm_a);
+< 
+<   FUNC_LEAVE
+---
+>   EnterCriticalSection(&g_eval_cs);
+193,197c150
+< __declspec ( naked ) void _asm_getmouse_end(void) {}
+< 
+< 
+< static double (NSEEL_CGEN_CALL *__setmousepos)(double *,double *) = &setmousepos_;
+< __declspec ( naked ) void _asm_setmousepos(void)
+---
+> void NSEEL_HOSTSTUB_LeaveMutex()
+199,203c152
+<   FUNC2_ENTER
+<   
+<   *__nextBlock = __setmousepos(parm_a,parm_b);
+< 
+<   FUNC_LEAVE
+---
+>   LeaveCriticalSection(&g_eval_cs);
+205,209d153
+< __declspec ( naked ) void _asm_setmousepos_end(void) {}
+< 
+< 
+< 
+< /////////////////////// end AVS specific script functions
+215,223c159,167
+<   NSEEL_addfunction("getosc",3,(int)_asm_getosc,(int)_asm_getosc_end-(int)_asm_getosc);
+<   NSEEL_addfunction("getspec",3,(int)_asm_getspec,(int)_asm_getspec_end-(int)_asm_getspec);
+<   NSEEL_addfunction("gettime",1,(int)_asm_gettime,(int)_asm_gettime_end-(int)_asm_gettime);
+<   NSEEL_addfunction("getkbmouse",1,(int)_asm_getmouse,(int)_asm_getmouse_end-(int)_asm_getmouse);
+<   NSEEL_addfunction("setmousepos",2,(int)_asm_setmousepos,(int)_asm_setmousepos_end-(int)_asm_setmousepos);
+< #ifdef AVS_MEGABUF_SUPPORT
+<     NSEEL_addfunctionex("megabuf",1,(int)_asm_megabuf,(int)_asm_megabuf_end-(int)_asm_megabuf,megabuf_ppproc);
+<     NSEEL_addfunction("gmegabuf",1,(int)_asm_gmegabuf,(int)_asm_gmegabuf_end-(int)_asm_gmegabuf);
+< #endif
+---
+> 
+>   // todo: check to see that parameter orders are correct
+>   NSEEL_addfunctionex("getosc",3,(char *)_asm_generic3parm_retd,(char *)_asm_generic3parm_retd_end-(char *)_asm_generic3parm_retd,NSEEL_PProc_THIS,(void*)getosc_);
+>   NSEEL_addfunctionex("getspec",3,(char *)_asm_generic3parm_retd,(char *)_asm_generic3parm_retd_end-(char *)_asm_generic3parm_retd,NSEEL_PProc_THIS,(void*)getspec_);
+> 
+>   NSEEL_addfunctionex("gettime",1,(char *)_asm_generic1parm_retd,(char *)_asm_generic1parm_retd_end-(char *)_asm_generic1parm_retd,NSEEL_PProc_THIS,(void*)gettime_);
+>   NSEEL_addfunctionex("getkbmouse",1,(char *)_asm_generic1parm_retd,(char *)_asm_generic1parm_retd_end-(char *)_asm_generic1parm_retd,NSEEL_PProc_THIS,(void*)getmouse_);
+> 
+>   NSEEL_addfunctionex("setmousepos",2,(char *)_asm_generic2parm_retd,(char *)_asm_generic2parm_retd_end-(char *)_asm_generic2parm_retd,NSEEL_PProc_THIS,(void*)setmousepos_);
+227d170
+<   gmegabuf_cleanup();
+249c192
+< int AVS_EEL_IF_Compile(int context, char *code)
+---
+> NSEEL_CODEHANDLE AVS_EEL_IF_Compile(void *context, char *code)
+253c196
+<   ret=NSEEL_code_compile((NSEEL_VMCTX)context,code);
+---
+>   ret=NSEEL_code_compile((NSEEL_VMCTX)context,code,0);
+271c214
+<   return (int)ret;
+---
+>   return ret;
+274c217
+< void AVS_EEL_IF_Execute(void *handle, char visdata[2][2][576])
+---
+> void AVS_EEL_IF_Execute(NSEEL_CODEHANDLE handle, char visdata[2][2][576])
+286,290d228
+< void AVS_EEL_IF_Free(int handle)
+< {
+<   NSEEL_code_free((NSEEL_CODEHANDLE)handle);
+< }
+< 
+294,321c232,233
+< #ifdef AVS_MEGABUF_SUPPORT
+<   megabuf_cleanup(ctx);
+< #endif
+<   NSEEL_VM_resetvars(ctx);
+< }
+< 
+< void AVS_EEL_IF_VM_free(NSEEL_VMCTX ctx)
+< {
+< #ifdef AVS_MEGABUF_SUPPORT
+<   megabuf_cleanup(ctx);
+< #endif
+<   NSEEL_VM_free(ctx);
+< }
+< 
+< 
+< 
+< 
+< //////////////////////////////
+< static double *gmb_blocks[MEGABUF_BLOCKS];
+< 
+< static void gmegabuf_cleanup()
+< {
+<   int x;
+<   for (x = 0; x < MEGABUF_BLOCKS; x ++)
+<   {
+<     if (gmb_blocks[x]) GlobalFree(gmb_blocks[x]);
+<     gmb_blocks[x]=0;
+<   }
+---
+>   NSEEL_VM_freeRAM(ctx);
+>   NSEEL_VM_remove_all_nonreg_vars(ctx);
+324,358d235
+< static double * NSEEL_CGEN_CALL gmegabuf_(double *which)
+< {
+<   static double error;
+<   int w=(int)(*which + 0.0001);
+<   int whichblock = w/MEGABUF_ITEMSPERBLOCK;
+< 
+<   if (w >= 0 && whichblock >= 0 && whichblock < MEGABUF_BLOCKS)
+<   {
+<     int whichentry = w%MEGABUF_ITEMSPERBLOCK;
+<     if (!gmb_blocks[whichblock])
+<     {
+<       gmb_blocks[whichblock]=(double *)GlobalAlloc(GPTR,sizeof(double)*MEGABUF_ITEMSPERBLOCK);
+<     }
+<     if (gmb_blocks[whichblock])
+<       return &gmb_blocks[whichblock][whichentry];
+<   }
+< 
+<   return &error;
+< }
+< 
+< static double * (NSEEL_CGEN_CALL *__gmegabuf)(double *) = &gmegabuf_;
+< __declspec ( naked ) void _asm_gmegabuf(void)
+< {
+<   double *parm_a, *__nextBlock;
+<   __asm { mov edx, 0xFFFFFFFF }
+<   __asm { mov ebp, esp }
+<   __asm { sub esp, __LOCAL_SIZE }
+<   __asm { mov dword ptr parm_a, eax }
+<   
+<   __nextBlock = __gmegabuf(parm_a);
+< 
+<   __asm { mov eax, __nextBlock } // this is custom, returning pointer
+<   __asm { mov esp, ebp }
+< }
+< __declspec ( naked ) void _asm_gmegabuf_end(void) {}
+diff -w vis_avs/avs_eelif.h vis_avs2/avs_eelif.h
+33,36c33
+< #include "../ns-eel/ns-eel.h"
+< #ifdef AVS_MEGABUF_SUPPORT
+< #include "../ns-eel/megabuf.h"
+< #endif
+---
+> #include "../ns-eel2/ns-eel.h"
+41,42c38,39
+< int AVS_EEL_IF_Compile(int context, char *code);
+< void AVS_EEL_IF_Execute(void *handle, char visdata[2][2][576]);
+---
+> NSEEL_CODEHANDLE AVS_EEL_IF_Compile(void *ctx, char *code);
+> void AVS_EEL_IF_Execute(NSEEL_CODEHANDLE handle, char visdata[2][2][576]);
+44c41
+< void AVS_EEL_IF_VM_free(NSEEL_VMCTX ctx);
+---
+> #define AVS_EEL_IF_VM_free(x) NSEEL_VM_free(x)
+51,52c48,49
+< #define executeCode(x,y) AVS_EEL_IF_Execute((void*)(x),(y))
+< #define freeCode(h) NSEEL_code_free((NSEEL_CODEHANDLE)(h))
+---
+> #define executeCode(x,y) AVS_EEL_IF_Execute(x,y)
+> #define freeCode(h) NSEEL_code_free(h)
+54,55c51,52
+< #define registerVar(x) NSEEL_VM_regvar((NSEEL_VMCTX)AVS_EEL_CONTEXTNAME,(x))
+< #define clearVars() AVS_EEL_IF_resetvars((NSEEL_VMCTX)AVS_EEL_CONTEXTNAME)
+---
+> #define registerVar(x) NSEEL_VM_regvar(AVS_EEL_CONTEXTNAME,(x))
+> #define clearVars() AVS_EEL_IF_resetvars(AVS_EEL_CONTEXTNAME)
+57c54
+< #define AVS_EEL_INITINST() AVS_EEL_CONTEXTNAME=(int)NSEEL_VM_alloc()
+---
+> #define AVS_EEL_INITINST() AVS_EEL_CONTEXTNAME=NSEEL_VM_alloc()
+59c56
+< #define AVS_EEL_QUITINST() AVS_EEL_IF_VM_free((NSEEL_VMCTX)AVS_EEL_CONTEXTNAME)
+---
+> #define AVS_EEL_QUITINST() NSEEL_VM_free(AVS_EEL_CONTEXTNAME)
+diff -w vis_avs/bpm.cpp vis_avs2/bpm.cpp
+42,46c42
+< 
+< #ifdef WA3_COMPONENT
+< extern CRITICAL_SECTION g_title_cs;
+< extern char g_title[2048];
+< #endif
+---
+> #include "../Agave/Language/api_language.h"
+151c147,148
+< 			wsprintf(txt, predictionBpm ? "%d%s"/*/%d"*/ : "Learning...", predictionBpm, cfg_smartbeatsticky && sticked ? " Got it!" : ""/*, Bpm*/);
+---
+> 			char lBuf[16];
+> 			wsprintf(txt, predictionBpm ? "%d%s"/*/%d"*/ : WASABI_API_LNGSTRING_BUF(IDS_LEARNING,lBuf,16), predictionBpm, cfg_smartbeatsticky && sticked ? WASABI_API_LNGSTRING(IDS_GOT_IT) : ""/*, Bpm*/);
+266,271d262
+< #ifdef WA3_COMPONENT
+<     EnterCriticalSection(&g_title_cs);
+<     lstrcpyn(songName,g_title,255);
+<     songName[255]=0;
+<     LeaveCriticalSection(&g_title_cs);
+< #else
+273d263
+< #endif
+383c373
+< 		if (abs(Avg - (TC - t[1].TC)) < abs(Avg - (t[0].TC - t[1].TC)))
+---
+> 		if (labs(Avg - (TC - t[1].TC)) < labs(Avg - (t[0].TC - t[1].TC)))
+397c387
+< 	if ((float)abs((Avg/offI)-thisLen) < (float)(Avg/offI)*0.2)
+---
+> 	if ((float)labs((Avg/offI)-thisLen) < (float)(Avg/offI)*0.2)
+517c507
+< 	if (abs(Avg-v) < et)
+---
+> 	if (labs(Avg-v) < et)
+677c667
+< 		int b;
+---
+> 		int b=0;
+685d674
+< 			int b;
+Only in vis_avs2: bump_lig.bin
+diff -w vis_avs/cfgwin.cpp vis_avs2/cfgwin.cpp
+43a44,45
+> #include "../Agave/Language/api_language.h"
+> #include "../WAT/WAT.h"
+60c62
+< char g_noeffectstr[]= "No effect/setting selected";
+---
+> char g_noeffectstr[48];
+67c69
+< extern BOOL CALLBACK aboutProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,LPARAM lParam);
+---
+> // extern BOOL CALLBACK aboutProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,LPARAM lParam);
+155c157,158
+< 	CreateDialog(this_mod->hDllInstance,MAKEINTRESOURCE(IDD_DIALOG1),this_mod->hwndParent,dlgProc);
+---
+> 	WASABI_API_CREATEDIALOG(IDD_DIALOG1,this_mod->hwndParent,dlgProc);
+> 	//CreateDialogA(this_mod->hDllInstance,MAKEINTRESOURCE(IDD_DIALOG1),this_mod->hwndParent,dlgProc);
+235c238
+<           wsprintf(s,"Shift+%d",x);
+---
+>                 wsprintf(s,WASABI_API_LNGSTRING(IDS_SHIFT_X),x);
+247c250
+<           SetDlgItemText(hwndDlg,IDC_BUTTON3,"All");
+---
+>               SetDlgItemText(hwndDlg,IDC_BUTTON3,WASABI_API_LNGSTRING(IDS_ALL));
+262,263c265,266
+<             i.dwTypeData="All";
+<             i.cch=strlen("All");
+---
+>                     i.dwTypeData=WASABI_API_LNGSTRING(IDS_ALL);
+>                     i.cch=strlen(i.dwTypeData);
+279c282
+<               SetDlgItemText(hwndDlg,IDC_BUTTON3,"All");
+---
+>                         SetDlgItemText(hwndDlg,IDC_BUTTON3,WASABI_API_LNGSTRING(IDS_ALL));
+383c386,387
+<         if (!stricmp(classname, "BaseWindow_RootWnd")) {
+---
+>             if (!stricmp(classname, "BaseWindow_RootWnd")) 
+>             {
+403,408c407,411
+< 
+<       SendDlgItemMessage(hwndDlg, IDC_THREAD_PRIORITY, CB_ADDSTRING, 0, (int)"Same as winamp");
+<       SendDlgItemMessage(hwndDlg, IDC_THREAD_PRIORITY, CB_ADDSTRING, 0, (int)"Idle");
+<       SendDlgItemMessage(hwndDlg, IDC_THREAD_PRIORITY, CB_ADDSTRING, 0, (int)"Lowest");
+<       SendDlgItemMessage(hwndDlg, IDC_THREAD_PRIORITY, CB_ADDSTRING, 0, (int)"Normal");
+<       SendDlgItemMessage(hwndDlg, IDC_THREAD_PRIORITY, CB_ADDSTRING, 0, (int)"Highest");
+---
+>         SendDlgItemMessage(hwndDlg, IDC_THREAD_PRIORITY, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRING(IDS_SAME_AS_WINAMP));
+>         SendDlgItemMessage(hwndDlg, IDC_THREAD_PRIORITY, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRING(IDS_IDLE));
+>         SendDlgItemMessage(hwndDlg, IDC_THREAD_PRIORITY, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRING(IDS_LOWEST));
+>         SendDlgItemMessage(hwndDlg, IDC_THREAD_PRIORITY, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRING(IDS_NORMAL));
+>         SendDlgItemMessage(hwndDlg, IDC_THREAD_PRIORITY, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRING(IDS_HIGHEST));
+410a414
+> 
+438d441
+< 		return 0;
+517d519
+< 
+604c606
+< 				SendDlgItemMessage(hwndDlg,IDC_COMBO1,CB_ADDSTRING,0,(long)"no suitable modes found");
+---
+> 				SendDlgItemMessage(hwndDlg,IDC_COMBO1,CB_ADDSTRING,0,(LPARAM)WASABI_API_LNGSTRING(IDS_NO_SUITABLE_MODES_FOUND));
+666c668,672
+<             MessageBox(hwndDlg,"Choose a video mode","Fullscreen",MB_OK);
+---
+>           {
+>             char title[32];
+>             MessageBox(hwndDlg,WASABI_API_LNGSTRING(IDS_CHOOSE_A_VIDEO_MODE),
+>             WASABI_API_LNGSTRING_BUF(IDS_AVS_FULLSCREEN,title,32),MB_OK);
+>           }
+861a868,876
+> 	char filter[128], *ptr = filter;
+> 	char savePreset[64];
+> 
+> 	WASABI_API_LNGSTRING_BUF(IDS_AVS_FILTER_STRING,filter,128);
+> 	while(*ptr)
+> 	{
+> 		if (*ptr=='|') *ptr=0;
+> 		ptr++;
+> 	}
+866c881
+< 	l.lpstrFilter = "AVS presets\0*.avs\0All files\0*.*\0";
+---
+> 	l.lpstrFilter = filter;
+870c885
+< 	l.lpstrTitle = "Save Preset";
+---
+> 	l.lpstrTitle = WASABI_API_LNGSTRING_BUF(IDS_SAVE_PRESET,savePreset,64);
+876c891
+< 		strcpy(last_preset,temp);
+---
+> 		strcpy(last_preset,temp); // this was changed from: lstrcpyn(last_preset,temp, 2048);
+878,880c893,895
+< 		if (r==1) MessageBox(hwndDlg,"Error saving preset","Save Preset",MB_OK);
+< 		else if (r==2) MessageBox(hwndDlg,"Preset too large","Save Preset",MB_OK);
+< 		else if (r==-1) MessageBox(hwndDlg,"Out of memory","Save Preset",MB_OK);
+---
+> 		if (r==1) MessageBox(hwndDlg,WASABI_API_LNGSTRING(IDS_ERROR_SAVING_PRESET),savePreset,MB_OK);
+> 		else if (r==2) MessageBox(hwndDlg,WASABI_API_LNGSTRING(IDS_PRESET_TOO_LARGE),savePreset,MB_OK);
+> 		else if (r==-1) MessageBox(hwndDlg,WASABI_API_LNGSTRING(IDS_OUT_OF_MEMORY),savePreset,MB_OK);
+941c956
+<           wsprintf(buf,"Eval code stats: %d segments, %d bytes source, %d+%d bytes code, %d bytes data",
+---
+>           wsprintf(buf,WASABI_API_LNGSTRING(IDS_EVAL_CODE_STATS_ETC),
+1081c1096,1097
+<       }
+---
+> 	        WASABI_API_LNGSTRING_BUF(IDS_NO_EFFECT_SETTING_SELECTED,g_noeffectstr,48);
+>         
+1084c1100,1101
+<       if (cfg_cfgwnd_open) ShowWindow(hwndDlg,SW_SHOWNA);
+---
+>             if (cfg_cfgwnd_open) 
+>                 ShowWindow(hwndDlg,SW_SHOWNA);
+1100a1118
+>         }
+1108c1126,1127
+<         while (tp >= last_preset && *tp != '\\') tp--;
+---
+>                 while (tp >= last_preset && *tp != '\\') 
+>                     tp--;
+1209c1228,1229
+<                 TV_INSERTSTRUCT is={parenth,h,{TVIF_PARAM|TVIF_TEXT|TVIF_CHILDREN,0,0,0,"<move here>",0,0,0,0,(int)0}};
+---
+>                                 TV_INSERTSTRUCT is={parenth,h,{TVIF_PARAM|TVIF_TEXT|TVIF_CHILDREN,0,0,0,
+>                                 WASABI_API_LNGSTRING(IDS_MOVE_HERE),0,0,0,0,(int)0}};
+1214,1215d1233
+< 
+<   //            TreeView_Select(hwnd,g_dragplace,TVGN_DROPHILITE);
+1297c1315,1317
+<               MessageBox(NULL,"error: inconsistency in tree. this should never happen. ACK!","critical error occurred",MB_OK);
+---
+> 		                char title[48];
+> 		                MessageBox(NULL,WASABI_API_LNGSTRING(IDS_ERROR_TREE_INCONSISTANCY),
+> 		                WASABI_API_LNGSTRING_BUF(IDS_CRITICAL_ERROR_OCCURRED,title,48),MB_OK);
+1336a1357
+>        
+1339,1340c1360
+< 			NM_TREEVIEW *p;
+< 			p=(NM_TREEVIEW *)lParam;
+---
+>             NM_TREEVIEW* p = (NM_TREEVIEW*)lParam;
+1343c1363
+< 
+---
+>                 // Element is being dragged
+1359c1379,1380
+<             else g_dragsource_item=NULL;
+---
+>                         else 
+>                             g_dragsource_item=NULL;
+1364c1385,1386
+< 			  if (p->hdr.code==TVN_SELCHANGED && !treeview_hack)
+---
+>                 // new element is selected selectis
+> 	            if ((p->hdr.code== TVN_SELCHANGEDW || p->hdr.code == TVN_SELCHANGEDA) && !treeview_hack)
+1372d1393
+< 
+1377c1398,1399
+< 				      if (cur_hwnd) DestroyWindow(cur_hwnd);
+---
+> 			                if (cur_hwnd) 
+>                                 DestroyWindow(cur_hwnd);
+1379c1401,1402
+<               if (cur_hwnd) sniffConfigWindow_oldProc=(WNDPROC)SetWindowLong(cur_hwnd,GWL_WNDPROC,(LONG)sniffConfigWindow_newProc);
+---
+>                             if (cur_hwnd) 
+>                                 sniffConfigWindow_oldProc=(WNDPROC)SetWindowLong(cur_hwnd, GWLP_WNDPROC,(LONG)sniffConfigWindow_newProc);
+1388c1411,1412
+< 				    } else SetDlgItemText(hwndDlg,IDC_EFNAME,g_noeffectstr);
+---
+> 		            } else 
+>                         SetDlgItemText(hwndDlg,IDC_EFNAME,g_noeffectstr);
+1390a1415,1416
+>                 // a tree view item has been clicked
+> 
+1404c1430
+<           if (!g_debugwnd) g_debugwnd=CreateDialog(g_hInstance,MAKEINTRESOURCE(IDD_DEBUG),g_hwnd,debugProc);
+---
+>                   if (!g_debugwnd) g_debugwnd=WASABI_API_CREATEDIALOG(IDD_DEBUG,g_hwnd,debugProc);
+1408c1434,1435
+<           DialogBox(g_hInstance,MAKEINTRESOURCE(IDD_DIALOG2),hwndDlg,aboutProc);
+---
+>                   // DialogBox(g_hInstance,MAKEINTRESOURCE(IDD_DIALOG2),hwndDlg,aboutProc);
+>                   about(hwndDlg);
+1416c1443
+<             char *names[5]={"Display","Fullscreen Settings","Presets/Hotkeys","Beat Detection","Transitions"};
+---
+>                     int name_ids[5]={IDS_DISPLAY,IDS_FULLSCREEN_SETTINGS,IDS_PRESET_HOTKEYS,IDS_BEAT_DETECTION,IDS_TRANSITIONS};
+1426c1453
+<               SetDlgItemText(hwndDlg,IDC_EFNAME,names[x-1]);
+---
+>                         SetDlgItemText(hwndDlg,IDC_EFNAME,WASABI_API_LNGSTRING(name_ids[x-1]));
+1430c1457
+< 							  cur_hwnd=CreateDialog(g_hInstance,MAKEINTRESOURCE(IDD_GCFG_DISP),hwndDlg,DlgProc_Disp);
+---
+> 				            cur_hwnd=WASABI_API_CREATEDIALOG(IDD_GCFG_DISP,hwndDlg,DlgProc_Disp);
+1432c1459
+< 							  cur_hwnd=CreateDialog(g_hInstance,MAKEINTRESOURCE(IDD_GCFG_FS),hwndDlg,DlgProc_FS);
+---
+> 				            cur_hwnd=WASABI_API_CREATEDIALOG(IDD_GCFG_FS,hwndDlg,DlgProc_FS);
+1434c1461
+< 							  cur_hwnd=CreateDialog(g_hInstance,MAKEINTRESOURCE(IDD_GCFG_PRESET),hwndDlg,DlgProc_Preset);
+---
+> 				            cur_hwnd=WASABI_API_CREATEDIALOG(IDD_GCFG_PRESET,hwndDlg,DlgProc_Preset);
+1436c1463
+< 							  cur_hwnd=CreateDialog(g_hInstance,MAKEINTRESOURCE(IDD_GCFG_BPM),hwndDlg,DlgProc_Bpm);
+---
+> 				            cur_hwnd=WASABI_API_CREATEDIALOG(IDD_GCFG_BPM,hwndDlg,DlgProc_Bpm);
+1447c1474,1476
+< 						  } else SetDlgItemText(hwndDlg,IDC_EFNAME,g_noeffectstr);
+---
+> 				        } 
+>                         else 
+>                             SetDlgItemText(hwndDlg,IDC_EFNAME,g_noeffectstr);
+1465,1466c1494,1495
+< 
+<               if (!g_render_library->GetRendererDesc(x,str)) break;
+---
+>                         if (!g_render_library->GetRendererDesc(x,str))
+>                             break;
+1481c1510
+<             _insertintomenu(hAddMenu,p++,LIST_ID,"Effect list");
+---
+>                     _insertintomenu(hAddMenu,p++,LIST_ID,WASABI_API_LNGSTRING(IDS_EFFECT_LIST));
+1490c1519
+<               i.dwTypeData = "Presets";
+---
+>                         i.dwTypeData = WASABI_API_LNGSTRING(IDS_PRESETS);
+1512,1513c1541
+<                     MENUITEMINFO mi={sizeof(mi),MIIM_SUBMENU|MIIM_TYPE,MFT_STRING,MFS_DEFAULT
+<                     };
+---
+>                                     MENUITEMINFO mi={sizeof(mi),MIIM_SUBMENU|MIIM_TYPE,MFT_STRING,MFS_DEFAULT};
+1611c1639,1642
+<                 if (!hTreeItem || parenthandle==hTreeItem) is.hInsertAfter=TVI_FIRST;
+---
+>                             if (!hTreeItem || parenthandle==hTreeItem) 
+>                             { 
+>                                 is.hInsertAfter=TVI_FIRST;
+>                             }
+1630c1661
+< 					}
+---
+> 		        } // end of IDC_ADD
+1668c1699,1700
+< 	                  if (tp) GlobalFree((HGLOBAL)tp);
+---
+> 	                                if (tp) 
+>                                         GlobalFree((HGLOBAL)tp);
+1696d1727
+< 
+1738a1770,1779
+> 		            char filter[128], *ptr = filter;
+> 		            char loadPreset[64];
+> 
+> 		            WASABI_API_LNGSTRING_BUF(IDS_AVS_FILTER_STRING,filter,128);
+> 		            while(*ptr)
+> 		            {
+> 			            if (*ptr=='|') *ptr=0;
+> 			            ptr++;
+> 		            }
+> 
+1740c1781
+< 						strcpy(buf1,g_path);
+---
+> 		            strcpy(buf1,g_path); // this was changed from: lstrcpyn(buf1,g_path,sizeof(buf1));
+1744c1785
+< 						l.lpstrFilter = "AVS presets\0*.avs\0All files\0*.*\0";
+---
+> 			        l.lpstrFilter = filter;
+1747c1788
+< 						l.lpstrTitle = "Load Preset";
+---
+> 			        l.lpstrTitle = WASABI_API_LNGSTRING_BUF(IDS_LOAD_PRESET,loadPreset,48);
+1753,1754c1794,1797
+<               if (x == 2) MessageBox(hwndDlg,"Still initializing previous preset","Load Preset",MB_OK);
+<               else lstrcpyn(last_preset,temp,sizeof(last_preset)); 
+---
+>                         if (x == 2) 
+>                             MessageBox(hwndDlg,WASABI_API_LNGSTRING(IDS_STILL_INITIALIZING_PREVIOUS_PRESET),loadPreset,MB_OK);
+>                         else 
+>                             lstrcpyn(last_preset,temp,sizeof(last_preset)); 
+1768c1811
+< 			}
+---
+> 	        } // end of  switch(LOWORD(Param))
+1770c1813
+< 	}
+---
+> 	    }// end of switch(uMsg)
+1863c1906
+<     is.item.pszText="Main";
+---
+>     is.item.pszText=WASABI_API_LNGSTRING(IDS_MAIN);
+Only in vis_avs2: color_mo.bin
+diff -w vis_avs/draw.cpp vis_avs2/draw.cpp
+35a36
+> #include "resource.h"
+37,41c38
+< 
+< #ifdef WA3_COMPONENT
+< extern CRITICAL_SECTION g_title_cs;
+< extern char g_title[2048];
+< #endif
+---
+> #include "../Agave/Language/api_language.h"
+53c50
+< static g_bpp, g_fs, g_noshoww;
+---
+> static int g_bpp, g_fs, g_noshoww;
+144c141
+<   	WNDCLASS wc={0,};
+---
+>   	WNDCLASSW wc={0,};
+149c146
+<   	wc.lpszClassName = "avsfsoverlaywnd";
+---
+>   	wc.lpszClassName = L"avsfsoverlaywnd";
+151c148
+<   	if(!RegisterClass(&wc)) return;
+---
+>   	if(!RegisterClassW(&wc)) return;
+154c151
+<   hwndOverlayWnd=CreateWindowEx(WS_EX_TOPMOST|WS_EX_TOOLWINDOW,"avsfsoverlaywnd","",WS_VISIBLE|WS_POPUP,0,0,GetSystemMetrics(SM_CXSCREEN),GetSystemMetrics(SM_CYSCREEN),NULL,NULL,g_hInstance,0);
+---
+>   hwndOverlayWnd=CreateWindowExW(WS_EX_TOPMOST|WS_EX_TOOLWINDOW,L"avsfsoverlaywnd",L"",WS_VISIBLE|WS_POPUP,0,0,GetSystemMetrics(SM_CXSCREEN),GetSystemMetrics(SM_CYSCREEN),NULL,NULL,g_hInstance,0);
+240c237
+< 		MessageBox(g_hwnd,"Error creating ddraw object","DDraw",0);
+---
+> 		MessageBox(g_hwnd,WASABI_API_LNGSTRING(IDS_ERROR_CREATING_DDRAW_OBJECT),"DDraw",0);
+846,850d842
+< #ifdef WA3_COMPONENT
+<     EnterCriticalSection(&g_title_cs);
+<     strcpy(this_title,g_title);
+<     LeaveCriticalSection(&g_title_cs);
+< #else
+869d860
+< #endif
+1134a1126
+> #ifndef NO_X86ASM
+1135a1128
+> #endif
+1320,1322d1312
+< #ifdef WA3_COMPONENT
+<         BitBlt(out,0,0,g_w-g_noshoww,g_h,in2?in2:in1,0,0,SRCCOPY);
+< #else
+1328d1317
+< #endif
+1332,1334d1320
+< #ifdef WA3_COMPONENT
+<         StretchBlt(out,0,0,g_dsw,g_dsh,in2?in2:in1,0,0,g_w,g_h,SRCCOPY);
+< #else
+1340d1325
+< #endif
+Only in vis_avs2: dyn_dist.bin
+Only in vis_avs2: dyn_move.bin
+Only in vis_avs2: dyn_shift.bin
+Only in vis_avs2: effect_l.bin
+Common subdirectories: vis_avs/evallib and vis_avs2/evallib
+Only in vis_avs2: help_1.bin
+Only in vis_avs2: help_2.bin
+Only in vis_avs2: help_3.bin
+Only in vis_avs2: help_4.bin
+Common subdirectories: vis_avs/laser and vis_avs2/laser
+diff -w vis_avs/main.cpp vis_avs2/main.cpp
+40a41,44
+> #include "api.h"
+> #include "../winamp/wa_ipc.h"
+> #include "../Agave/Language/api_language.h"
+> #include <api/service/waServiceFactory.h>
+44,46c48,51
+< #ifdef WA3_COMPONENT
+< #include "wasabicfg.h"
+< #include "../studio/studio/api.h"
+---
+> #ifdef REAPLAY_PLUGIN
+> #include "../../jmde/reaper_plugin.h"
+> const char *(*get_ini_file)();
+> int (*vuGetVisData)(char *vdata, int size);
+48a54,55
+> #define PLUGIN_VERSION "v2.93"
+> 
+56c63
+< char *verstr=
+---
+> /* char *verstr=
+62c69
+< " v2.81d"
+---
+> " v2.92"
+63a71
+> */
+75d82
+< #ifndef WA3_COMPONENT
+77d83
+< #endif
+82c88,92
+< #ifndef WA3_COMPONENT
+---
+> /* wasabi based services for localisation support */
+> api_service *WASABI_API_SVC = 0;
+> api_language *WASABI_API_LNG = 0;
+> HINSTANCE WASABI_API_LNG_HINST = 0, WASABI_API_ORIG_HINST = 0;
+> static char module1[128];
+85c95,105
+< static winampVisHeader hdr = { VIS_HDRVER, verstr, getModule };
+---
+> static winampVisHeader hdr = { VIS_HDRVER, 0, getModule };
+> 
+> // use this to get our own HINSTACE since overriding DllMain(..) causes instant crashes (should see why)
+> 
+> static HINSTANCE GetMyInstance()
+> {
+> 	MEMORY_BASIC_INFORMATION mbi = {0};
+> 	if(VirtualQuery(GetMyInstance, &mbi, sizeof(mbi)))
+> 		return (HINSTANCE)mbi.AllocationBase;
+> 	return NULL;
+> }
+88c108,110
+< 	__declspec( dllexport ) winampVisHeader* winampVisGetHeader()
+---
+> 	__declspec( dllexport ) winampVisHeader* winampVisGetHeader(HWND hwndParent)
+> 	{
+> 		if(!WASABI_API_LNG_HINST)
+89a112,130
+> 			// loader so that we can get the localisation service api for use
+> 			WASABI_API_SVC = (api_service*)SendMessage(hwndParent, WM_WA_IPC, 0, IPC_GET_API_SERVICE);
+> 			if (WASABI_API_SVC == (api_service*)1) WASABI_API_SVC = NULL;
+> 
+> 			waServiceFactory *sf = WASABI_API_SVC->service_getServiceByGuid(languageApiGUID);
+> 			if (sf) WASABI_API_LNG = reinterpret_cast<api_language*>(sf->getInterface());
+> 
+> 			// need to have this initialised before we try to do anything with localisation features
+> 			WASABI_API_START_LANG(GetMyInstance(),VisAVSLangGUID);
+> 		}
+> 
+> 		#ifndef LASER
+> 		static char szDescription[256];
+> 		wsprintfA(szDescription,"%s " PLUGIN_VERSION,WASABI_API_LNGSTRING_BUF(IDS_AVS,module1,128));
+> 		hdr.description = szDescription;
+> 		#else
+> 		hdr.description = "AVS/Laser "PLUGIN_VERSION;
+> 		#endif
+> 
+101c142
+< 		"Advanced Visualization Studio",
+---
+> 		module1,
+121d161
+< #endif
+122a163,186
+> void about(HWND hwndParent)
+> 
+>  {
+> 	static int about_here = 0;
+> 	char aboutbuf[1024] = {0}, aboutTitle[48] = {0};
+> 	if (about_here)
+> 	{
+> 		SetActiveWindow(FindWindow("#32770",WASABI_API_LNGSTRING_BUF(IDS_ABOUT_AVS,aboutTitle,48)));
+> 		return;
+> 	}
+> 	about_here = 1;
+> 	wsprintf(aboutbuf,WASABI_API_LNGSTRING(IDS_ABOUT_STRING),hdr.description);
+> 	MessageBox(hwndParent,aboutbuf,WASABI_API_LNGSTRING_BUF(IDS_ABOUT_AVS,aboutTitle,48),0);
+> 	about_here = 0;
+> }
+> 
+> HWND GetDialogBoxParent(HWND winamp)
+> {
+> 	HWND parent = (HWND)SendMessage(winamp, WM_WA_IPC, 0, IPC_GETDIALOGBOXPARENT);
+> 	if (!parent || parent == (HWND)1)
+> 		return winamp;
+> 	return parent;
+> 
+> /*
+140a205,206
+> */
+> 
+147c213,214
+<     DialogBox(this_mod->hDllInstance,MAKEINTRESOURCE(IDD_DIALOG2),this_mod->hwndParent,aboutProc);
+---
+>     about(GetDialogBoxParent(this_mod->hwndParent));
+> //  DialogBox(this_mod->hDllInstance,MAKEINTRESOURCE(IDD_DIALOG2),this_mod->hwndParent,aboutProc);
+191,193d257
+< #ifdef WA3_COMPONENT
+< 	GetModuleFileName(GetModuleHandle(NULL),g_path,MAX_PATH);
+< #else
+195d258
+< #endif
+203c266,268
+<     MessageBox(this_mod->hwndParent,"This version of AVS requires Winamp 2.9+","AVS ERROR",MB_OK|MB_ICONSTOP);
+---
+>     char title[16];
+>     MessageBox(this_mod->hwndParent,WASABI_API_LNGSTRING(IDS_REQUIRES_2_9_PLUS),
+>     WASABI_API_LNGSTRING_BUF(IDS_AVS_ERROR,title,16),MB_OK|MB_ICONSTOP);
+212c277,279
+<     MessageBox(this_mod->hwndParent,"NO MMX SUPPORT FOUND - CANNOT RUN AVS - GET THE NON-MMX VERSION.","AVS ERROR",MB_OK|MB_ICONSTOP);
+---
+>     char title[16];
+>     MessageBox(this_mod->hwndParent,WASABI_API_LNGSTRING(IDS_NO_MMX_SUPPORT),
+>     WASABI_API_LNGSTRING_BUF(IDS_AVS_ERROR,title,16),MB_OK|MB_ICONSTOP);
+217,221d283
+< 
+< #ifdef WA3_COMPONENT
+<   strcat(g_path,"\\wacs\\data");
+< #endif
+< 
+229d290
+< #ifndef WA3_COMPONENT
+231d291
+< #endif
+244c304
+< 			double a=log(x*60.0/255.0 + 1.0)/log(60.0);
+---
+> 			double a=log((double)x*60.0/255.0 + 1.0)/log(60.0);
+268d327
+< #ifndef WA3_COMPONENT
+332d390
+< #endif
+369d426
+< #ifndef WA3_COMPONENT
+371d427
+< #endif
+384,405d439
+< #ifdef WA3_COMPONENT
+< static winampVisModule dummyMod;
+< 
+< void init3(void)
+< {
+<   extern HWND g_wndparent;
+<   dummyMod.hwndParent=g_wndparent;
+<   dummyMod.hDllInstance=g_hInstance;
+<   init(&dummyMod);
+< }
+< 
+< void quit3(void)
+< {
+<   extern HWND last_parent;
+<   if (last_parent) 
+<   {
+<     ShowWindow(GetParent(last_parent),SW_SHOWNA);
+<   }
+<   quit(&dummyMod);
+< }
+< #endif
+< 
+420,422d453
+< #ifdef WA3_COMPONENT
+<     char visdata[576*2*2];
+<     int ret=api->core_getVisData(0,visdata,sizeof(visdata));
+423a455,463
+> #ifdef REAPLAY_PLUGIN
+>     if(!IsWindowVisible(g_hwnd)) 
+>     {
+>       Sleep(1);
+>       continue;
+>     }
+> 
+>     char visdata[576*2*2];
+>     int ret = vuGetVisData(visdata, sizeof(visdata));
+478,479d517
+< 
+< 
+532a571,604
+> 
+> #ifdef REAPLAY_PLUGIN
+> static winampVisModule dummyMod;
+> extern "C"
+> {
+>   
+>   REAPER_PLUGIN_DLL_EXPORT int REAPER_PLUGIN_ENTRYPOINT(REAPER_PLUGIN_HINSTANCE hInstance, reaper_plugin_info_t *rec)
+>   {
+>     g_hInstance=hInstance;
+>     if (rec)
+>     {
+>       if (rec->caller_version != REAPER_PLUGIN_VERSION || !rec->GetFunc)
+>         return 0;
+> 
+>       *((void **)&get_ini_file) = rec->GetFunc("get_ini_file");
+>       *((void **)&vuGetVisData) = rec->GetFunc("vuGetVisData");
+>       if (!get_ini_file || !vuGetVisData)
+>         return 0;
+> 
+>       dummyMod.hwndParent=rec->hwnd_main;
+>       dummyMod.hDllInstance=g_hInstance;
+>       init(&dummyMod);
+> 
+>       return 1;
+>     }
+>     else
+>     {
+>       quit(&dummyMod);
+>       return 0;
+>     }
+>   }
+>   
+> };
+> #endif
+Only in vis_avs2: movement.bin
+Only in vis_avs: presets
+diff -w vis_avs/r_avi.cpp vis_avs2/r_avi.cpp
+35a36
+> #include "../Agave/Language/api_language.h"
+53c54
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_AVI,desc,128):desc); }
+370c371
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_AVI),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_AVI,hwndParent,g_DlgProc);
+diff -w vis_avs/r_blit.cpp vis_avs2/r_blit.cpp
+38a39
+> #include "../Agave/Language/api_language.h"
+57c58
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_BLITTER_FEEDBACK,desc,128):desc); }
+551c552
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_BLT),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_BLT,hwndParent,g_DlgProc);
+diff -w vis_avs/r_blur.cpp vis_avs2/r_blur.cpp
+37a38
+> #include "../Agave/Language/api_language.h"
+53c54
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_BLUR,desc,128):desc); }
+877c878
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_BLUR),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_BLUR,hwndParent,g_DlgProc);
+diff -w vis_avs/r_bpm.cpp vis_avs2/r_bpm.cpp
+37a38
+> #include "../Agave/Language/api_language.h"
+51c52
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_MISC_CUSTOM_BPM,desc,128):desc); }
+194c195
+< 		char txt[40];
+---
+> 		char txt[40], beat[16], beats[16];
+218c219,221
+< 		wsprintf(txt, "%d beat%s", g_ConfigThis->skipVal, g_ConfigThis->skipVal > 1 ? "s" : "");
+---
+> 		WASABI_API_LNGSTRING_BUF(IDS_BEAT,beat,16);
+> 		WASABI_API_LNGSTRING_BUF(IDS_BEATS,beats,16);
+> 		wsprintf(txt, "%d %s", g_ConfigThis->skipVal, g_ConfigThis->skipVal > 1 ? beats : beat);
+220c223
+< 		wsprintf(txt, "%d beat%s", g_ConfigThis->skipfirst, g_ConfigThis->skipfirst > 1 ? "s" : "");
+---
+> 		wsprintf(txt, "%d %s", g_ConfigThis->skipfirst, g_ConfigThis->skipfirst > 1 ? beats : beat);
+235c238
+< 		char txt[40];
+---
+> 		char txt[40], beat[16], beats[16];
+244c247,249
+< 		wsprintf(txt, "%d beat%s", g_ConfigThis->skipVal, g_ConfigThis->skipVal > 1 ? "s" : "");
+---
+> 		WASABI_API_LNGSTRING_BUF(IDS_BEAT,beat,16);
+> 		WASABI_API_LNGSTRING_BUF(IDS_BEATS,beats,16);
+> 		wsprintf(txt, "%d %s", g_ConfigThis->skipVal, g_ConfigThis->skipVal > 1 ? beats : beat);
+246c251
+< 		wsprintf(txt, "%d beat%s", g_ConfigThis->skipfirst, g_ConfigThis->skipfirst > 1 ? "s" : "");
+---
+> 		wsprintf(txt, "%d %s", g_ConfigThis->skipfirst, g_ConfigThis->skipfirst > 1 ? beats : beat);
+273c278
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_BPM),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_BPM,hwndParent,g_DlgProc);
+diff -w vis_avs/r_bright.cpp vis_avs2/r_bright.cpp
+36a37
+> #include "../Agave/Language/api_language.h"
+50c51
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_BRIGHTNESS,desc,128):desc); }
+468c469
+< 	        LOGBRUSH lb={BS_SOLID,_color,0};
+---
+> 	        LOGBRUSH lb={ (COLORREF)BS_SOLID,(COLORREF)_color,(COLORREF)0};
+489c490
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_BRIGHTNESS),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_BRIGHTNESS,hwndParent,g_DlgProc);
+diff -w vis_avs/r_bspin.cpp vis_avs2/r_bspin.cpp
+36a37
+> #include "../Agave/Language/api_language.h"
+49c50
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_BASS_SPIN,desc,128):desc); }
+244c245
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_BSPIN),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_BSPIN,hwndParent,g_DlgProc);
+diff -w vis_avs/r_bump.cpp vis_avs2/r_bump.cpp
+38a39
+> #include "../Agave/Language/api_language.h"
+55c56
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_BUMP,desc,128):desc); }
+69,71c70,72
+< 	int codeHandle;
+< 	int codeHandleBeat;
+< 	int codeHandleInit;
+---
+> 	NSEEL_CODEHANDLE codeHandle;
+> 	NSEEL_CODEHANDLE codeHandleBeat;
+> 	NSEEL_CODEHANDLE codeHandleInit;
+82c83
+<   int AVS_EEL_CONTEXTNAME;
+---
+>   NSEEL_VMCTX AVS_EEL_CONTEXTNAME;
+441c442
+< 				SendDlgItemMessage(hwndDlg, IDC_COMBO1, CB_ADDSTRING, 0, (int)"Current");
+---
+> 				SendDlgItemMessage(hwndDlg, IDC_COMBO1, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRING(IDS_CURRENT));
+447,448c448,449
+< 					 wsprintf(txt, "Buffer %d", i+1);
+< 					 SendDlgItemMessage(hwndDlg, IDC_COMBO1, CB_ADDSTRING, 0, (int)txt);
+---
+> 					 wsprintf(txt, WASABI_API_LNGSTRING(IDS_BUFFER_X), i+1);
+> 					 SendDlgItemMessage(hwndDlg, IDC_COMBO1, CB_ADDSTRING, 0, (LPARAM)txt);
+465a467,471
+> /*		char text[4096];
+> 		WASABI_API_LNGSTRING_BUF(IDS_BUMP_LIGHT_POSITION,text,4096);
+> 		int titlelen = lstrlen(text)+1;
+> 		lstrcpyn(text+titlelen,GetTextResource(IDR_BUMP_LIGHT_POSITION),4095-titlelen);
+> */
+541c547
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_BUMP),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_BUMP,hwndParent,g_DlgProc);
+diff -w vis_avs/r_chanshift.cpp vis_avs2/r_chanshift.cpp
+34a35
+> #include "../Agave/Language/api_language.h"
+328c329
+< 	return CreateDialog(hInstance, MAKEINTRESOURCE(IDD_CFG_CHANSHIFT), hwndParent, (DLGPROC)g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_CHANSHIFT, hwndParent, (DLGPROC)g_DlgProc);
+334c335
+< 	return MOD_NAME; 
+---
+> 	static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_CHANNEL_SHIFT,desc,128):desc);
+339c340
+< 	srand(time(0));
+---
+> 	srand((unsigned int)time(0));
+diff -w vis_avs/r_clear.cpp vis_avs2/r_clear.cpp
+35a36
+> #include "../Agave/Language/api_language.h"
+48c49
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_CLEAR_SCREEN,desc,128):desc); }
+157c158
+< 	        LOGBRUSH lb={BS_SOLID,_color,0};
+---
+> 	        LOGBRUSH lb={(COLORREF)BS_SOLID,(COLORREF)_color,(COLORREF)0};
+215c216
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_CLEAR),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_CLEAR,hwndParent,g_DlgProc);
+diff -w vis_avs/r_colorfade.cpp vis_avs2/r_colorfade.cpp
+36a37
+> #include "../Agave/Language/api_language.h"
+49c50
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_COLORFADE,desc,128):desc); }
+352c353
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_COLORFADE),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_COLORFADE,hwndParent,g_DlgProc);
+diff -w vis_avs/r_colorreduction.cpp vis_avs2/r_colorreduction.cpp
+33a34
+> #include "../Agave/Language/api_language.h"
+158c159
+< 	return CreateDialog(hInstance, MAKEINTRESOURCE(IDD_CFG_COLORREDUCTION), hwndParent, (DLGPROC)g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_COLORREDUCTION, hwndParent, (DLGPROC)g_DlgProc);
+164c165
+< 	return MOD_NAME; 
+---
+> 	static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_COLOR_REDUCTION,desc,128):desc); 
+diff -w vis_avs/r_colorreplace.cpp vis_avs2/r_colorreplace.cpp
+36a37
+> #include "../Agave/Language/api_language.h"
+47c48
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_COLOR_CLIP,desc,128):desc); }
+157c158
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_CONTRASTENHANCE),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_CONTRASTENHANCE,hwndParent,g_DlgProc);
+diff -w vis_avs/r_comment.cpp vis_avs2/r_comment.cpp
+36a37
+> #include "../Agave/Language/api_language.h"
+47c48
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_MISC_COMMENT,desc,128):desc); }
+114c115
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_COMMENT),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_COMMENT,hwndParent,g_DlgProc);
+diff -w vis_avs/r_contrast.cpp vis_avs2/r_contrast.cpp
+36a37
+> #include "../Agave/Language/api_language.h"
+49c50
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_COLOR_CLIP,desc,128):desc); }
+221c222
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_CONTRASTENHANCE),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_CONTRASTENHANCE,hwndParent,g_DlgProc);
+diff -w vis_avs/r_dcolormod.cpp vis_avs2/r_dcolormod.cpp
+38c38
+< 
+---
+> #include "../Agave/Language/api_language.h"
+51c51
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_COLOR_MODIFIER,desc,128):desc); }
+61c61
+<     int AVS_EEL_CONTEXTNAME;
+---
+>     NSEEL_VMCTX AVS_EEL_CONTEXTNAME;
+64c64
+<     int codehandle[4];
+---
+>     NSEEL_CODEHANDLE codehandle[4];
+269a270,274
+> /*		char text[4096];
+> 		WASABI_API_LNGSTRING_BUF(IDS_COLOR_MODIFIER,text,4096);
+> 		int titlelen = lstrlen(text)+1;
+> 		lstrcpyn(text+titlelen,GetTextResource(IDR_COLOR_MODIFIER),4095-titlelen);
+> */
+349c354
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_COLORMOD),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_COLORMOD,hwndParent,g_DlgProc);
+diff -w vis_avs/r_ddm.cpp vis_avs2/r_ddm.cpp
+39a40
+> #include "../Agave/Language/api_language.h"
+119c120
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_DYNAMIC_DISTANCE_MODIFIER,desc,128):desc); }
+130c131
+<     int AVS_EEL_CONTEXTNAME;
+---
+>     NSEEL_VMCTX AVS_EEL_CONTEXTNAME;
+134c135
+<     int codehandle[4];
+---
+>     NSEEL_CODEHANDLE codehandle[4];
+436a438,442
+> /*		char text[4096];
+> 		WASABI_API_LNGSTRING_BUF(IDS_DYNAMIC_DISTANCE_MODIFIER,text,4096);
+> 		int titlelen = lstrlen(text)+1;
+> 		lstrcpyn(text+titlelen,GetTextResource(IDR_DYNAMIC_DISTANCE_MODIFIER),4095-titlelen);
+> */
+482c488
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_DDM),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_DDM,hwndParent,g_DlgProc);
+Only in vis_avs: r_defs.cpp
+diff -w vis_avs/r_defs.h vis_avs2/r_defs.h
+82a83
+> char* GetTextResource(UINT id);
+diff -w vis_avs/r_dmove.cpp vis_avs2/r_dmove.cpp
+40a41
+> #include "../Agave/Language/api_language.h"
+75c76
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_DYNAMIC_MOVEMENT,desc,128):desc); }
+85c86
+<     int AVS_EEL_CONTEXTNAME;
+---
+>     NSEEL_VMCTX AVS_EEL_CONTEXTNAME;
+88c89
+<     int codehandle[4];
+---
+>     NSEEL_CODEHANDLE codehandle[4];
+642c643
+<       SendDlgItemMessage(hwndDlg, IDC_COMBO1, CB_ADDSTRING, 0, (int)"Current");
+---
+>       SendDlgItemMessage(hwndDlg, IDC_COMBO1, CB_ADDSTRING, 0, (LPARAM)WASABI_API_LNGSTRING(IDS_CURRENT));
+648c649
+< 					 wsprintf(txt, "Buffer %d", i+1);
+---
+> 					 wsprintf(txt, WASABI_API_LNGSTRING(IDS_BUFFER_X), i+1);
+662,663c663,666
+<         char *text="Dynamic Movement\0"
+<           "Dynamic movement help goes here (send me some :)";
+---
+>         char text[4096];
+> 	WASABI_API_LNGSTRING_BUF(IDS_DYNAMIC_MOVEMENT,text,4096);
+> 	int titlelen = lstrlen(text)+1;
+> 	lstrcpyn(text+titlelen,GetTextResource(IDR_DYNAMIC_MOVEMENT),4095-titlelen);
+772c775
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_DMOVE),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_DMOVE,hwndParent,g_DlgProc);
+diff -w vis_avs/r_dotfnt.cpp vis_avs2/r_dotfnt.cpp
+36a37
+> #include "../Agave/Language/api_language.h"
+63c64
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_DOT_FOUNTAIN,desc,128):desc); }
+317c318
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_DOTPLANE),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_DOTPLANE,hwndParent,g_DlgProc);
+diff -w vis_avs/r_dotgrid.cpp vis_avs2/r_dotgrid.cpp
+36a37
+> #include "../Agave/Language/api_language.h"
+49c50
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_DOT_GRID,desc,128):desc); }
+201c202
+< 	        LOGBRUSH lb={BS_SOLID,color,0};
+---
+> 	        LOGBRUSH lb={ (COLORREF)BS_SOLID,(COLORREF)color,(COLORREF)0};
+325c326
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_DOTGRID),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_DOTGRID,hwndParent,g_DlgProc);
+diff -w vis_avs/r_dotpln.cpp vis_avs2/r_dotpln.cpp
+35a36
+> #include "../Agave/Language/api_language.h"
+56c57
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_DOT_PLANE,desc,128):desc); }
+306c307
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_DOTPLANE),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_DOTPLANE,hwndParent,g_DlgProc);
+Only in vis_avs2: reaplay_avs.dsp
+diff -w vis_avs/render.cpp vis_avs2/render.cpp
+34,35d33
+< #include "wnd.h"
+< #include "wa_ipc.h"
+89,90c87,88
+< 	strncpy(INI_FILE,(char*)SendMessage(GetWinampHwnd(),WM_WA_IPC,0,IPC_GETINIFILE),MAX_PATH);
+< 	p += strlen(INI_FILE) - 1;
+---
+> 	GetModuleFileName(hDllInstance,INI_FILE,sizeof(INI_FILE));
+> 	if (p[0]) while (p[1]) p++;
+93c91
+< 	strcpy(p,"\\plugins\\vis_avs_laser.dat");
+---
+> 	strcpy(p,"\\vis_avs_laser.dat");
+95c93
+< 	strcpy(p,"\\plugins\\vis_avs.dat");
+---
+> 	strcpy(p,"\\vis_avs.dat");
+117,118c115,116
+< 		strncpy(INI_FILE,(char*)SendMessage(GetWinampHwnd(),WM_WA_IPC,0,IPC_GETINIFILE),MAX_PATH);
+< 		p += strlen(INI_FILE) - 1;
+---
+> 		GetModuleFileName(hDllInstance,INI_FILE,sizeof(INI_FILE));
+> 		if (p[0]) while (p[1]) p++;
+121c119
+< 	  strcpy(p,"\\plugins\\vis_avs_laser.dat");
+---
+> 	  strcpy(p,"\\vis_avs_laser.dat");
+123c121
+< 	  strcpy(p,"\\plugins\\vis_avs.dat");
+---
+> 	  strcpy(p,"\\vis_avs.dat");
+Only in vis_avs: res.aps
+diff -w vis_avs/resource.h vis_avs2/resource.h
+4a5,107
+> #define IDS_AVS                         0
+> #define IDS_WINAMP_AVS_DISPLAY          1
+> #define IDS_AVS_EDITOR                  2
+> #define IDS_DOCK_IN_AVS_EDITOR          3
+> #define IDS_LEARNING                    5
+> #define IDS_GOT_IT                      6
+> #define IDS_NO_EFFECT_SETTING_SELECTED  7
+> #define IDS_SHIFT_X                     8
+> #define IDS_ALL                         9
+> #define IDS_SAME_AS_WINAMP              10
+> #define IDS_IDLE                        11
+> #define IDS_LOWEST                      12
+> #define IDS_NORMAL                      13
+> #define IDS_HIGHEST                     14
+> #define IDS_NO_SUITABLE_MODES_FOUND     15
+> #define IDS_CHOOSE_A_VIDEO_MODE         16
+> #define IDS_FULLSCREEN                  17
+> #define IDS_AVS_FILTER_STRING           18
+> #define IDS_SAVE_PRESET                 19
+> #define IDS_ERROR_SAVING_PRESET         20
+> #define IDS_PRESET_TOO_LARGE            21
+> #define IDS_OUT_OF_MEMORY               22
+> #define IDS_EVAL_CODE_STATS_ETC         23
+> #define IDS_MOVE_HERE                   24
+> #define IDS_ERROR_TREE_INCONSISTANCY    25
+> #define IDS_CRITICAL_ERROR_OCCURRED     26
+> #define IDS_DISPLAY                     27
+> #define IDS_FULLSCREEN_SETTINGS         28
+> #define IDS_PRESET_HOTKEYS              29
+> #define IDS_BEAT_DETECTION              30
+> #define IDS_TRANSITIONS                 31
+> #define IDS_EFFECT_LIST                 32
+> #define IDS_PRESETS                     33
+> #define IDS_LOAD_PRESET                 34
+> #define IDS_STILL_INITIALIZING_PREVIOUS_PRESET 35
+> #define IDS_MAIN                        36
+> #define IDS_ERROR_CREATING_DDRAW_OBJECT 37
+> #define IDS_ABOUT_STRING                38
+> #define IDS_ABOUT_AVS                   39
+> #define IDS_REQUIRES_2_9_PLUS           40
+> #define IDS_AVS_ERROR                   41
+> #define IDS_NO_MMX_SUPPORT              42
+> #define IDS_STRING43                    43
+> #define IDS_SHIFT_                      43
+> #define IDS_AVS_CRITICAL_ERROR          44
+> #define IDS_CHANNEL_SHIFT               45
+> #define IDS_COLOR_REDUCTION             46
+> #define IDS_MULTIPLIER                  47
+> #define IDS_HOLDEN04_VIDEO_DELAY        48
+> #define IDS_HOLDEN05_MULTI_DELAY        49
+> #define IDS_CURRENT_PRESET_EDITED_SAVE_BEFORE_LOAD 50
+> #define IDS_STRING51IDS_CURRENT_PRESET_EDITED_SAVE_BEFORE_NEW 51
+> #define IDS_CURRENT_PRESET_EDITED_SAVE_BEFORE_NEW 51
+> #define IDS_AVS_PRESET_MODIFIED         52
+> #define IDS_ERROR_CREATING_WINDOW       53
+> #define IDS_CANNOT_GO_FULLSCREEN_WHEN_VIDEO_PLAYING 54
+> #define IDS_AVS_FULLSCREEN              55
+> #define IDS_FULLSCREEN_FPS_ON           56
+> #define IDS_FULLSCREEN_FPS_OFF          57
+> #define IDS_RANDOM_PRESETS_ON           58
+> #define IDS_RANDOM_PRESETS_OFF          59
+> #define IDS_SAVED_TO                    60
+> #define IDS_LOADED_FROM                 61
+> #define IDS_ERROR_LOADING_FROM          62
+> #define IDS_X_BEATX                     63
+> #define IDS_BEAT                        63
+> #define IDS_CURRENT                     64
+> #define IDS_BUFFER_X                    65
+> #define IDS_BUMP_LIGHT_POSITION         66
+> #define IDS_4X_RED_BRIGHTNESS_2X_GREEN_1X_BLUE 67
+> #define IDS_SOLARIZATION                68
+> #define IDS_DOUBLE_SOLARIZATION         69
+> #define IDS_INVERSE_SOLARIZATION_SOFT   70
+> #define IDS_BIG_BRIGHTNESS_ON_BEAT      71
+> #define IDS_BIG_BRIGHTNESS_ON_BEAT_INTERPOLATIVE 72
+> #define IDS_PULSING_BRIGHTNESS_BEAT_INTERPOLATIVE 73
+> #define IDS_ROLLING_SOLARIZATION_BEAT_INTERPOLATIVE 74
+> #define IDS_ROLLING_TONE_BEAT_INTERPOLATIVE 75
+> #define IDS_RANDOM_INVERSE_TONE_SWITCH_ON_BEAT 76
+> #define IDS_COLOR_MODIFIER              77
+> #define IDS_DYNAMIC_DISTANCE_MODIFIER   78
+> #define IDS_RANDOM_ROTATE               79
+> #define IDS_RANDOM_DIRECTION            80
+> #define IDS_IN_AND_OUT                  81
+> #define IDS_UNSPUN_KALEIDA              82
+> #define IDS_ROLLING_GRIDLEY             83
+> #define IDS_6_WAY_OUTSWIRL              84
+> #define IDS_WAVY                        85
+> #define IDS_SMOOTH_ROTOBLITTER          86
+> #define IDS_DYNAMIC_MOVEMENT            87
+> #define IDS_REPLACE                     88
+> #define IDS_ADDITIVE                    89
+> #define IDS_MAXIMUM_BLEND               90
+> #define IDS_50_50_BLEND                 91
+> #define IDS_SUBTRACTIVE_BLEND_1         92
+> #define IDS_SUBTRACTIVE_BLEND_2         93
+> #define IDS_MULTIPLY_BLEND              94
+> #define IDS_ADJUSTABLE_BLEND            95
+> #define IDS_XOR                         96
+> #define IDS_MINIMUM_BLEND               97
+> #define IDS_DYNAMIC_SHIFT               98
+> #define IDS_SPIRAL                      99
+> #define IDS_3D_SCOPE_DISH               100
+5a109
+> #define IDS_ROTATING_BOW_THING          101
+6a111
+> #define IDS_VERTICAL_BOUNCING_SCOPE     102
+8a114
+> #define IDS_SPIRAL_GRAPH_FUN            103
+10a117
+> #define IDS_ALTERNATING_DIAGONAL_SCOPE  104
+11a119
+> #define IDS_VIBRATING_WORM              105
+12a121
+> #define IDS_WANDERING_SIMPLE            106
+13a123
+> #define IDS_FLITTERBUG                  107
+14a125
+> #define IDS_SPIROSTAR                   108
+15a127
+> #define IDS_EXPLODING_DAISY             109
+16a129
+> #define IDS_SWIRLIE_DOTS                110
+17a131
+> #define IDS_SWEEP                       111
+18a133
+> #define IDS_WHIPLASH_SPIRAL             112
+19a135
+> #define IDS_SUPERSCOPE                  113
+20a137
+> #define IDS_DRAW_X_BANDS                114
+21a139
+> #define IDS_NONE                        115
+22a141
+> #define IDS_SLIGHT_FUZZIFY              116
+23a143
+> #define IDS_SHIFT_ROTATE_LEFT           117
+24a145
+> #define IDS_BIG_SWIRL_OUT               118
+25a147
+> #define IDS_MEDIUM_SWIRL                119
+26a149
+> #define IDS_SUNBURSTER                  120
+27a151
+> #define IDS_SWIRL_TO_CENTER             121
+29a154
+> #define IDS_BLOCKY_PARTIAL_OUT          122
+30a156
+> #define IDS_SWIRLING_AROUND_BOTH_WAYS   123
+31a158
+> #define IDS_BUBBLING_OUTWARD            124
+32a160
+> #define IDS_BUBBLING_OUTWARD_WITH_SWIRL 125
+33a162,163
+> #define IDS_5_POINTED_DISTRO            126
+> #define IDS_TUNNELING                   127
+35a166
+> #define IDS_BLEEDIN                     128
+36a168
+> #define IDS_SHIFTED_BIG_SWIRL_OUT       129
+37a170
+> #define IDS_PSYCHOTIC_BEAMING_OUTWARD   130
+38a172
+> #define IDS_COSINE_RADIAL_3_WAY         131
+39a174
+> #define IDS_SPINNY_TUBE                 132
+40a176
+> #define IDS_RADIAL_SWIRLIES             133
+41a178
+> #define IDS_SWILL                       134
+42a180
+> #define IDS_GRIDLEY                     135
+43a182
+> #define IDS_GRAPEVINE                   136
+44a184
+> #define IDS_QUADRANT                    137
+45a186
+> #define IDS_6_WAY_KALAEIDA              138
+46a188
+> #define IDS_USER_DEFINED                139
+48a191
+> #define IDS_MOVEMENT                    140
+49a193
+> #define IDS_IGNORE                      141
+50a195
+> #define IDS_MAXIMUM                     142
+51a197
+> #define IDS_50_50                       143
+52a199
+> #define IDS_EVERY_OTHER_LINE            144
+53a201
+> #define IDS_EVERY_OTHER_PIXEL           145
+54a203
+> #define IDS_ADJUSTABLE                  146
+55a205
+> #define IDS_MULTIPLY                    147
+56a207
+> #define IDS_BUFFER                      148
+57a209
+> #define IDS_MINIMUM                     149
+58a211
+> #define IDS_CROSS_DISSOLVE              150
+59a213
+> #define IDS_RANDOM                      151
+60a215
+> #define IDS_L_R_PUSH                    152
+61a217
+> #define IDS_R_L_PUSH                    153
+62a219
+> #define IDS_T_B_PUSH                    154
+63a221
+> #define IDS_B_T_PUSH                    155
+64a223
+> #define IDS_9_RANDOM_BLOCKS             156
+65a225
+> #define IDS_SPLIT_L_R_PUSH              157
+66a227
+> #define IDS_L_R_CENTER_PUSH             158
+67a229
+> #define IDS_L_R_CENTER_SQUEEZE          159
+68a231
+> #define IDS_L_R_WIPE                    160
+69a233
+> #define IDS_R_L_WIPE                    161
+70a235
+> #define IDS_T_B_WIPE                    162
+71a237
+> #define IDS_B_T_WIPE                    163
+72a239
+> #define IDS_DOT_DISSOLVE                164
+73a241
+> #define IDS_LOADING_WAIT                165
+74a243
+> #define IDS_LOADING                     166
+75a245
+> #define IDS_ERROR_LOADING_X             167
+76a247
+> #define IDS_BUILTIN_ID                  168
+77a249
+> #define IDS_CONFIG_SIZE                 169
+78a251
+> #define IDS_GENERAL                     170
+79a253
+> #define IDS_OPERATORS                   171
+80a255,327
+> #define IDS_FUNCTIONS                   172
+> #define IDS_STRING173                   173
+> #define IDS_CONSTANTS                   173
+> #define IDR_BUMP_LIGHT_POSITION         174
+> #define IDS_BEAT2                       174
+> #define IDS_BEATS                       174
+> #define IDR_COLOR_MODIFIER              175
+> #define IDS_SUBTRACTIVE_1               175
+> #define IDR_DYNAMIC_DISTANCE_MODIFIER   176
+> #define IDS_SUBTRACTIVE_2               176
+> #define IDR_DYNAMIC_MOVEMENT            177
+> #define IDS_STRING177                   177
+> #define IDS_RENDER_AVI                  177
+> #define IDR_DYNAMIC_SHIFT               178
+> #define IDS_TRANS_BLITTER_FEEDBACK      178
+> #define IDR_SUPERSCOPE                  179
+> #define IDS_TRANS_BLUR                  179
+> #define IDR_MOVEMENT                    180
+> #define IDS_MISC_CUSTOM_BPM             180
+> #define IDR_EFFECT_LIST                 181
+> #define IDS_TRANS_BRIGHTNESS            181
+> #define IDR_HELP_1                      182
+> #define IDS_RENDER_BASS_SPIN            182
+> #define IDR_HELP_2                      183
+> #define IDS_TRANS_BUMP                  183
+> #define IDR_HELP_3                      184
+> #define IDS_TRANS_CHANNEL_SHIFT         184
+> #define IDR_HELP_4                      185
+> #define IDS_RENDER_CLEAR_SCREEN         185
+> #define IDS_TRANS_COLORFADE             186
+> #define IDS_TRANS_COLOR_REDUCTION       187
+> #define IDS_TRANS_COLOR_CLIP            188
+> #define IDS_MISC_COMMENT                189
+> #define IDS_TRANS_COLOR_MODIFIER        190
+> #define IDS_TRANS_DYNAMIC_DISTANCE_MODIFIER 191
+> #define IDS_TRANS_DYNAMIC_MOVEMENT      192
+> #define IDS_RENDER_DOT_FOUNTAIN         193
+> #define IDS_RENDER_DOT_GRID             194
+> #define IDS_RENDER_DOT_PLANE            195
+> #define IDS_TRANS_FADEOUT               196
+> #define IDS_TRANS_FAST_BRIGHTNESS       197
+> #define IDS_TRANS_GRAIN                 198
+> #define IDS_TRANS_INTERFERENCES         199
+> #define IDS_TRANS_INTERLEAVE            200
+> #define IDS_TRANS_INVERT                201
+> #define IDS_MISC_SET_RENDER_MODE        202
+> #define IDS_TRANS_MIRROR                203
+> #define IDS_TRANS_MOSAIC                204
+> #define IDS_TRANS_MULTI_DELAY           205
+> #define IDS_TRANS_MULTIPLIER            206
+> #define IDS_RENDER_ONBEAT_CLEAR         207
+> #define IDS_TRANS_UNIQUE_TONE           208
+> #define IDS_RENDER_RING                 209
+> #define IDS_RENDER_OSCILLOSCOPE_STAR    210
+> #define IDS_RENDER_MOVING_PARTICLE      211
+> #define IDS_RENDER_PICTURE              212
+> #define IDS_TRANS_ROTO_BLITTER          213
+> #define IDS_RENDER_ROTATING_STARS       214
+> #define IDS_TRANS_SCATTER               215
+> #define IDS_TRANS_DYNAMIC_SHIFT         216
+> #define IDS_RENDER_SIMPLE               217
+> #define IDS_RENDER_SUPERSCOPE           218
+> #define IDS_MISC_BUFFER_SAVE            219
+> #define IDS_RENDER_STARFIELD            220
+> #define IDS_RENDER_SVP_LOADER           221
+> #define IDS_RENDER_TEXT                 222
+> #define IDS_RENDER_TIMESCOPE            223
+> #define IDS_TRANS_MOVEMENT              224
+> #define IDS_UNKNOWN_RENDER_OBJECT       225
+> #define IDS_TRANS_VIDEO_DELAY           226
+> #define IDS_TRANS_WATER                 227
+> #define IDS_TRANS_WATER_BUMP            228
+> #define IDS_OVERLAY_MODE                229
+395a643,644
+> #define IDC_STATIC1                     1210
+> #define IDC_STATIC2                     1211
+411c660
+< #define _APS_NEXT_RESOURCE_VALUE        172
+---
+> #define _APS_NEXT_RESOURCE_VALUE        230
+413c662
+< #define _APS_NEXT_CONTROL_VALUE         1210
+---
+> #define _APS_NEXT_CONTROL_VALUE         1212
+diff -w vis_avs/res.rc vis_avs2/res.rc
+56,57c56,57
+< IDD_DIALOG1 DIALOGEX 0, 0, 378, 238
+< STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+---
+> IDD_DIALOG1 DIALOGEX 0, 0, 400, 241
+> STYLE DS_SETFONT | DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+63,65c63,65
+<     PUSHBUTTON      "-",IDC_REMSEL,119,2,14,13
+<     PUSHBUTTON      "+",IDC_ADD,2,2,14,13
+<     PUSHBUTTON      "x2",IDC_CLONESEL,19,2,14,13,BS_CENTER
+---
+>     PUSHBUTTON      "-",IDC_REMSEL,121,2,14,12
+>     PUSHBUTTON      "+",IDC_ADD,4,2,14,12
+>     PUSHBUTTON      "x2",IDC_CLONESEL,22,2,14,12,BS_CENTER
+67,68c67,68
+<                     139,9,233,214
+<     GROUPBOX        "No effect/setting selected",IDC_EFNAME,136,0,240,227
+---
+>                     145,9,245,214
+>     GROUPBOX        "No effect/setting selected",IDC_EFNAME,139,0,257,229
+72,74c72,73
+<                     WS_TABSTOP,2,18,131,139
+<     CONTROL         "",IDC_RRECT,"Static",SS_BLACKRECT | SS_NOTIFY,3,159,129,
+<                     69
+---
+>                     WS_TABSTOP,4,18,131,137
+>     CONTROL         "",IDC_RRECT,"Static",SS_BLACKRECT | SS_NOTIFY,4,159,131,69
+77,79c76,78
+< IDD_CFG_SIMPLE DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_SIMPLE DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+82,84c81,82
+<                     WS_TABSTOP,6,9,46,10
+<     CONTROL         "Oscilliscope",IDC_OSC,"Button",BS_AUTORADIOBUTTON,53,9,
+<                     53,10
+---
+>                     WS_TABSTOP,6,13,60,8
+>     CONTROL         "Oscilliscope",IDC_OSC,"Button",BS_AUTORADIOBUTTON,70,13,65,8
+86,89c84,86
+<                     WS_TABSTOP,6,24,33,10
+<     CONTROL         "Solid",IDC_SOLID,"Button",BS_AUTORADIOBUTTON,38,24,31,
+<                     10
+<     CONTROL         "Dots",IDC_DOT,"Button",BS_AUTORADIOBUTTON,72,24,31,10
+---
+>                     WS_TABSTOP,6,26,41,8
+>     CONTROL         "Solid",IDC_SOLID,"Button",BS_AUTORADIOBUTTON,51,26,40,8
+>     CONTROL         "Dots",IDC_DOT,"Button",BS_AUTORADIOBUTTON,95,26,40,8
+91c88
+<                     WS_GROUP | WS_TABSTOP,8,68,56,10
+---
+>                     WS_GROUP | WS_TABSTOP,6,57,75,8
+93,95c90,91
+<                     8,78,61,10
+<     CONTROL         "Center Channel",IDC_MIDCH,"Button",BS_AUTORADIOBUTTON,8,
+<                     88,65,10
+---
+>                     6,69,75,8
+>     CONTROL         "Center Channel",IDC_MIDCH,"Button",BS_AUTORADIOBUTTON,6,80,75,8
+97,103c93,97
+<                     WS_TABSTOP,86,68,29,10
+<     CONTROL         "Bottom",IDC_BOTTOM,"Button",BS_AUTORADIOBUTTON,86,78,38,
+<                     10
+<     CONTROL         "Center",IDC_CENTER,"Button",BS_AUTORADIOBUTTON,86,88,37,
+<                     10
+<     GROUPBOX        "Effect options",IDC_STATIC,0,58,137,43
+<     EDITTEXT        IDC_NUMCOL,53,107,19,12,ES_AUTOHSCROLL | ES_NUMBER
+---
+>                     WS_TABSTOP,110,57,45,10
+>     CONTROL         "Bottom",IDC_BOTTOM,"Button",BS_AUTORADIOBUTTON,110,69,45,10
+>     CONTROL         "Center",IDC_CENTER,"Button",BS_AUTORADIOBUTTON,110,80,45,10
+>     GROUPBOX        "Effect options",IDC_STATIC,0,45,245,51
+>     EDITTEXT        IDC_NUMCOL,53,110,19,12,ES_AUTOHSCROLL | ES_NUMBER
+105c99
+<     GROUPBOX        "Render Effect",IDC_STATIC,0,0,137,57
+---
+>     GROUPBOX        "Render Effect",IDC_STATIC,0,2,245,39
+107,108c101,102
+<     LTEXT           "Cycle through ",IDC_STATIC,7,109,46,8
+<     LTEXT           "colors (max 16)",IDC_STATIC,77,109,48,8
+---
+>     LTEXT           "Cycle through ",IDC_STATIC,7,112,46,8
+>     LTEXT           "colors (max 16)",IDC_STATIC,77,112,48,8
+111,113c105,107
+< IDD_CFG_FADE DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_FADE DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+124,126c118,120
+< IDD_CFG_BLT DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_BLT DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+146,148c140,142
+< IDD_CFG_DOTPLANE DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_DOTPLANE DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+172,174c166,168
+< IDD_CFG_OSCSTAR DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_OSCSTAR DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+205,207c199,201
+< IDD_CFG_NFC DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_NFC DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+220,222c214,216
+< IDD_CFG_BLUR DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_BLUR DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+238,240c232,234
+< IDD_CFG_BSPIN DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_BSPIN DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+255,257c249,251
+< IDD_GCFG_DISP DIALOG DISCARDABLE  0, 0, 233, 223
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_GCFG_DISP DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+318,320c312,314
+< IDD_CFG_PARTS DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_PARTS DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+348,350c342,344
+< IDD_CFG_ROTBLT DIALOG DISCARDABLE  0, 0, 137, 157
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_ROTBLT DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+378,380c372,374
+< IDC_CFG_SVP DIALOG DISCARDABLE  0, 0, 233, 214
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDC_CFG_SVP DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+387,389c381,383
+< IDD_CFG_COLORFADE DIALOG DISCARDABLE  0, 0, 137, 155
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_COLORFADE DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+411,413c405,407
+< IDD_CFG_CONTRASTENHANCE DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_CONTRASTENHANCE DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+429,431c423,425
+< IDD_CFG_ROTSTAR DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_ROTSTAR DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+440,442c434,436
+< IDD_CFG_OSCRING DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_OSCRING DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+474,476c468,470
+< IDD_GCFG_PRESET DIALOG DISCARDABLE  0, 0, 233, 215
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_GCFG_PRESET DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+498,500c492,494
+< IDD_CFG_SCAT DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_SCAT DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+506,508c500,502
+< IDD_CFG_DOTGRID DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_DOTGRID DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+539,541c533,535
+< IDD_CFG_STACK DIALOG DISCARDABLE  0, 0, 233, 219
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_STACK DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+585c579
+< IDD_DIALOG2 DIALOG DISCARDABLE  0, 0, 205, 150
+---
+> IDD_DIALOG2 DIALOGEX 0, 0, 205, 150
+588c582
+< FONT 8, "MS Sans Serif"
+---
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+592c586
+<     LTEXT           "Copyright (C) 1998-2006 Nullsoft",IDC_STATIC,7,16,191,8
+---
+>     LTEXT           "Copyright (C) 1998-2023 Winamp SA",IDC_STATIC,7,16,191,8
+595,598c589,592
+<     CTEXT           "Advanced Visualization Studio:\nWhat we (at Nullsoft) use to (try to) get chicks at parties.",
+<                     IDC_STATIC,7,26,191,17
+<     CTEXT           "Feel free to try to do the same (you are welcome to use AVS at parties, clubs, concerts, and whatnot. Just give credit where credit is due).",
+<                     IDC_STATIC,7,44,191,24
+---
+>     LTEXT           "Portions Copyright (C) 2010 Cockos Incorporated\r\r\nThis software is BSD-licensed open source.",
+>                     IDC_STATIC,7,26,191,26
+>     CTEXT           "You are welcome to use AVS at parties, clubs, concerts, and whatnot. Just give credit where credit is due.",
+>                     IDC_STATIC,7,54,191,17
+604,606c598,600
+< IDD_CFG_WATER DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_WATER DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+612,614c606,608
+< IDD_CFG_COMMENT DIALOG DISCARDABLE  0, 0, 233, 214
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_COMMENT DIALOGEX 0, 0, 233, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+620,622c614,616
+< IDD_CFG_BRIGHTNESS DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_BRIGHTNESS DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+654,656c648,650
+< IDD_CFG_INTERLEAVE DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_INTERLEAVE DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+682,684c676,678
+< IDD_CFG_GRAIN DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_GRAIN DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+700,702c694,696
+< IDD_CFG_CLEAR DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_CLEAR DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+720,722c714,716
+< IDD_CFG_MIRROR DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_MIRROR DIALOGEX 0, 0, 245, 213
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+747,749c741,743
+< IDD_CFG_STARFIELD DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_STARFIELD DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+781,783c775,777
+< IDD_CFG_TEXT DIALOG DISCARDABLE  0, 0, 233, 214
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_TEXT DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+850,851c844,845
+< IDD_CFG_BUMP DIALOG DISCARDABLE  0, 0, 233, 214
+< STYLE DS_CONTROL | WS_CHILD
+---
+> IDD_CFG_BUMP DIALOG  0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+896,898c890,892
+< IDD_CFG_MOSAIC DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_MOSAIC DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+924,926c918,920
+< IDD_CFG_WATERBUMP DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_WATERBUMP DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+962,964c956,958
+< IDD_CFG_AVI DIALOG DISCARDABLE  0, 0, 233, 214
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_AVI DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+988,990c982,984
+< IDD_CFG_UNKN DIALOG DISCARDABLE  0, 0, 233, 214
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_UNKN DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+996,998c990,992
+< IDD_CFG_BPM DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_BPM DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1025,1027c1019,1021
+< IDD_GCFG_BPM DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_GCFG_BPM DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1057,1059c1051,1053
+< IDD_CFG_PICTURE DIALOG DISCARDABLE  0, 0, 233, 214
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_PICTURE DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1086,1088c1080,1082
+< IDD_CFG_TRANS DIALOG DISCARDABLE  0, 0, 233, 214
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_TRANS DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1109,1111c1103,1105
+< IDD_CFG_DDM DIALOG DISCARDABLE  0, 0, 233, 214
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_DDM DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1132,1134c1126,1128
+< IDD_CFG_SSCOPE DIALOG DISCARDABLE  0, 0, 233, 214
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_SSCOPE DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1173,1175c1167,1169
+< IDD_CFG_INVERT DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_INVERT DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1181,1183c1175,1177
+< IDD_CFG_ONETONE DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_ONETONE DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1199,1201c1193,1195
+< IDD_CFG_TIMESCOPE DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_TIMESCOPE DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1226,1228c1220,1222
+< IDD_CFG_INTERF DIALOG DISCARDABLE  0, 0, 137, 157
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_INTERF DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1290,1292c1284,1286
+< IDD_CFG_LIST DIALOG DISCARDABLE  0, 0, 234, 214
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_LIST DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1332,1334c1326,1328
+< IDD_CFG_LISTROOT DIALOG DISCARDABLE  0, 0, 233, 214
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_LISTROOT DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1340,1342c1334,1336
+< IDD_CFG_LINEMODE DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_LINEMODE DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1355,1357c1349,1351
+< IDD_GCFG_TRANSITIONS DIALOG DISCARDABLE  0, 0, 199, 177
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_GCFG_TRANSITIONS DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1389c1383
+< IDD_CFG_LASER_CONE$(LASER) DIALOG DISCARDABLE  0, 0, 137, 155
+---
+> IDD_CFG_LASER_CONE$(LASER) DIALOGEX 0, 0, 137, 155
+1391c1385
+< IDD_CFG_LASER_CONE DIALOG DISCARDABLE  0, 0, 137, 155
+---
+> IDD_CFG_LASER_CONE DIALOGEX 0, 0, 137, 155
+1393,1394c1387,1388
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1426c1420
+< IDD_CFG_LASER_BEATHOLD$(LASER) DIALOG DISCARDABLE  0, 0, 137, 137
+---
+> IDD_CFG_LASER_BEATHOLD$(LASER) DIALOGEX 0, 0, 245, 214
+1428c1422
+< IDD_CFG_LASER_BEATHOLD DIALOG DISCARDABLE  0, 0, 137, 137
+---
+> IDD_CFG_LASER_BEATHOLD DIALOGEX 0, 0, 245, 214
+1430,1431c1424,1425
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1444c1438
+< IDD_CFG_LASER_LINE$(LASER) DIALOG DISCARDABLE  0, 0, 137, 137
+---
+> IDD_CFG_LASER_LINE$(LASER) DIALOGEX 0, 0, 137, 137
+1446c1440
+< IDD_CFG_LASER_LINE DIALOG DISCARDABLE  0, 0, 137, 137
+---
+> IDD_CFG_LASER_LINE DIALOGEX 0, 0, 137, 137
+1448,1449c1442,1443
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1471,1473c1465,1467
+< IDD_GCFG_FS DIALOG DISCARDABLE  0, 0, 233, 215
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_GCFG_FS DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1514,1516c1508,1510
+< IDD_CFG_SHIFT DIALOG DISCARDABLE  0, 0, 233, 214
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_SHIFT DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1536c1530
+< IDD_CFG_LASER_TRANSFORM$(LASER) DIALOG DISCARDABLE  0, 0, 233, 214
+---
+> IDD_CFG_LASER_TRANSFORM$(LASER) DIALOGEX 0, 0, 245, 214
+1538c1532
+< IDD_CFG_LASER_TRANSFORM DIALOG DISCARDABLE  0, 0, 233, 214
+---
+> IDD_CFG_LASER_TRANSFORM DIALOGEX 0, 0, 245, 214
+1540,1541c1534,1535
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1560,1562c1554,1556
+< IDD_CFG_DMOVE DIALOG DISCARDABLE  0, 0, 233, 214
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_DMOVE DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1596,1598c1590,1592
+< IDD_CFG_FASTBRIGHT DIALOG DISCARDABLE  0, 0, 137, 137
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_FASTBRIGHT DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1608,1610c1602,1604
+< IDD_CFG_COLORMOD DIALOG DISCARDABLE  0, 0, 233, 214
+< STYLE DS_CONTROL | WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_COLORMOD DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1630,1631c1624,1625
+< IDD_EVAL_HELP DIALOG DISCARDABLE  0, 0, 311, 231
+< STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+---
+> IDD_EVAL_HELP DIALOGEX 0, 0, 311, 228
+> STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+1633c1627
+< FONT 8, "MS Sans Serif"
+---
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1641,1642c1635,1636
+< IDD_DEBUG DIALOG DISCARDABLE  0, 0, 360, 183
+< STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+---
+> IDD_DEBUG DIALOGEX 0, 0, 360, 185
+> STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+1644c1638
+< FONT 8, "MS Sans Serif"
+---
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1691,1693c1685,1687
+< IDD_CFG_CHANSHIFT DIALOG DISCARDABLE  0, 0, 231, 216
+< STYLE WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_CHANSHIFT DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1706,1708c1700,1702
+< IDD_CFG_COLORREDUCTION DIALOG DISCARDABLE  0, 0, 231, 216
+< STYLE WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_COLORREDUCTION DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1716,1718c1710,1712
+< IDD_CFG_MULT DIALOG DISCARDABLE  0, 0, 231, 216
+< STYLE WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_MULT DIALOGEX 0, 0, 231, 216
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1739,1741c1733,1735
+< IDD_CFG_MULTIDELAY DIALOG DISCARDABLE  0, 0, 188, 206
+< STYLE WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_MULTIDELAY DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1802,1804c1796,1798
+< IDD_CFG_VIDEODELAY DIALOG DISCARDABLE  0, 0, 224, 194
+< STYLE WS_CHILD
+< FONT 8, "MS Sans Serif"
+---
+> IDD_CFG_VIDEODELAY DIALOGEX 0, 0, 245, 214
+> STYLE DS_SETFONT | DS_CONTROL | WS_CHILD
+> FONT 8, "MS Sans Serif", 0, 0, 0x1
+1823c1817
+< GUIDELINES DESIGNINFO DISCARDABLE 
+---
+> GUIDELINES DESIGNINFO
+1943c1937
+< 1 TEXTINCLUDE DISCARDABLE 
+---
+> 1 TEXTINCLUDE
+1948c1942
+< 2 TEXTINCLUDE DISCARDABLE 
+---
+> 2 TEXTINCLUDE
+1954c1948
+< 3 TEXTINCLUDE DISCARDABLE 
+---
+> 3 TEXTINCLUDE
+1968c1962
+< IDR_MENU1 MENU DISCARDABLE 
+---
+> IDR_MENU1 MENUEX 
+1970c1964
+<     POPUP "&Preset"
+---
+>     POPUP "&Preset",                        65535,MFT_STRING,MFS_ENABLED
+1972,1975c1966,1969
+<         MENUITEM "Load...",                     IDC_LOAD
+<         MENUITEM "&Save...",                    IDC_SAVE
+<         MENUITEM SEPARATOR
+<         MENUITEM "&New",                        IDC_CLEAR
+---
+>         MENUITEM "Load...",                     1028,MFT_STRING,MFS_ENABLED
+>         MENUITEM "&Save...",                    1035,MFT_STRING,MFS_ENABLED
+>         MENUITEM MFT_SEPARATOR
+>         MENUITEM "&New",                        1041,MFT_STRING,MFS_ENABLED
+1977c1971
+<     POPUP "&Edit"
+---
+>     POPUP "&Edit",                          65535,MFT_STRING,MFS_ENABLED
+1979,1980c1973,1974
+<         MENUITEM "&Undo",                       IDM_UNDO
+<         MENUITEM "&Redo",                       IDM_REDO
+---
+>         MENUITEM "&Undo",                       40009,MFT_STRING,MFS_ENABLED
+>         MENUITEM "&Redo",                       40010,MFT_STRING,MFS_ENABLED
+1982c1976
+<     POPUP "&Settings"
+---
+>     POPUP "&Settings",                      65535,MFT_STRING,MFS_ENABLED
+1984,1990c1978,1984
+<         MENUITEM "&Display",                    IDM_DISPLAY
+<         MENUITEM "&Fullscreen",                 IDM_FULLSCREEN
+<         MENUITEM "&Presets/Hotkeys",            IDM_PRESETS
+<         MENUITEM "&Beat Detection",             IDM_BPM
+<         MENUITEM "Transitio&ns",                IDM_TRANSITIONS
+<         MENUITEM SEPARATOR
+<         MENUITEM "Debug Window...",             IDM_HELP_DEBUGWND
+---
+>         MENUITEM "&Display",                    40001,MFT_STRING,MFS_ENABLED
+>         MENUITEM "&Fullscreen",                 40007,MFT_STRING,MFS_ENABLED
+>         MENUITEM "&Presets/Hotkeys",            40002,MFT_STRING,MFS_ENABLED
+>         MENUITEM "&Beat Detection",             40005,MFT_STRING,MFS_ENABLED
+>         MENUITEM "Transitio&ns",                40006,MFT_STRING,MFS_ENABLED
+>         MENUITEM MFT_SEPARATOR
+>         MENUITEM "Debug Window...",             40008,MFT_STRING,MFS_ENABLED
+1992c1986
+<     POPUP "&Help", HELP
+---
+>     POPUP "&Help",                          65535,MFT_STRING | MFT_RIGHTJUSTIFY,MFS_ENABLED
+1994c1988
+<         MENUITEM "&About...",                   IDM_ABOUT
+---
+>         MENUITEM "&About...",                   40004,MFT_STRING,MFS_ENABLED
+1997a1992,2009
+> /////////////////////////////////////////////////////////////////////////////
+> //
+> // TEXT
+> //
+>  
+> IDR_BUMP_LIGHT_POSITION TEXT                    "bump_lig.bin"
+> IDR_COLOR_MODIFIER      TEXT                    "color_mo.bin"
+> IDR_DYNAMIC_DISTANCE_MODIFIER TEXT                    "dyn_dist.bin"
+> IDR_DYNAMIC_MOVEMENT    TEXT                    "dyn_move.bin"
+> IDR_DYNAMIC_SHIFT       TEXT                    "dyn_shift.bin"
+> IDR_SUPERSCOPE          TEXT                    "supersco.bin"
+> IDR_MOVEMENT            TEXT                    "movement.bin"
+> IDR_EFFECT_LIST         TEXT                    "effect_l.bin"
+> IDR_HELP_1              TEXT                    "help_1.bin"
+> IDR_HELP_2              TEXT                    "help_2.bin"
+> IDR_HELP_3              TEXT                    "help_3.bin"
+> IDR_HELP_4              TEXT                    "help_4.bin"
+> 
+1999d2010
+< #ifndef _MAC
+2002c2013
+< // Version
+---
+> // String Table
+2005,2020c2016
+< VS_VERSION_INFO VERSIONINFO
+<  FILEVERSION 2,7,9,2
+<  PRODUCTVERSION 2,7,9,2
+<  FILEFLAGSMASK 0x3fL
+< #ifdef _DEBUG
+<  FILEFLAGS 0x1L
+< #else
+<  FILEFLAGS 0x0L
+< #endif
+<  FILEOS 0x40004L
+<  FILETYPE 0x2L
+<  FILESUBTYPE 0x0L
+< BEGIN
+<     BLOCK "StringFileInfo"
+<     BEGIN
+<         BLOCK "040904b0"
+---
+> STRINGTABLE
+2022,2034c2018,2307
+<             VALUE "Comments", "Nullsoft Advanced Visualization Studio, Baby\0"
+<             VALUE "CompanyName", "Nullsoft, Inc.\0"
+<             VALUE "FileDescription", "vis_avs\0"
+<             VALUE "FileVersion", "2, 7, 9, 2\0"
+<             VALUE "InternalName", "AVS\0"
+<             VALUE "LegalCopyright", "Copyright © 2003 Nullsoft, Inc.\0"
+<             VALUE "LegalTrademarks", "AVS is a trademark of Nullsoft, Inc.\0"
+<             VALUE "OriginalFilename", "vis_avs.dll\0"
+<             VALUE "PrivateBuild", "\0"
+<             VALUE "ProductName", "  vis_avs\0"
+<             VALUE "ProductVersion", "2, 7, 9, 2\0"
+<             VALUE "SpecialBuild", "\0"
+<         END
+---
+> 
+>     IDS_AVS                 "Advanced Visualization Studio"
+>     IDS_AVS_EDITOR          "AVS Editor"
+>     IDS_DOCK_IN_AVS_EDITOR  "Dock in AVS Editor"
+>     IDS_LEARNING            "Learning..."
+>     IDS_GOT_IT              " Got it!"
+>     IDS_NO_EFFECT_SETTING_SELECTED "No Effect/Setting Selected"
+>     IDS_SHIFT_X             "Shift+%d"
+>     IDS_ALL                 "All"
+>     IDS_SAME_AS_WINAMP      "Same as Winamp"
+>     IDS_IDLE                "Idle"
+>     IDS_LOWEST              "Lowest"
+>     IDS_NORMAL              "Normal"
+>     IDS_HIGHEST             "Highest"
+>     IDS_NO_SUITABLE_MODES_FOUND "No suitable modes found"
+> END
+> 
+> STRINGTABLE
+> BEGIN
+>     IDS_CHOOSE_A_VIDEO_MODE "Choose a video mode"
+>     IDS_FULLSCREEN          "Fullscreen"
+>     IDS_AVS_FILTER_STRING   "AVS presets|*.avs|All files|*.*|"
+>     IDS_SAVE_PRESET         "Save Preset"
+>     IDS_ERROR_SAVING_PRESET "Error saving preset"
+>     IDS_PRESET_TOO_LARGE    "Preset too large"
+>     IDS_OUT_OF_MEMORY       "Out of memory"
+>     IDS_EVAL_CODE_STATS_ETC "Eval code stats: %d segments, %d bytes source, %d+%d bytes code, %d bytes data"
+>     IDS_MOVE_HERE           "<move here>"
+>     IDS_ERROR_TREE_INCONSISTANCY 
+>                             "Error: Inconsistency in tree. this should never happen. ACK!"
+>     IDS_CRITICAL_ERROR_OCCURRED "Critical Error Occurred"
+>     IDS_DISPLAY             "Display"
+>     IDS_FULLSCREEN_SETTINGS "Fullscreen Settings"
+>     IDS_PRESET_HOTKEYS      "Presets / Hotkeys"
+>     IDS_BEAT_DETECTION      "Beat Detection"
+>     IDS_TRANSITIONS         "Transitions"
+> END
+> 
+> STRINGTABLE 
+> BEGIN
+>     IDS_EFFECT_LIST         "Effect List"
+>     IDS_PRESETS             "Presets"
+>     IDS_LOAD_PRESET         "Load Preset"
+>     IDS_STILL_INITIALIZING_PREVIOUS_PRESET 
+>                             "Still initializing previous preset"
+>     IDS_MAIN                "Main"
+>     IDS_ERROR_CREATING_DDRAW_OBJECT "Error creating ddraw object"
+>     IDS_ABOUT_STRING        "\t%s\n\tCopyright (C) 1998-2023 Winamp SA\nPortions Copyright (C) 2010 Cockos Incorporated\r\r\nThis software is BSD-licensed open source.\n\nYou are welcome to use\nAVS at parties, clubs, concerts and whatnot.\nJust give credit where credit is due.\n\nLove,\n    Justin Frankel, Francis Gastellu, Christophe Thibault,\n    Brennan Underwood & mig\n\nSpecial thanks to Steven Wittens and Tom Holden."
+>     IDS_ABOUT_AVS           "About AVS"
+>     IDS_REQUIRES_2_9_PLUS   "This version of AVS requires Winamp 2.9+"
+>     IDS_AVS_ERROR           "AVS Error"
+>     IDS_NO_MMX_SUPPORT      "No MMX support found - cannot run AVS!\nGet the non-MMX version."
+>     IDS_SHIFT_              "shift-"
+>     IDS_AVS_CRITICAL_ERROR  "AVS Critical Error"
+> END
+> 
+> STRINGTABLE 
+> BEGIN
+>     IDS_CURRENT_PRESET_EDITED_SAVE_BEFORE_LOAD 
+>                             "Current preset may have been edited. Save preset before loading?"
+>     IDS_CURRENT_PRESET_EDITED_SAVE_BEFORE_NEW 
+>                             "Current preset may have been edited. Save preset before creating new?"
+>     IDS_AVS_PRESET_MODIFIED "AVS Preset Modified"
+>     IDS_ERROR_CREATING_WINDOW "Error creating window"
+>     IDS_CANNOT_GO_FULLSCREEN_WHEN_VIDEO_PLAYING 
+>                             "Cannot go fullscreen when video is playing"
+>     IDS_AVS_FULLSCREEN      "AVS Fullscreen"
+>     IDS_FULLSCREEN_FPS_ON   "fullscreen fps on"
+>     IDS_FULLSCREEN_FPS_OFF  "fullscreen fps off"
+>     IDS_RANDOM_PRESETS_ON   "random presets on"
+>     IDS_RANDOM_PRESETS_OFF  "random presets off"
+>     IDS_SAVED_TO            "saved to"
+>     IDS_LOADED_FROM         "loaded from"
+>     IDS_ERROR_LOADING_FROM  "error loading from"
+>     IDS_BEAT                "beat"
+> END
+> 
+> STRINGTABLE 
+> BEGIN
+>     IDS_CURRENT             "Current"
+>     IDS_BUFFER_X            "Buffer %d"
+>     IDS_BUMP_LIGHT_POSITION "Bump Light Position"
+>     IDS_4X_RED_BRIGHTNESS_2X_GREEN_1X_BLUE 
+>                             "4x Red Brightness, 2x Green, 1x Blue"
+>     IDS_SOLARIZATION        "Solarization"
+>     IDS_DOUBLE_SOLARIZATION "Double Solarization"
+>     IDS_INVERSE_SOLARIZATION_SOFT "Inverse Solarization (Soft)"
+>     IDS_BIG_BRIGHTNESS_ON_BEAT "Big Brightness on Beat"
+>     IDS_BIG_BRIGHTNESS_ON_BEAT_INTERPOLATIVE 
+>                             "Big Brightness on Beat (Interpolative)"
+>     IDS_PULSING_BRIGHTNESS_BEAT_INTERPOLATIVE 
+>                             "Pulsing Brightness (Beat Interpolative)"
+>     IDS_ROLLING_SOLARIZATION_BEAT_INTERPOLATIVE 
+>                             "Rolling Solarization (Beat Interpolative)"
+>     IDS_ROLLING_TONE_BEAT_INTERPOLATIVE "Rolling Tone (Beat Interpolative)"
+>     IDS_RANDOM_INVERSE_TONE_SWITCH_ON_BEAT 
+>                             "Random Inverse Tone (Switch on Beat)"
+>     IDS_COLOR_MODIFIER      "Color Modifier"
+>     IDS_DYNAMIC_DISTANCE_MODIFIER "Dynamic Distance Modifier"
+>     IDS_RANDOM_ROTATE       "Random Rotate"
+> END
+> 
+> STRINGTABLE 
+> BEGIN
+>     IDS_RANDOM_DIRECTION    "Random Direction"
+>     IDS_IN_AND_OUT          "In and Out"
+>     IDS_UNSPUN_KALEIDA      "Unspun Kaleida"
+>     IDS_ROLLING_GRIDLEY     "Roiling Gridley"
+>     IDS_6_WAY_OUTSWIRL      "6-Way Outswirl"
+>     IDS_WAVY                "Wavy"
+>     IDS_SMOOTH_ROTOBLITTER  "Smooth Rotoblitter"
+>     IDS_DYNAMIC_MOVEMENT    "Dynamic Movement"
+>     IDS_REPLACE             "Replace"
+>     IDS_ADDITIVE            "Additive"
+>     IDS_MAXIMUM_BLEND       "Maximum Blend"
+>     IDS_50_50_BLEND         "50/50 Blend"
+>     IDS_SUBTRACTIVE_BLEND_1 "Subtractive Blend 1"
+>     IDS_SUBTRACTIVE_BLEND_2 "Subtractive Blend 2"
+>     IDS_MULTIPLY_BLEND      "Multiply Blend"
+>     IDS_ADJUSTABLE_BLEND    "Adjustable Blend"
+> END
+> 
+> STRINGTABLE 
+> BEGIN
+>     IDS_XOR                 "XOR"
+>     IDS_MINIMUM_BLEND       "Minimum Blend"
+>     IDS_DYNAMIC_SHIFT       "Dynamic Shift"
+>     IDS_SPIRAL              "Spiral"
+>     IDS_3D_SCOPE_DISH       "3D Scope Dish"
+>     IDS_ROTATING_BOW_THING  "Rotating Bow Thing"
+>     IDS_VERTICAL_BOUNCING_SCOPE "Vertical Bouncing Scope"
+>     IDS_SPIRAL_GRAPH_FUN    "Spiral Graph Fun"
+>     IDS_ALTERNATING_DIAGONAL_SCOPE "Alternating Diagonal Scope"
+>     IDS_VIBRATING_WORM      "Vibrating Worm"
+>     IDS_WANDERING_SIMPLE    "Wandering Simple"
+>     IDS_FLITTERBUG          "Flitterbug"
+>     IDS_SPIROSTAR           "Spirostar"
+>     IDS_EXPLODING_DAISY     "Exploding Daisy"
+>     IDS_SWIRLIE_DOTS        "Swirlie Dots"
+>     IDS_SWEEP               "Sweep"
+> END
+> 
+> STRINGTABLE 
+> BEGIN
+>     IDS_WHIPLASH_SPIRAL     "Whiplash Spiral"
+>     IDS_SUPERSCOPE          "Superscope"
+>     IDS_DRAW_X_BANDS        "Draw %d bands"
+>     IDS_NONE                "none"
+>     IDS_SLIGHT_FUZZIFY      "slight fuzzify"
+>     IDS_SHIFT_ROTATE_LEFT   "shift rotate left"
+>     IDS_BIG_SWIRL_OUT       "big swirl out"
+>     IDS_MEDIUM_SWIRL        "medium swirl"
+>     IDS_SUNBURSTER          "sunburster"
+>     IDS_SWIRL_TO_CENTER     "swirl to center"
+>     IDS_BLOCKY_PARTIAL_OUT  "blocky partial out"
+>     IDS_SWIRLING_AROUND_BOTH_WAYS "swirling around both ways at once"
+>     IDS_BUBBLING_OUTWARD    "bubbling outward"
+>     IDS_BUBBLING_OUTWARD_WITH_SWIRL "bubbling outward with swirl"
+>     IDS_5_POINTED_DISTRO    "5 pointed distro"
+>     IDS_TUNNELING           "tunneling"
+> END
+> 
+> STRINGTABLE 
+> BEGIN
+>     IDS_BLEEDIN             "bleedin'"
+>     IDS_SHIFTED_BIG_SWIRL_OUT "shifted big swirl out"
+>     IDS_PSYCHOTIC_BEAMING_OUTWARD "psychotic beaming outward"
+>     IDS_COSINE_RADIAL_3_WAY "cosine radial 3-way"
+>     IDS_SPINNY_TUBE         "spinny tube"
+>     IDS_RADIAL_SWIRLIES     "radial swirlies"
+>     IDS_SWILL               "swill"
+>     IDS_GRIDLEY             "gridley"
+>     IDS_GRAPEVINE           "grapevine"
+>     IDS_QUADRANT            "quadrant"
+>     IDS_6_WAY_KALAEIDA      "6-way kaleida (use wrap!)"
+>     IDS_USER_DEFINED        "(user defined)"
+>     IDS_MOVEMENT            "Movement"
+>     IDS_IGNORE              "Ignore"
+>     IDS_MAXIMUM             "Maximum"
+>     IDS_50_50               "50/50"
+> END
+> 
+> STRINGTABLE 
+> BEGIN
+>     IDS_EVERY_OTHER_LINE    "Every other line"
+>     IDS_EVERY_OTHER_PIXEL   "Every other pixel"
+>     IDS_ADJUSTABLE          "Adjustable"
+>     IDS_MULTIPLY            "Multiply"
+>     IDS_BUFFER              "Buffer"
+>     IDS_MINIMUM             "Minimum"
+>     IDS_CROSS_DISSOLVE      "Cross dissolve"
+>     IDS_RANDOM              "Random"
+>     IDS_L_R_PUSH            "L/R Push"
+>     IDS_R_L_PUSH            "R/L Push"
+>     IDS_T_B_PUSH            "T/B Push"
+>     IDS_B_T_PUSH            "B/T Push"
+>     IDS_9_RANDOM_BLOCKS     "9 Random Blocks"
+>     IDS_SPLIT_L_R_PUSH      "Split L/R Push"
+>     IDS_L_R_CENTER_PUSH     "L/R to Center Push"
+>     IDS_L_R_CENTER_SQUEEZE  "L/R to Center Squeeze"
+> END
+> 
+> STRINGTABLE 
+> BEGIN
+>     IDS_L_R_WIPE            "L/R Wipe"
+>     IDS_R_L_WIPE            "R/L Wipe"
+>     IDS_T_B_WIPE            "T/B Wipe"
+>     IDS_B_T_WIPE            "B/T Wipe"
+>     IDS_DOT_DISSOLVE        "Dot Dissolve"
+>     IDS_LOADING_WAIT        "loading [wait]..."
+>     IDS_LOADING             "loading..."
+>     IDS_ERROR_LOADING_X     "error loading: %s"
+>     IDS_BUILTIN_ID          "Built-in ID: %d\r\n"
+>     IDS_CONFIG_SIZE         "Config size: %d\r\n"
+>     IDS_GENERAL             "General"
+>     IDS_OPERATORS           "Operators"
+>     IDS_FUNCTIONS           "Functions"
+>     IDS_CONSTANTS           "Constants"
+>     IDS_BEATS               "beats"
+>     IDS_SUBTRACTIVE_1       "Subtractive 1"
+> END
+> 
+> STRINGTABLE 
+> BEGIN
+>     IDS_SUBTRACTIVE_2       "Subtractive 2"
+>     IDS_RENDER_AVI          "Render / AVI"
+>     IDS_TRANS_BLITTER_FEEDBACK "Trans / Blitter Feedback"
+>     IDS_TRANS_BLUR          "Trans / Blur"
+>     IDS_MISC_CUSTOM_BPM     "Misc / Custom BPM"
+>     IDS_TRANS_BRIGHTNESS    "Trans / Brightness"
+>     IDS_RENDER_BASS_SPIN    "Render / Bass Spin"
+>     IDS_TRANS_BUMP          "Trans / Bump"
+>     IDS_TRANS_CHANNEL_SHIFT "Trans / Channel Shift"
+>     IDS_RENDER_CLEAR_SCREEN "Render / Clear Screen"
+>     IDS_TRANS_COLORFADE     "Trans / Colorfade"
+>     IDS_TRANS_COLOR_REDUCTION "Trans / Color Reduction"
+>     IDS_TRANS_COLOR_CLIP    "Trans / Color Clip"
+>     IDS_MISC_COMMENT        "Misc / Comment"
+>     IDS_TRANS_COLOR_MODIFIER "Trans / Color Modifier"
+>     IDS_TRANS_DYNAMIC_DISTANCE_MODIFIER "Trans / Dynamic Distance Modifier"
+> END
+> 
+> STRINGTABLE 
+> BEGIN
+>     IDS_TRANS_DYNAMIC_MOVEMENT "Trans / Dynamic Movement"
+>     IDS_RENDER_DOT_FOUNTAIN "Render / Dot Fountain"
+>     IDS_RENDER_DOT_GRID     "Render / Dot Grid"
+>     IDS_RENDER_DOT_PLANE    "Render / Dot Plane"
+>     IDS_TRANS_FADEOUT       "Trans / Fadeout"
+>     IDS_TRANS_FAST_BRIGHTNESS "Trans / Fast Brightness"
+>     IDS_TRANS_GRAIN         "Trans / Grain"
+>     IDS_TRANS_INTERFERENCES "Trans / Interferences"
+>     IDS_TRANS_INTERLEAVE    "Trans / Interleave"
+>     IDS_TRANS_INVERT        "Trans / Invert"
+>     IDS_MISC_SET_RENDER_MODE "Misc / Set render mode"
+>     IDS_TRANS_MIRROR        "Trans / Mirror"
+>     IDS_TRANS_MOSAIC        "Trans / Mosaic"
+>     IDS_TRANS_MULTI_DELAY   "Trans / Multi Delay"
+>     IDS_TRANS_MULTIPLIER    "Trans / Multiplier"
+>     IDS_RENDER_ONBEAT_CLEAR "Render / OnBeat Clear"
+> END
+> 
+> STRINGTABLE 
+> BEGIN
+>     IDS_TRANS_UNIQUE_TONE   "Trans / Unique Tone"
+>     IDS_RENDER_RING         "Render / Ring"
+>     IDS_RENDER_OSCILLOSCOPE_STAR "Render / Oscilliscope Star"
+>     IDS_RENDER_MOVING_PARTICLE "Render / Moving Particle"
+>     IDS_RENDER_PICTURE      "Render / Picture"
+>     IDS_TRANS_ROTO_BLITTER  "Trans / Roto Blitter"
+>     IDS_RENDER_ROTATING_STARS "Render / Rotating Stars"
+>     IDS_TRANS_SCATTER       "Trans / Scatter"
+>     IDS_TRANS_DYNAMIC_SHIFT "Trans / Dynamic Shift"
+>     IDS_RENDER_SIMPLE       "Render / Simple"
+>     IDS_RENDER_SUPERSCOPE   "Render / SuperScope"
+>     IDS_MISC_BUFFER_SAVE    "Misc / Buffer Save"
+>     IDS_RENDER_STARFIELD    "Render / Starfield"
+>     IDS_RENDER_SVP_LOADER   "Render / SVP Loader"
+>     IDS_RENDER_TEXT         "Render / Text"
+>     IDS_RENDER_TIMESCOPE    "Render / Timescope"
+> END
+> 
+> STRINGTABLE 
+> BEGIN
+>     IDS_TRANS_MOVEMENT      "Trans / Movement"
+>     IDS_UNKNOWN_RENDER_OBJECT "Unknown Render Object"
+>     IDS_TRANS_VIDEO_DELAY   "Trans / Video Delay"
+>     IDS_TRANS_WATER         "Trans / Water"
+>     IDS_TRANS_WATER_BUMP    "Trans / Water Bump"
+>     IDS_OVERLAY_MODE        "Overlay Mode"
+2036c2309,2310
+<     BLOCK "VarFileInfo"
+---
+> 
+> STRINGTABLE 
+2038,2039c2312
+<         VALUE "Translation", 0x409, 1200
+<     END
+---
+>     65535                   "{BE608673-B723-4a59-9EBA-52DC77109E10}"
+2042,2043d2314
+< #endif    // !_MAC
+< 
+2054c2325
+< 
+---
+> #include "version.rc2"
+diff -w vis_avs/r_fadeout.cpp vis_avs2/r_fadeout.cpp
+36a37
+> #include "../Agave/Language/api_language.h"
+49c50
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_FADEOUT,desc,128):desc); }
+274c275
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_FADE),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_FADE,hwndParent,g_DlgProc);
+diff -w vis_avs/r_fastbright.cpp vis_avs2/r_fastbright.cpp
+35a36
+> #include "../Agave/Language/api_language.h"
+48c49
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_FAST_BRIGHTNESS,desc,128):desc); }
+273c274
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_FASTBRIGHT),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_FASTBRIGHT,hwndParent,g_DlgProc);
+diff -w vis_avs/r_grain.cpp vis_avs2/r_grain.cpp
+35a36
+> #include "../Agave/Language/api_language.h"
+48c49
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_GRAIN,desc,128):desc); }
+386c387
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_GRAIN),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_GRAIN,hwndParent,g_DlgProc);
+diff -w vis_avs/r_interf.cpp vis_avs2/r_interf.cpp
+35a36
+> #include "../Agave/Language/api_language.h"
+50c51
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_INTERFERENCES,desc,128):desc); }
+506c507
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_INTERF),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_INTERF,hwndParent,g_DlgProc);
+diff -w vis_avs/r_interleave.cpp vis_avs2/r_interleave.cpp
+35a36
+> #include "../Agave/Language/api_language.h"
+48c49
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_INTERLEAVE,desc,128):desc); }
+311c312
+< 	        LOGBRUSH lb={BS_SOLID,_color,0};
+---
+> 	        LOGBRUSH lb={ (COLORREF)BS_SOLID,(COLORREF)_color,(COLORREF)0};
+362c363
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_INTERLEAVE),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_INTERLEAVE,hwndParent,g_DlgProc);
+diff -w vis_avs/r_invert.cpp vis_avs2/r_invert.cpp
+35a36
+> #include "../Agave/Language/api_language.h"
+48c49
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_INVERT,desc,128):desc); }
+169c170
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_INVERT),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_INVERT,hwndParent,g_DlgProc);
+diff -w vis_avs/rlib.cpp vis_avs2/rlib.cpp
+38a39,40
+> #include "resource.h"
+> #include "../Agave/Language/api_language.h"
+89c91,93
+<       MessageBox(NULL,"Out of memory","AVS Critical Error",MB_OK);
+---
+>       char title[64];
+>       MessageBox(NULL,WASABI_API_LNGSTRING(IDS_OUT_OF_MEMORY),
+> 		 WASABI_API_LNGSTRING_BUF(IDS_AVS_CRITICAL_ERROR,title,64),MB_OK);
+208c212,214
+<       MessageBox(NULL,"Out of memory","AVS Critical Error",MB_OK);
+---
+>       char title[64];
+>       MessageBox(NULL,WASABI_API_LNGSTRING(IDS_OUT_OF_MEMORY),
+> 		 WASABI_API_LNGSTRING_BUF(IDS_AVS_CRITICAL_ERROR,title,64),MB_OK);
+234c240
+<   AVS_EEL_IF_VM_free,
+---
+>   NSEEL_VM_free,
+237c243
+<   NSEEL_code_compile,
+---
+>   AVS_EEL_IF_Compile,
+333c339
+<     return RetrFuncs[*which].rf();
+---
+>     return RetrFuncs[*which].rf(NULL);
+361c367
+<         return RetrFuncs[*which].rf();
+---
+>         return RetrFuncs[*which].rf(NULL);
+diff -w vis_avs/rlib.h vis_avs2/rlib.h
+39c39
+<       C_RBASE *(*rf)(char *desc=NULL);
+---
+>       C_RBASE *(*rf)(char *desc);
+diff -w vis_avs/r_linemode.cpp vis_avs2/r_linemode.cpp
+35a36
+> #include "../Agave/Language/api_language.h"
+41c42
+< static char *line_blendmodes[]= 
+---
+> static int line_blendmodes[]=
+43,52c44,53
+<   "Replace",
+<   "Additive",
+<   "Maximum Blend",
+<   "50/50 Blend",
+<   "Subtractive Blend 1",
+<   "Subtractive Blend 2",
+<   "Multiply Blend",
+< 	"Adjustable Blend",
+<   "XOR",
+<   "Minimum Blend",
+---
+>   IDS_REPLACE,
+>   IDS_ADDITIVE,
+>   IDS_MAXIMUM_BLEND,
+>   IDS_50_50_BLEND,
+>   IDS_SUBTRACTIVE_BLEND_1,
+>   IDS_SUBTRACTIVE_BLEND_2,
+>   IDS_MULTIPLY_BLEND,
+>   IDS_ADJUSTABLE_BLEND,
+>   IDS_XOR,
+>   IDS_MINIMUM_BLEND,
+64c65
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_MISC_SET_RENDER_MODE,desc,128):desc); }
+124c125
+<           SendDlgItemMessage(hwndDlg,IDC_COMBO1,CB_ADDSTRING,0,(LPARAM)line_blendmodes[x]);
+---
+>           SendDlgItemMessage(hwndDlg,IDC_COMBO1,CB_ADDSTRING,0,(LPARAM)WASABI_API_LNGSTRING(line_blendmodes[x]));
+182c183
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_LINEMODE),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_LINEMODE,hwndParent,g_DlgProc);
+diff -w vis_avs/r_list.cpp vis_avs2/r_list.cpp
+40a41
+> #include "../Agave/Language/api_language.h"
+45c46
+< char *C_RenderListClass::get_desc() { if (isroot) return "Main"; return "Effect list"; }
+---
+> char *C_RenderListClass::get_desc() { static char desc[128]; return WASABI_API_LNGSTRING_BUF(isroot?IDS_MAIN:IDS_EFFECT_LIST,desc,128); }
+456,457c457,458
+<         int smp_max_threads;
+<         C_RBASE2 *rb2;
+---
+>         int smp_max_threads = g_config_smp ? g_config_smp_mt : 0;
+>         C_RBASE2 *rb2 = (C_RBASE2*)renders[x].render;
+459c460
+<         if (renders[x].has_rbase2 && (smp_max_threads=g_config_smp ? g_config_smp_mt : 0) > 1 && ((rb2 = (C_RBASE2*)renders[x].render)->smp_getflags()&1))
+---
+>         if (renders[x].has_rbase2 && smp_max_threads > 1 && (rb2->smp_getflags()&1))
+740,741c741,744
+<       if (t&0x10000000) isBeat=1;
+<       if (t&0x20000000) isBeat=0;
+---
+>       if (t&0x10000000) 
+>           isBeat=1;
+>       if (t&0x20000000) 
+>           isBeat=0;
+988,989c991,992
+< 	wsprintf(txt, "Buffer %d", i+1);
+< 	SendDlgItemMessage(dlg, ctl, CB_ADDSTRING, 0, (int)txt);
+---
+> 	wsprintf(txt, WASABI_API_LNGSTRING(IDS_BUFFER_X), i+1);
+> 	SendDlgItemMessage(dlg, ctl, CB_ADDSTRING, 0, (LPARAM)txt);
+995c998
+< static const char *blendmodes[] = 
+---
+> int blendmodes[] = 
+997,1010c1000,1013
+<   "Ignore",
+<   "Replace",
+<   "50/50",
+<   "Maximum",
+<   "Additive",
+<   "Subtractive 1",
+<   "Subtractive 2",
+<   "Every other line",
+<   "Every other pixel",
+<   "XOR",
+< 	"Adjustable",
+<   "Multiply",
+< 	"Buffer",
+<   "Minimum",
+---
+>   IDS_IGNORE,
+>   IDS_REPLACE,
+>   IDS_50_50,
+>   IDS_MAXIMUM,
+>   IDS_ADDITIVE,
+>   IDS_SUBTRACTIVE_1,
+>   IDS_SUBTRACTIVE_2,
+>   IDS_EVERY_OTHER_LINE,
+>   IDS_EVERY_OTHER_PIXEL,
+>   IDS_XOR,
+>   IDS_ADJUSTABLE,
+>   IDS_MULTIPLY,
+>   IDS_BUFFER,
+>   IDS_MINIMUM,
+1066,1067c1069,1071
+<             SendDlgItemMessage(hwndDlg,IDC_COMBO1,CB_ADDSTRING,0,(LPARAM)blendmodes[x]);
+<             SendDlgItemMessage(hwndDlg,IDC_COMBO2,CB_ADDSTRING,0,(LPARAM)blendmodes[x]);
+---
+>             char blendStr[64];
+>             SendDlgItemMessage(hwndDlg,IDC_COMBO1,CB_ADDSTRING,0,(LPARAM)WASABI_API_LNGSTRING_BUF(blendmodes[x],blendStr,64));
+>             SendDlgItemMessage(hwndDlg,IDC_COMBO2,CB_ADDSTRING,0,(LPARAM)blendStr);
+1183a1188,1192
+> /*        char text[4096];
+>           WASABI_API_LNGSTRING_BUF(IDS_EFFECT_LIST,text,4096);
+>           int titlelen = lstrlen(text)+1;
+>           lstrcpyn(text+titlelen,GetTextResource(IDR_EFFECT_LIST),4095-titlelen);
+> */
+1212c1221
+<   return CreateDialog(hInstance,MAKEINTRESOURCE(isroot?IDD_CFG_LISTROOT:IDD_CFG_LIST),hwndParent,isroot?g_DlgProcRoot:g_DlgProc);
+---
+>   return WASABI_API_CREATEDIALOG(isroot?IDD_CFG_LISTROOT:IDD_CFG_LIST,hwndParent,(WNDPROC)(isroot?g_DlgProcRoot:g_DlgProc));
+1273,1274c1282,1283
+<    //     if (len<=strlen(sig_str)+2) MessageBox(NULL,"Error laoding preset: len",filename,MB_OK);
+<  //       else MessageBox(NULL,"Error laoding preset: signature",filename,MB_OK);
+---
+>    //     if (len<=strlen(sig_str)+2) MessageBox(NULL,"Error loading preset: len",filename,MB_OK);
+>  //       else MessageBox(NULL,"Error loading preset: signature",filename,MB_OK);
+1277c1286
+<   //  else MessageBox(NULL,"Error laoding preset: fopen",filename,MB_OK);
+---
+>   //  else MessageBox(NULL,"Error loading preset: fopen",filename,MB_OK);
+1280c1289
+< //  else MessageBox(NULL,"Error laoding preset: MALLOC",filename,MB_OK);
+---
+> //  else MessageBox(NULL,"Error loading preset: MALLOC",filename,MB_OK);
+diff -w vis_avs/r_list.h vis_avs2/r_list.h
+32a33
+> #include "avs_eelif.h"
+67c68
+<     int codehandle[4];
+---
+>     NSEEL_CODEHANDLE codehandle[4];
+71c72
+<     int AVS_EEL_CONTEXTNAME;
+---
+>     NSEEL_VMCTX AVS_EEL_CONTEXTNAME;
+diff -w vis_avs/r_mirror.cpp vis_avs2/r_mirror.cpp
+33a34
+> #include "../Agave/Language/api_language.h"
+47c48
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_MIRROR,desc,128):desc); }
+368c369
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_MIRROR),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_MIRROR,hwndParent,g_DlgProc);
+diff -w vis_avs/r_mosaic.cpp vis_avs2/r_mosaic.cpp
+35a36
+> #include "../Agave/Language/api_language.h"
+53c54
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_MOSAIC,desc,128):desc); }
+284c285
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_MOSAIC),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_MOSAIC,hwndParent,g_DlgProc);
+diff -w vis_avs/r_multidelay.cpp vis_avs2/r_multidelay.cpp
+36a37
+> #include "../Agave/Language/api_language.h"
+361c362
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_MULTIDELAY),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_MULTIDELAY,hwndParent,g_DlgProc);
+366c367
+< 	return MOD_NAME; 
+---
+> 	static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_MULTI_DELAY,desc,128):desc); 
+diff -w vis_avs/r_multiplier.cpp vis_avs2/r_multiplier.cpp
+33a34
+> #include "../Agave/Language/api_language.h"
+331c332
+< 	return CreateDialog(hInstance, MAKEINTRESOURCE(IDD_CFG_MULT), hwndParent, (DLGPROC)g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_MULT, hwndParent, (DLGPROC)g_DlgProc);
+337c338
+< 	return MOD_NAME; 
+---
+> 	static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_MULTIPLIER,desc,128):desc); 
+diff -w vis_avs/r_nfclr.cpp vis_avs2/r_nfclr.cpp
+34a35
+> #include "../Agave/Language/api_language.h"
+47c48
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_ONBEAT_CLEAR,desc,128):desc); }
+228c229
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_NFC),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_NFC,hwndParent,g_DlgProc);
+diff -w vis_avs/r_onetone.cpp vis_avs2/r_onetone.cpp
+35a36
+> #include "../Agave/Language/api_language.h"
+49c50
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_UNIQUE_TONE,desc,128):desc); }
+198c199
+< 	        LOGBRUSH lb={BS_SOLID,_color,0};
+---
+> 	        LOGBRUSH lb={ (COLORREF)BS_SOLID,(COLORREF)_color,(COLORREF)0};
+250c251
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_ONETONE),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_ONETONE,hwndParent,g_DlgProc);
+diff -w vis_avs/r_oscring.cpp vis_avs2/r_oscring.cpp
+37a38
+> #include "../Agave/Language/api_language.h"
+49c50
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_RING,desc,128):desc); }
+176,177c177,178
+<       lx=c_x+(cos(a)*is*sca);
+<       ly=c_y+(sin(a)*is*sca);
+---
+>       lx=c_x+(int)(cos(a)*is*sca);
+>       ly=c_y+(int)(sin(a)*is*sca);
+189,190c190,191
+<         tx=c_x+(cos(a)*is*sca);
+<         ty=c_y+(sin(a)*is*sca);
+---
+>         tx=c_x+(int)(cos(a)*is*sca);
+>         ty=c_y+(int)(sin(a)*is*sca);
+252c253
+< 	        LOGBRUSH lb={BS_SOLID,color,0};
+---
+> 	        LOGBRUSH lb={ (COLORREF)BS_SOLID,(COLORREF)color,(COLORREF)0};
+354c355
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_OSCRING),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_OSCRING,hwndParent,g_DlgProc);
+diff -w vis_avs/r_oscstar.cpp vis_avs2/r_oscstar.cpp
+37a38
+> #include "../Agave/Language/api_language.h"
+49c50
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_OSCILLOSCOPE_STAR,desc,128):desc); }
+260c261
+< 	        LOGBRUSH lb={BS_SOLID,color,0};
+---
+> 	        LOGBRUSH lb={(COLORREF)BS_SOLID,(COLORREF)color,(COLORREF)0};
+363c364
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_OSCSTAR),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_OSCSTAR,hwndParent,g_DlgProc);
+diff -w vis_avs/r_parts.cpp vis_avs2/r_parts.cpp
+36a37
+> #include "../Agave/Language/api_language.h"
+49c50
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_MOVING_PARTICLE,desc,128):desc); }
+304c305
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_PARTS),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_PARTS,hwndParent,g_DlgProc);
+diff -w vis_avs/r_picture.cpp vis_avs2/r_picture.cpp
+34a35
+> #include "../Agave/Language/api_language.h"
+49c50
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_PICTURE,desc,128):desc); }
+353c354
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_PICTURE),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_PICTURE,hwndParent,g_DlgProc);
+diff -w vis_avs/r_rotblit.cpp vis_avs2/r_rotblit.cpp
+36a37
+> #include "../Agave/Language/api_language.h"
+54c55
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_ROTO_BLITTER,desc,128):desc); }
+320c321
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_ROTBLT),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_ROTBLT,hwndParent,g_DlgProc);
+diff -w vis_avs/r_rotstar.cpp vis_avs2/r_rotstar.cpp
+35a36
+> #include "../Agave/Language/api_language.h"
+48c49
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_ROTATING_STARS,desc,128):desc); }
+200c201
+< 	        LOGBRUSH lb={BS_SOLID,color,0};
+---
+> 	        LOGBRUSH lb={(COLORREF)BS_SOLID,(COLORREF)color,(COLORREF)0};
+265c266
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_ROTSTAR),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_ROTSTAR,hwndParent,g_DlgProc);
+diff -w vis_avs/r_scat.cpp vis_avs2/r_scat.cpp
+36a37
+> #include "../Agave/Language/api_language.h"
+49c50
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_SCATTER,desc,128):desc); }
+155c156
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_SCAT),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_SCAT,hwndParent,g_DlgProc);
+diff -w vis_avs/r_shift.cpp vis_avs2/r_shift.cpp
+37a38
+> #include "../Agave/Language/api_language.h"
+52c53
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_DYNAMIC_SHIFT,desc,128):desc); }
+61c62
+<     int AVS_EEL_CONTEXTNAME;
+---
+>     NSEEL_VMCTX AVS_EEL_CONTEXTNAME;
+65c66
+<     int codehandle[3];
+---
+>     NSEEL_CODEHANDLE codehandle[3];
+382c383
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_SHIFT),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_SHIFT,hwndParent,g_DlgProc);
+diff -w vis_avs/r_simple.cpp vis_avs2/r_simple.cpp
+34a35
+> #include "../Agave/Language/api_language.h"
+47c48
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_SIMPLE,desc,128):desc); }
+304c305
+< 	        LOGBRUSH lb={BS_SOLID,color,0};
+---
+> 	        LOGBRUSH lb={(COLORREF)BS_SOLID,(COLORREF)color,(COLORREF)0};
+420c421
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_SIMPLE),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_SIMPLE,hwndParent,g_DlgProc);
+diff -w vis_avs/r_sscope.cpp vis_avs2/r_sscope.cpp
+41a42
+> #include "../Agave/Language/api_language.h"
+56c57
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_SUPERSCOPE,desc,128):desc); }
+68c69
+<     int AVS_EEL_CONTEXTNAME;
+---
+>     NSEEL_VMCTX AVS_EEL_CONTEXTNAME;
+72c73
+<     int codehandle[4];
+---
+>     NSEEL_CODEHANDLE codehandle[4];
+351c352
+<   char *name;
+---
+>   int name;
+365,378c366,379
+<   {"Spiral","n=800","d=i+v*0.2; r=t+i*$PI*4; x=cos(r)*d; y=sin(r)*d","t=t-0.05",""},
+<   {"3D Scope Dish", "n=200","iz=1.3+sin(r+i*$PI*2)*(v+0.5)*0.88; ix=cos(r+i*$PI*2)*(v+0.5)*.88; iy=-0.3+abs(cos(v*$PI)); x=ix/iz;y=iy/iz;","",""},
+<   {"Rotating Bow Thing","n=80;t=0.0;","r=i*$PI*2; d=sin(r*3)+v*0.5; x=cos(t+r)*d; y=sin(t-r)*d","t=t+0.01",""},
+<   {"Vertical Bouncing Scope","n=100; t=0; tv=0.1;dt=1;","x=t+v*pow(sin(i*$PI),2); y=i*2-1.0;","t=t*0.9+tv*0.1","tv=((rand(50.0)/50.0))*dt; dt=-dt;"},
+<   {"Spiral Graph Fun","n=100;t=0;","r=i*$PI*128+t; x=cos(r/64)*0.7+sin(r)*0.3; y=sin(r/64)*0.7+cos(r)*0.3","t=t+0.01;","n=80+rand(120.0)"},
+<   {"Alternating Diagonal Scope","n=64; t=1;","sc=0.4*sin(i*$PI); x=2*(i-0.5-v*sc)*t; y=2*(i-0.5+v*sc);","","t=-t;"},
+<   {"Vibrating Worm","n=w; dt=0.01; t=0; sc=1;","x=cos(2*i+t)*0.9*(v*0.5+0.5); y=sin(i*2+t)*0.9*(v*0.5+0.5);","t=t+dt;dt=0.9*dt+0.001; t=if(above(t,$PI*2),t-$PI*2,t);","dt=sc;sc=-sc;"},
+<   {"Wandering Simple","n=800;xa=-0.5;ya=0.0;xb=-0.0;yb=0.75;c=200;f=0;\r\nnxa=(rand(100)-50)*.02;nya=(rand(100)-50)*.02;\r\nnxb=(rand(100)-50)*.02;nyb=(rand(100)-50)*.02;","//primary render\r\nx=(ex*i)+xa;\r\ny=(ey*i)+ya;\r\n\r\n//volume offset\r\nx=x+ ( cos(r) * v * dv);\r\ny=y+ ( sin(r) * v * dv);\r\n\r\n//color values\r\nred=i;\r\ngreen=(1-i);\r\nblue=abs(v*6);","f=f+1;\r\nt=1-((cos((f*3.1415)/c)+1)*.5);\r\nxa=((nxa-lxa)*t)+lxa;\r\nya=((nya-lya)*t)+lya;\r\nxb=((nxb-lxb)*t)+lxb;\r\nyb=((nyb-lyb)*t)+lyb;\r\nex=(xb-xa);\r\ney=(yb-ya);\r\nd=sqrt(sqr(ex)+sqr(ey));\r\nr=atan(ey/ex)+(3.1415/2);\r\ndv=d*2","c=f;\r\nf=0;\r\nlxa=nxa;\r\nlya=nya;\r\nlxb=nxb;\r\nlyb=nyb;\r\nnxa=(rand(100)-50)*.02;\r\nnya=(rand(100)-50)*.02;\r\nnxb=(rand(100)-50)*.02;\r\nnyb=(rand(100)-50)*.02"},
+<   {"Flitterbug","n=180;t=0.0;lx=0;ly=0;vx=rand(200)-100;vy=rand(200)-100;cf=.97;c=200;f=0","x=nx;y=ny;\r\nr=i*3.14159*2; d=(sin(r*5*(1-s))+i*0.5)*(.3-s);\r\ntx=(t*(1-(s*(i-.5))));\r\nx=x+cos(tx+r)*d; y=y+sin(t-y)*d;\r\nred=abs(x-nx)*5;\r\ngreen=abs(y-ny)*5;\r\nblue=1-s-red-green;","f=f+1;t=(f*2*3.1415)/c;\r\nvx=(vx-(lx*.1))*cf;\r\nvy=(vy-(ly*.1))*cf;\r\nlx=lx+vx;ly=ly+vy;\r\nnx=lx*.001;ny=ly*.001;\r\ns=abs(nx*ny)","c=f;f=0;\r\nvx=vx+rand(600)-300;vy=vy+rand(600)-300"},
+<   {"Spirostar","n=20;t=0;f=0;c=200;mn=10;dv=2;dn=0","r=if(b,0,((i*dv)*3.14159*128)+(t/2));\r\nx=cos(r)*sz;\r\ny=sin(r)*sz;","f=f+1;t=(f*3.1415*2)/c;\r\nsz=abs(sin(t-3.1415));\r\ndv=if(below(n,12),(n/2)-1,\r\n    if(equal(12,n),3,\r\n    if(equal(14,n),6,\r\n    if(below(n,20),2,4))))","bb = bb + 1;\r\nbeatdiv = 8;\r\nc=if(equal(bb%beatdiv,0),f,c);\r\nf=if(equal(bb%beatdiv,0),0,f);\r\ng=if(equal(bb%beatdiv,0),g+1,g);\r\nn=if(equal(bb%beatdiv,0),(abs((g%17)-8) *2)+4,n);"},
+<   {"Exploding Daisy","n = 380 + rand(200) ; k = 0.0; l = 0.0; m = ( rand( 10 ) + 2 ) * .5; c = 0; f = 0","r=(i*3.14159*2)+(a * 3.1415);\r\nd=sin(r*m)*.3;\r\nx=cos(k+r)*d*2;y=(  (sin(k-r)*d) + ( sin(l*(i-.5) ) ) ) * .7;\r\nred=abs(x);\r\ngreen=abs(y);\r\nblue=d","a = a + 0.002 ; k = k + 0.04 ; l = l + 0.03","bb = bb + 1;\r\nbeatdiv = 16;\r\nn=if(equal(bb%beatdiv,0),380 + rand(200),n);\r\nt=if(equal(bb%beatdiv,0),0.0,t);\r\na=if(equal(bb%beatdiv,0),0.0,a);\r\nk=if(equal(bb%beatdiv,0),0.0,k);\r\nl=if(equal(bb%beatdiv,0),0.0,l);\r\nm=if(equal(bb%beatdiv,0),(( rand( 100  ) + 2 ) * .1) + 2,m);"},
+<   {"Swirlie Dots","n=45;t=rand(100);u=rand(100)","di = ( i - .5) * 2;\r\nx = di;sin(u*di) * .4;\r\ny = cos(u*di) * .6;\r\nx = x + ( cos(t) * .05 );\r\ny = y + ( sin(t) * .05 );","t = t + .15; u = u + .05","bb = bb + 1;\r\nbeatdiv = 16;\r\nn = if(equal(bb%beatdiv,0),30 + rand( 30 ),n);"},
+<   {"Sweep","n=180;lsv=100;sv=200;ssv=200;c=200;f=0","sv=(sv*abs(cos(lsv)))+(lsv*abs(cos(sv)));\r\nfv=fv+(sin(sv)*dv);\r\nd=i; r=t+(fv * sin(t) * .3)*3.14159*4;\r\nx=cos(r)*d;\r\ny=sin(r)*d;\r\nred=i;\r\ngreen=abs(sin(r))-(red*.15);\r\nblue=fv","f=f+1;t=(f*2*3.1415)/c;\r\nlsv=slsv;sv=ssv;fv=0","bb = bb + 1;\r\nbeatdiv = 8;\r\nc=if(equal(bb%beatdiv,0),f,c);\r\nf=if(equal(bb%beatdiv,0),0,f);\r\ndv=if(equal(bb%beatdiv,0),((rand(100)*.01) * .1) + .02,dv);\r\nn=if(equal(bb%beatdiv,0),80+rand(100),n);\r\nssv=if(equal(bb%beatdiv,0),rand(200)+100,ssv);\r\nslsv=if(equal(bb%beatdiv,0),rand(200)+100,slsv);"},
+<   {"Whiplash Spiral","n=80;c=200;f=0","d=i;\r\nr=t+i*3.14159*4;\r\nsdt=sin(dt+(i*3.1415*2));\r\ncdt=cos(dt+(i*3.1415*2));\r\nx=(cos(r)*d) + (sdt * .6 * sin(t) );\r\ny=(sin(r)*d) + ( cdt *.6 * sin(t) );\r\nblue=abs(x);\r\ngreen=abs(y);\r\nred=cos(dt*4)","t=t-0.05;f=f+1;dt=(f*2*3.1415)/c","bb = bb + 1;\r\nbeatdiv = 8;\r\nc=if(equal(bb%beatdiv,0),f,c);\r\nf=if(equal(bb%beatdiv,0),0,f);"},
+---
+>   {IDS_SPIRAL,"n=800","d=i+v*0.2; r=t+i*$PI*4; x=cos(r)*d; y=sin(r)*d","t=t-0.05",""},
+>   {IDS_3D_SCOPE_DISH, "n=200","iz=1.3+sin(r+i*$PI*2)*(v+0.5)*0.88; ix=cos(r+i*$PI*2)*(v+0.5)*.88; iy=-0.3+abs(cos(v*$PI)); x=ix/iz;y=iy/iz;","",""},
+>   {IDS_ROTATING_BOW_THING,"n=80;t=0.0;","r=i*$PI*2; d=sin(r*3)+v*0.5; x=cos(t+r)*d; y=sin(t-r)*d","t=t+0.01",""},
+>   {IDS_VERTICAL_BOUNCING_SCOPE,"n=100; t=0; tv=0.1;dt=1;","x=t+v*pow(sin(i*$PI),2); y=i*2-1.0;","t=t*0.9+tv*0.1","tv=((rand(50.0)/50.0))*dt; dt=-dt;"},
+>   {IDS_SPIRAL_GRAPH_FUN,"n=100;t=0;","r=i*$PI*128+t; x=cos(r/64)*0.7+sin(r)*0.3; y=sin(r/64)*0.7+cos(r)*0.3","t=t+0.01;","n=80+rand(120.0)"},
+>   {IDS_ALTERNATING_DIAGONAL_SCOPE,"n=64; t=1;","sc=0.4*sin(i*$PI); x=2*(i-0.5-v*sc)*t; y=2*(i-0.5+v*sc);","","t=-t;"},
+>   {IDS_VIBRATING_WORM,"n=w; dt=0.01; t=0; sc=1;","x=cos(2*i+t)*0.9*(v*0.5+0.5); y=sin(i*2+t)*0.9*(v*0.5+0.5);","t=t+dt;dt=0.9*dt+0.001; t=if(above(t,$PI*2),t-$PI*2,t);","dt=sc;sc=-sc;"},
+>   {IDS_WANDERING_SIMPLE,"n=800;xa=-0.5;ya=0.0;xb=-0.0;yb=0.75;c=200;f=0;\r\nnxa=(rand(100)-50)*.02;nya=(rand(100)-50)*.02;\r\nnxb=(rand(100)-50)*.02;nyb=(rand(100)-50)*.02;","//primary render\r\nx=(ex*i)+xa;\r\ny=(ey*i)+ya;\r\n\r\n//volume offset\r\nx=x+ ( cos(r) * v * dv);\r\ny=y+ ( sin(r) * v * dv);\r\n\r\n//color values\r\nred=i;\r\ngreen=(1-i);\r\nblue=abs(v*6);","f=f+1;\r\nt=1-((cos((f*3.1415)/c)+1)*.5);\r\nxa=((nxa-lxa)*t)+lxa;\r\nya=((nya-lya)*t)+lya;\r\nxb=((nxb-lxb)*t)+lxb;\r\nyb=((nyb-lyb)*t)+lyb;\r\nex=(xb-xa);\r\ney=(yb-ya);\r\nd=sqrt(sqr(ex)+sqr(ey));\r\nr=atan(ey/ex)+(3.1415/2);\r\ndv=d*2","c=f;\r\nf=0;\r\nlxa=nxa;\r\nlya=nya;\r\nlxb=nxb;\r\nlyb=nyb;\r\nnxa=(rand(100)-50)*.02;\r\nnya=(rand(100)-50)*.02;\r\nnxb=(rand(100)-50)*.02;\r\nnyb=(rand(100)-50)*.02"},
+>   {IDS_FLITTERBUG,"n=180;t=0.0;lx=0;ly=0;vx=rand(200)-100;vy=rand(200)-100;cf=.97;c=200;f=0","x=nx;y=ny;\r\nr=i*3.14159*2; d=(sin(r*5*(1-s))+i*0.5)*(.3-s);\r\ntx=(t*(1-(s*(i-.5))));\r\nx=x+cos(tx+r)*d; y=y+sin(t-y)*d;\r\nred=abs(x-nx)*5;\r\ngreen=abs(y-ny)*5;\r\nblue=1-s-red-green;","f=f+1;t=(f*2*3.1415)/c;\r\nvx=(vx-(lx*.1))*cf;\r\nvy=(vy-(ly*.1))*cf;\r\nlx=lx+vx;ly=ly+vy;\r\nnx=lx*.001;ny=ly*.001;\r\ns=abs(nx*ny)","c=f;f=0;\r\nvx=vx+rand(600)-300;vy=vy+rand(600)-300"},
+>   {IDS_SPIROSTAR,"n=20;t=0;f=0;c=200;mn=10;dv=2;dn=0","r=if(b,0,((i*dv)*3.14159*128)+(t/2));\r\nx=cos(r)*sz;\r\ny=sin(r)*sz;","f=f+1;t=(f*3.1415*2)/c;\r\nsz=abs(sin(t-3.1415));\r\ndv=if(below(n,12),(n/2)-1,\r\n    if(equal(12,n),3,\r\n    if(equal(14,n),6,\r\n    if(below(n,20),2,4))))","bb = bb + 1;\r\nbeatdiv = 8;\r\nc=if(equal(bb%beatdiv,0),f,c);\r\nf=if(equal(bb%beatdiv,0),0,f);\r\ng=if(equal(bb%beatdiv,0),g+1,g);\r\nn=if(equal(bb%beatdiv,0),(abs((g%17)-8) *2)+4,n);"},
+>   {IDS_EXPLODING_DAISY,"n = 380 + rand(200) ; k = 0.0; l = 0.0; m = ( rand( 10 ) + 2 ) * .5; c = 0; f = 0","r=(i*3.14159*2)+(a * 3.1415);\r\nd=sin(r*m)*.3;\r\nx=cos(k+r)*d*2;y=(  (sin(k-r)*d) + ( sin(l*(i-.5) ) ) ) * .7;\r\nred=abs(x);\r\ngreen=abs(y);\r\nblue=d","a = a + 0.002 ; k = k + 0.04 ; l = l + 0.03","bb = bb + 1;\r\nbeatdiv = 16;\r\nn=if(equal(bb%beatdiv,0),380 + rand(200),n);\r\nt=if(equal(bb%beatdiv,0),0.0,t);\r\na=if(equal(bb%beatdiv,0),0.0,a);\r\nk=if(equal(bb%beatdiv,0),0.0,k);\r\nl=if(equal(bb%beatdiv,0),0.0,l);\r\nm=if(equal(bb%beatdiv,0),(( rand( 100  ) + 2 ) * .1) + 2,m);"},
+>   {IDS_SWIRLIE_DOTS,"n=45;t=rand(100);u=rand(100)","di = ( i - .5) * 2;\r\nx = di;sin(u*di) * .4;\r\ny = cos(u*di) * .6;\r\nx = x + ( cos(t) * .05 );\r\ny = y + ( sin(t) * .05 );","t = t + .15; u = u + .05","bb = bb + 1;\r\nbeatdiv = 16;\r\nn = if(equal(bb%beatdiv,0),30 + rand( 30 ),n);"},
+>   {IDS_SWEEP,"n=180;lsv=100;sv=200;ssv=200;c=200;f=0","sv=(sv*abs(cos(lsv)))+(lsv*abs(cos(sv)));\r\nfv=fv+(sin(sv)*dv);\r\nd=i; r=t+(fv * sin(t) * .3)*3.14159*4;\r\nx=cos(r)*d;\r\ny=sin(r)*d;\r\nred=i;\r\ngreen=abs(sin(r))-(red*.15);\r\nblue=fv","f=f+1;t=(f*2*3.1415)/c;\r\nlsv=slsv;sv=ssv;fv=0","bb = bb + 1;\r\nbeatdiv = 8;\r\nc=if(equal(bb%beatdiv,0),f,c);\r\nf=if(equal(bb%beatdiv,0),0,f);\r\ndv=if(equal(bb%beatdiv,0),((rand(100)*.01) * .1) + .02,dv);\r\nn=if(equal(bb%beatdiv,0),80+rand(100),n);\r\nssv=if(equal(bb%beatdiv,0),rand(200)+100,ssv);\r\nslsv=if(equal(bb%beatdiv,0),rand(200)+100,slsv);"},
+>   {IDS_WHIPLASH_SPIRAL,"n=80;c=200;f=0","d=i;\r\nr=t+i*3.14159*4;\r\nsdt=sin(dt+(i*3.1415*2));\r\ncdt=cos(dt+(i*3.1415*2));\r\nx=(cos(r)*d) + (sdt * .6 * sin(t) );\r\ny=(sin(r)*d) + ( cdt *.6 * sin(t) );\r\nblue=abs(x);\r\ngreen=abs(y);\r\nred=cos(dt*4)","t=t-0.05;f=f+1;dt=(f*2*3.1415)/c","bb = bb + 1;\r\nbeatdiv = 8;\r\nc=if(equal(bb%beatdiv,0),f,c);\r\nf=if(equal(bb%beatdiv,0),0,f);"},
+439c440
+< 	        LOGBRUSH lb={BS_SOLID,color,0};
+---
+> 	        LOGBRUSH lb={(COLORREF)BS_SOLID,(COLORREF)color,(COLORREF)0};
+496a498,503
+> /*
+> 	char text[4096];
+> 	WASABI_API_LNGSTRING_BUF(IDS_SUPERSCOPE,text,4096);
+> 	int titlelen = lstrlen(text)+1;
+> 	lstrcpyn(text+titlelen,GetTextResource(IDR_SUPERSCOPE),4095-titlelen);
+> */
+498,499c505,506
+<                    "Superscope tutorial goes here\r\n"
+<                    "But for now, here is the old text:\r\n"
+---
+>                    "Superscope tutorial:\r\n\n"
+> //                 "But for now, here is the old text:\r\n"
+512c519
+<                    " Anybody want to send me better text to put here? Please :)\r\n"
+---
+> //                 " Anybody want to send me better text to put here? Please :)\r\n"
+529,530c536,537
+<             i.dwTypeData=presets[x].name;
+<             i.cch=strlen(presets[x].name);
+---
+>             i.dwTypeData=WASABI_API_LNGSTRING(presets[x].name);
+>             i.cch=strlen(i.dwTypeData);
+587c594
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_SSCOPE),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_SSCOPE,hwndParent,g_DlgProc);
+diff -w vis_avs/r_stack.cpp vis_avs2/r_stack.cpp
+37a38
+> #include "../Agave/Language/api_language.h"
+90c91
+< return MOD_NAME; 
+---
+> static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_MISC_BUFFER_SAVE,desc,128):desc);
+257c258
+<           wsprintf(s,"Buffer %d",x);
+---
+>           wsprintf(s,WASABI_API_LNGSTRING(IDS_BUFFER_X),x);
+332c333
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_STACK),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_STACK,hwndParent,g_DlgProc);
+diff -w vis_avs/r_stars.cpp vis_avs2/r_stars.cpp
+35a36
+> #include "../Agave/Language/api_language.h"
+59c60
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_STARFIELD,desc,128):desc); }
+338c339
+< 	        LOGBRUSH lb={BS_SOLID,_color,0};
+---
+> 	        LOGBRUSH lb={ (COLORREF)BS_SOLID,(COLORREF)_color,(COLORREF)0};
+389c390
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_STARFIELD),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_STARFIELD,hwndParent,g_DlgProc);
+diff -w vis_avs/r_svp.cpp vis_avs2/r_svp.cpp
+33a34,35
+> #include "../Agave/Language/api_language.h"
+> 
+49c51
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_SVP_LOADER,desc,128):desc); }
+220c222
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDC_CFG_SVP),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDC_CFG_SVP,hwndParent,g_DlgProc);
+diff -w vis_avs/r_text.cpp vis_avs2/r_text.cpp
+39a40
+> #include "../Agave/Language/api_language.h"
+59c60
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_TEXT,desc,128):desc); }
+993c994
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_TEXT),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_TEXT,hwndParent,g_DlgProc);
+diff -w vis_avs/r_timescope.cpp vis_avs2/r_timescope.cpp
+35a36
+> #include "../Agave/Language/api_language.h"
+50c51
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_RENDER_TIMESCOPE,desc,128):desc); }
+181c182
+< 				wsprintf(txt, "Draw %d bands", g_ConfigThis->nbands);
+---
+> 				wsprintf(txt, WASABI_API_LNGSTRING(IDS_DRAW_X_BANDS), g_ConfigThis->nbands);
+202c203
+< 	        LOGBRUSH lb={BS_SOLID,_color,0};
+---
+> 	        LOGBRUSH lb={ (COLORREF)BS_SOLID,(COLORREF)_color,(COLORREF)0};
+259c260
+< 				wsprintf(txt, "Draw %d bands", g_ConfigThis->nbands);
+---
+> 				wsprintf(txt, WASABI_API_LNGSTRING(IDS_DRAW_X_BANDS), g_ConfigThis->nbands);
+272c273
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_TIMESCOPE),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_TIMESCOPE,hwndParent,g_DlgProc);
+diff -w vis_avs/r_trans.cpp vis_avs2/r_trans.cpp
+39a40,41
+> #include "../Agave/Language/api_language.h"
+> #include "../nu/AutoWide.h"
+53c55
+<     char *list_desc; // The string to show in the listbox.
+---
+>     int list_desc; // The string to show in the listbox.
+61,84c63,86
+<   {/* 0,*/ "none", "", 0, 0},
+<   {/* 1,*/ "slight fuzzify", "", 0, 0},
+<   {/* 2,*/ "shift rotate left", "x=x+1/32; // use wrap for this one", 0, 1},
+<   {/* 3,*/ "big swirl out", "r = r + (0.1 - (0.2 * d));\r\nd = d * 0.96;", 0, 0},
+<   {/* 4,*/ "medium swirl", "d = d * (0.99 * (1.0 - sin(r-$PI*0.5) / 32.0));\r\nr = r + (0.03 * sin(d * $PI * 4));", 0, 0},
+<   {/* 5,*/ "sunburster", "d = d * (0.94 + (cos((r-$PI*0.5) * 32.0) * 0.06));", 0, 0},
+<   {/* 6,*/ "swirl to center", "d = d * (1.01 + (cos((r-$PI*0.5) * 4) * 0.04));\r\nr = r + (0.03 * sin(d * $PI * 4));", 0, 0},
+<   {/* 7,*/ "blocky partial out", "", 0, 0},
+<   {/* 8,*/ "swirling around both ways at once", "r = r + (0.1 * sin(d * $PI * 5));", 0, 0},
+<   {/* 9,*/ "bubbling outward", "t = sin(d * $PI);\r\nd = d - (8*t*t*t*t*t)/sqrt((sw*sw+sh*sh)/4);", 0, 0},
+<   {/*10,*/ "bubbling outward with swirl", "t = sin(d * $PI);\r\nd = d - (8*t*t*t*t*t)/sqrt((sw*sw+sh*sh)/4);\r\nt=cos(d*$PI/2.0);\r\nr= r + 0.1*t*t*t;", 0, 0},
+<   {/*11,*/ "5 pointed distro", "d = d * (0.95 + (cos(((r-$PI*0.5) * 5.0) - ($PI / 2.50)) * 0.03));", 0, 0},
+<   {/*12,*/ "tunneling", "r = r + 0.04;\r\nd = d * (0.96 + cos(d * $PI) * 0.05);", 0, 0},
+<   {/*13,*/ "bleedin'", "t = cos(d * $PI);\r\nr = r + (0.07 * t);\r\nd = d * (0.98 + t * 0.10);", 0, 0},
+<   {/*14,*/ "shifted big swirl out", "// this is a very bad approximation in script. fixme.\r\nd=sqrt(x*x+y*y); r=atan2(y,x);\r\nr=r+0.1-0.2*d; d=d*0.96;\r\nx=cos(r)*d + 8/128; y=sin(r)*d;", 0, 1},
+<   {/*15,*/ "psychotic beaming outward", "d = 0.15", 0, 0},
+<   {/*16,*/ "cosine radial 3-way", "r = cos(r * 3)", 0, 0},
+<   {/*17,*/ "spinny tube", "d = d * (1 - ((d - .35) * .5));\r\nr = r + .1;", 0, 0},
+<   {/*18,*/ "radial swirlies", "d = d * (1 - (sin((r-$PI*0.5) * 7) * .03));\r\nr = r + (cos(d * 12) * .03);", 1, 0},
+<   {/*19,*/ "swill", "d = d * (1 - (sin((r - $PI*0.5) * 12) * .05));\r\nr = r + (cos(d * 18) * .05);\r\nd = d * (1-((d - .4) * .03));\r\nr = r + ((d - .4) * .13)", 1, 0},
+<   {/*20,*/ "gridley", "x = x + (cos(y * 18) * .02);\r\ny = y + (sin(x * 14) * .03);", 1, 1},
+<   {/*21,*/ "grapevine", "x = x + (cos(abs(y-.5) * 8) * .02);\r\ny = y + (sin(abs(x-.5) * 8) * .05);\r\nx = x * .95;\r\ny = y * .95;", 1, 1},
+<   {/*22,*/ "quadrant", "y = y * ( 1 + (sin(r + $PI/2) * .3) );\r\nx = x * ( 1 + (cos(r + $PI/2) * .3) );\r\nx = x * .995;\r\ny = y * .995;", 1, 1},
+<   {/*23,*/ "6-way kaleida (use wrap!)", "y = (r*6)/($PI); x = d;", 1, 1},
+---
+>   {/* 0,*/ IDS_NONE, "", 0, 0},
+>   {/* 1,*/ IDS_SLIGHT_FUZZIFY, "", 0, 0},
+>   {/* 2,*/ IDS_SHIFT_ROTATE_LEFT, "x=x+1/32; // use wrap for this one", 0, 1},
+>   {/* 3,*/ IDS_BIG_SWIRL_OUT, "r = r + (0.1 - (0.2 * d));\r\nd = d * 0.96;", 0, 0},
+>   {/* 4,*/ IDS_MEDIUM_SWIRL, "d = d * (0.99 * (1.0 - sin(r-$PI*0.5) / 32.0));\r\nr = r + (0.03 * sin(d * $PI * 4));", 0, 0},
+>   {/* 5,*/ IDS_SUNBURSTER, "d = d * (0.94 + (cos((r-$PI*0.5) * 32.0) * 0.06));", 0, 0},
+>   {/* 6,*/ IDS_SWIRL_TO_CENTER, "d = d * (1.01 + (cos((r-$PI*0.5) * 4) * 0.04));\r\nr = r + (0.03 * sin(d * $PI * 4));", 0, 0},
+>   {/* 7,*/ IDS_BLOCKY_PARTIAL_OUT, "", 0, 0},
+>   {/* 8,*/ IDS_SWIRLING_AROUND_BOTH_WAYS, "r = r + (0.1 * sin(d * $PI * 5));", 0, 0},
+>   {/* 9,*/ IDS_BUBBLING_OUTWARD, "t = sin(d * $PI);\r\nd = d - (8*t*t*t*t*t)/sqrt((sw*sw+sh*sh)/4);", 0, 0},
+>   {/*10,*/ IDS_BUBBLING_OUTWARD_WITH_SWIRL, "t = sin(d * $PI);\r\nd = d - (8*t*t*t*t*t)/sqrt((sw*sw+sh*sh)/4);\r\nt=cos(d*$PI/2.0);\r\nr= r + 0.1*t*t*t;", 0, 0},
+>   {/*11,*/ IDS_5_POINTED_DISTRO, "d = d * (0.95 + (cos(((r-$PI*0.5) * 5.0) - ($PI / 2.50)) * 0.03));", 0, 0},
+>   {/*12,*/ IDS_TUNNELING, "r = r + 0.04;\r\nd = d * (0.96 + cos(d * $PI) * 0.05);", 0, 0},
+>   {/*13,*/ IDS_BLEEDIN, "t = cos(d * $PI);\r\nr = r + (0.07 * t);\r\nd = d * (0.98 + t * 0.10);", 0, 0},
+>   {/*14,*/ IDS_SHIFTED_BIG_SWIRL_OUT, "// this is a very bad approximation in script. fixme.\r\nd=sqrt(x*x+y*y); r=atan2(y,x);\r\nr=r+0.1-0.2*d; d=d*0.96;\r\nx=cos(r)*d + 8/128; y=sin(r)*d;", 0, 1},
+>   {/*15,*/ IDS_PSYCHOTIC_BEAMING_OUTWARD, "d = 0.15", 0, 0},
+>   {/*16,*/ IDS_COSINE_RADIAL_3_WAY, "r = cos(r * 3)", 0, 0},
+>   {/*17,*/ IDS_SPINNY_TUBE, "d = d * (1 - ((d - .35) * .5));\r\nr = r + .1;", 0, 0},
+>   {/*18,*/ IDS_RADIAL_SWIRLIES, "d = d * (1 - (sin((r-$PI*0.5) * 7) * .03));\r\nr = r + (cos(d * 12) * .03);", 1, 0},
+>   {/*19,*/ IDS_SWILL, "d = d * (1 - (sin((r - $PI*0.5) * 12) * .05));\r\nr = r + (cos(d * 18) * .05);\r\nd = d * (1-((d - .4) * .03));\r\nr = r + ((d - .4) * .13)", 1, 0},
+>   {/*20,*/ IDS_GRIDLEY, "x = x + (cos(y * 18) * .02);\r\ny = y + (sin(x * 14) * .03);", 1, 1},
+>   {/*21,*/ IDS_GRAPEVINE, "x = x + (cos(abs(y-.5) * 8) * .02);\r\ny = y + (sin(abs(x-.5) * 8) * .05);\r\nx = x * .95;\r\ny = y * .95;", 1, 1},
+>   {/*22,*/ IDS_QUADRANT, "y = y * ( 1 + (sin(r + $PI/2) * .3) );\r\nx = x * ( 1 + (cos(r + $PI/2) * .3) );\r\nx = x * .995;\r\ny = y * .995;", 1, 1},
+>   {/*23,*/ IDS_6_WAY_KALAEIDA, "y = (r*6)/($PI); x = d;", 1, 1},
+426c428
+<       int AVS_EEL_CONTEXTNAME;
+---
+>       NSEEL_VMCTX AVS_EEL_CONTEXTNAME;
+437c439
+<       int codehandle=0;
+---
+>       NSEEL_CODEHANDLE codehandle=0;
+782c784
+<           SendDlgItemMessage(hwndDlg,IDC_LIST1,LB_ADDSTRING,0,(long)(descriptions[x].list_desc));
+---
+>             SendDlgItemMessage( hwndDlg, IDC_LIST1, LB_ADDSTRING, 0, (LPARAM)(const wchar_t *)AutoWide( WASABI_API_LNGSTRING( descriptions[ x ].list_desc ), CP_UTF8 ) );
+803c805
+<         SendDlgItemMessage(hwndDlg,IDC_LIST1,LB_ADDSTRING,0,(long)"(user defined)");
+---
+>         SendDlgItemMessage( hwndDlg, IDC_LIST1, LB_ADDSTRING, 0, (LPARAM)(const wchar_t *)AutoWide( WASABI_API_LNGSTRING( IDS_USER_DEFINED ), CP_UTF8 ) );
+815c817
+<             SetDlgItemText(hwndDlg,IDC_EDIT1,descriptions[g_this->effect].eval_desc);
+---
+>             SetDlgItemTextA(hwndDlg,IDC_EDIT1,descriptions[g_this->effect].eval_desc);
+854c856
+<         if (SendDlgItemMessage(hwndDlg,IDC_LIST1,LB_GETCURSEL,0,0) != sizeof(descriptions)/sizeof(descriptions[0]))
+---
+>         if (SendDlgItemMessageA(hwndDlg,IDC_LIST1,LB_GETCURSEL,0,0) != sizeof(descriptions)/sizeof(descriptions[0]))
+857c859
+<           SendDlgItemMessage(hwndDlg,IDC_LIST1,LB_SETCURSEL,sizeof(descriptions)/sizeof(descriptions[0]),0);
+---
+>           SendDlgItemMessageA(hwndDlg,IDC_LIST1,LB_SETCURSEL,sizeof(descriptions)/sizeof(descriptions[0]),0);
+863c865
+<         t=SendDlgItemMessage(hwndDlg,IDC_LIST1,LB_GETCURSEL,0,0);
+---
+>         t=SendDlgItemMessageA(hwndDlg,IDC_LIST1,LB_GETCURSEL,0,0);
+936c938
+<           if (SendDlgItemMessage(hwndDlg,IDC_LIST1,LB_GETCURSEL,0,0) != sizeof(descriptions)/sizeof(descriptions[0]))
+---
+>           if (SendDlgItemMessageA(hwndDlg,IDC_LIST1,LB_GETCURSEL,0,0) != sizeof(descriptions)/sizeof(descriptions[0]))
+943c945
+<             SendDlgItemMessage(hwndDlg,IDC_LIST1,LB_SETCURSEL,sizeof(descriptions)/sizeof(descriptions[0]),0);
+---
+>             SendDlgItemMessageA(hwndDlg,IDC_LIST1,LB_SETCURSEL,sizeof(descriptions)/sizeof(descriptions[0]),0);
+949a952,958
+> /*
+> 		char text[4096];
+> 		WASABI_API_LNGSTRING_BUF(IDS_MOVEMENT,text,4096);
+> 		int titlelen = lstrlen(text)+1;
+> 		lstrcpyn(text+titlelen,GetTextResource(IDR_MOVEMENT),4095-titlelen);
+> */
+> 
+951c960
+<           "Movement help goes here (send me some :)\r\n"
+---
+>           "Movement help:\r\n"
+968c977
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_TRANS),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_TRANS,hwndParent,g_DlgProc);
+diff -w vis_avs/r_transition.cpp vis_avs2/r_transition.cpp
+41a42,43
+> #include "../Agave/Language/api_language.h"
+> 
+44c46
+< static const char *transitionmodes[] = 
+---
+> int transitionmodes[] = 
+46,60c48,62
+<   "Random",
+< 	"Cross dissolve",
+< 	"L/R Push",
+< 	"R/L Push",
+< 	"T/B Push",
+< 	"B/T Push",
+< 	"9 Random Blocks",
+< 	"Split L/R Push",
+< 	"L/R to Center Push",
+< 	"L/R to Center Squeeze",
+<   "L/R Wipe",
+<   "R/L Wipe",
+<   "T/B Wipe",
+<   "B/T Wipe",
+<   "Dot Dissolve",
+---
+> 	IDS_RANDOM,
+> 	IDS_CROSS_DISSOLVE,
+> 	IDS_L_R_PUSH,
+> 	IDS_R_L_PUSH,
+> 	IDS_T_B_PUSH,
+> 	IDS_B_T_PUSH,
+> 	IDS_9_RANDOM_BLOCKS,
+> 	IDS_SPLIT_L_R_PUSH,
+> 	IDS_L_R_CENTER_PUSH,
+> 	IDS_L_R_CENTER_SQUEEZE,
+> 	IDS_L_R_WIPE,
+> 	IDS_R_L_WIPE,
+> 	IDS_T_B_WIPE,
+> 	IDS_B_T_WIPE,
+> 	IDS_DOT_DISSOLVE,
+173c175
+<       wsprintf(s,"error loading: %s",scanstr_back(last_file,"\\",last_file-1)+1);
+---
+>       wsprintf(s,WASABI_API_LNGSTRING(IDS_ERROR_LOADING_X),scanstr_back(last_file,"\\",last_file-1)+1);
+548c550
+< 	      SendDlgItemMessage(hwndDlg,IDC_TRANSITION,CB_ADDSTRING,0,(LPARAM)transitionmodes[x]);
+---
+> 	      SendDlgItemMessage(hwndDlg,IDC_TRANSITION,CB_ADDSTRING,0,(LPARAM)WASABI_API_LNGSTRING(transitionmodes[x]));
+628c630
+<   return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_GCFG_TRANSITIONS),hwndParent,g_DlgProc);
+---
+>   return WASABI_API_CREATEDIALOG(IDD_GCFG_TRANSITIONS,hwndParent,g_DlgProc);
+diff -w vis_avs/r_unkn.cpp vis_avs2/r_unkn.cpp
+33a34
+> #include "../Agave/Language/api_language.h"
+39c40
+< char *C_UnknClass::get_desc() { return MOD_NAME; }
+---
+> char *C_UnknClass::get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_UNKNOWN_RENDER_OBJECT,desc,128):desc); }
+99,100c100,101
+<         else wsprintf(s,"Built-in ID: %d\r\n",g_this->id);
+<         wsprintf(s+strlen(s),"Config size: %d\r\n",g_this->configdata_len);
+---
+>         else wsprintf(s,WASABI_API_LNGSTRING(IDS_BUILTIN_ID),g_this->id);
+>         wsprintf(s+strlen(s),WASABI_API_LNGSTRING(IDS_CONFIG_SIZE),g_this->configdata_len);
+112c113
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_UNKN),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_UNKN,hwndParent,g_DlgProc);
+diff -w vis_avs/r_videodelay.cpp vis_avs2/r_videodelay.cpp
+36a37
+> #include "../Agave/Language/api_language.h"
+301c302
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_VIDEODELAY),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_VIDEODELAY,hwndParent,g_DlgProc);
+306c307
+< 	return MOD_NAME; 
+---
+> 	static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_VIDEO_DELAY,desc,128):desc);
+diff -w vis_avs/r_waterbump.cpp vis_avs2/r_waterbump.cpp
+37c37
+< 
+---
+> #include "../Agave/Language/api_language.h"
+50c50
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_WATER_BUMP,desc,128):desc); }
+423c423
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_WATERBUMP),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_WATERBUMP,hwndParent,g_DlgProc);
+diff -w vis_avs/r_water.cpp vis_avs2/r_water.cpp
+37a38
+> #include "../Agave/Language/api_language.h"
+50c51
+< 		virtual char *get_desc() { return MOD_NAME; }
+---
+> 		virtual char *get_desc() { static char desc[128]; return (!desc[0]?WASABI_API_LNGSTRING_BUF(IDS_TRANS_WATER,desc,128):desc); }
+496c497
+< 	return CreateDialog(hInstance,MAKEINTRESOURCE(IDD_CFG_WATER),hwndParent,g_DlgProc);
+---
+> 	return WASABI_API_CREATEDIALOG(IDD_CFG_WATER,hwndParent,g_DlgProc);
+Only in vis_avs2: supersco.bin
+diff -w vis_avs/util.cpp vis_avs2/util.cpp
+33a34
+> #include "../Agave/Language/api_language.h"
+38a40,49
+> char* GetTextResource(UINT id){
+> 	void* data = 0;
+> 	HRSRC rsrc = FindResource(WASABI_API_LNG_HINST,MAKEINTRESOURCE(id),"TEXT");
+> 	if(rsrc){
+> 	HGLOBAL resourceHandle = LoadResource(WASABI_API_LNG_HINST,rsrc);
+> 		data = LockResource(resourceHandle);
+> 	}
+> 	return (char*)data;
+> }
+> 
+112a124,125
+> 
+> /*
+131,133d143
+<          "  // using the doubleslash comments until the end of the line\r\n"
+<          "  /* using the classic C comments \r\n"
+<          "     comment a block of text */\r\n"
+301d310
+< #ifdef AVS_MEGABUF_SUPPORT
+311,312d319
+< #endif
+< #ifdef NSEEL_LOOPFUNC_SUPPORT
+318d324
+< #endif
+328a335,343
+> */
+> 
+>     text=GetTextResource(IDR_HELP_1);
+> 	else if (sel == 1)
+> 		text=GetTextResource(IDR_HELP_2);
+> 	else if (sel == 2)
+> 		text=GetTextResource(IDR_HELP_3);
+> 	else if (sel == 3)
+> 		text=GetTextResource(IDR_HELP_4);
+344c359
+<         item.pszText="General";
+---
+>         item.pszText=WASABI_API_LNGSTRING(IDS_GENERAL);
+346c361
+<         item.pszText="Operators";
+---
+>         item.pszText=WASABI_API_LNGSTRING(IDS_OPERATORS);
+348c363
+<         item.pszText="Functions";
+---
+>         item.pszText=WASABI_API_LNGSTRING(IDS_FUNCTIONS);
+350c365
+<         item.pszText="Constants";
+---
+>         item.pszText=WASABI_API_LNGSTRING(IDS_CONSTANTS);
+382,383c397
+<   extern HINSTANCE g_hInstance;
+<   DialogBoxParam(g_hInstance,MAKEINTRESOURCE(IDD_EVAL_HELP),hwndDlg,evalHelpDlgProc, (LONG)localinfo);
+---
+>   WASABI_API_DIALOGBOXPARAM(IDD_EVAL_HELP,hwndDlg,evalHelpDlgProc, (LONG)localinfo);
+Only in vis_avs2: version.rc2
+diff -w vis_avs/vis_avs.dsp vis_avs2/vis_avs.dsp
+48c48
+< # ADD CPP /nologo /G6 /MD /W3 /O2 /Ob2 /I "evallib/" /D "NDEBUG" /D "WA2_EMBED" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "VIS_PL_EXPORTS" /D "NSEEL_LOOPFUNC_SUPPORT" /D "AVS_MEGABUF_SUPPORT" /FD /c
+---
+> # ADD CPP /nologo /G6 /MD /W3 /O2 /Ob2 /I "evallib/" /I "../Wasabi" /D "NDEBUG" /D "WA2_EMBED" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "VIS_PL_EXPORTS" /D "NSEEL_LOOPFUNC_SUPPORT" /D "AVS_MEGABUF_SUPPORT" /FD /c
+648,649c648
+< # End Group
+< # Begin Group "Text files"
+---
+> # Begin Source File
+651c650,651
+< # PROP Default_Filter ""
+---
+> SOURCE=".\avs-hilited.png"
+> # End Source File
+654c654
+< SOURCE=.\vis_avs.txt
+---
+> SOURCE=".\avs-normal.png"
+658c658
+< SOURCE=.\whatsnew.txt
+---
+> SOURCE=".\avs-selected.png"
+660d659
+< # End Group
+663c662
+< SOURCE=".\avs-hilited.png"
+---
+> SOURCE=.\bump_lig.bin
+667c666
+< SOURCE=".\avs-normal.png"
+---
+> SOURCE=.\color_mo.bin
+671c670,706
+< SOURCE=".\avs-selected.png"
+---
+> SOURCE=.\dyn_dist.bin
+> # End Source File
+> # Begin Source File
+> 
+> SOURCE=.\dyn_move.bin
+> # End Source File
+> # Begin Source File
+> 
+> SOURCE=.\dyn_shift.bin
+> # End Source File
+> # Begin Source File
+> 
+> SOURCE=.\effect_l.bin
+> # End Source File
+> # Begin Source File
+> 
+> SOURCE=.\help_1.bin
+> # End Source File
+> # Begin Source File
+> 
+> SOURCE=.\help_2.bin
+> # End Source File
+> # Begin Source File
+> 
+> SOURCE=.\help_3.bin
+> # End Source File
+> # Begin Source File
+> 
+> SOURCE=.\help_4.bin
+> # End Source File
+> # Begin Source File
+> 
+> SOURCE=.\movement.bin
+> # End Source File
+> # Begin Source File
+> 
+> SOURCE=.\supersco.bin
+672a708,720
+> # End Group
+> # Begin Group "Text files"
+> 
+> # PROP Default_Filter ""
+> # Begin Source File
+> 
+> SOURCE=.\vis_avs.txt
+> # End Source File
+> # Begin Source File
+> 
+> SOURCE=.\whatsnew.txt
+> # End Source File
+> # End Group
+diff -w vis_avs/vis_Avs.dsw vis_avs2/vis_Avs.dsw
+10,13d9
+<     begin source code control
+<     "$/vis_avs", RDAAAAAA
+<     ..\vis_avs
+<     end source code control
+Only in vis_avs2: vis_avs.sln
+Only in vis_avs2: vis_avs.vcxproj
+Only in vis_avs2: vis_avs.vcxproj.filters
+diff -w vis_avs/wnd.cpp vis_avs2/wnd.cpp
+45,54d44
+< #ifdef WA3_COMPONENT
+< #include "wasabicfg.h"
+< #include "../studio/studio/api.h"
+< #include "../studio/common/metatags.h"
+< #include "../studio/bfc/rootwnd.h"
+< 
+< CRITICAL_SECTION g_title_cs;
+< char g_title[2048];
+< 
+< #else
+58c48
+< #endif
+---
+> #include "../Agave/Language/api_language.h"
+59a50
+> #ifndef WS_EX_LAYERED
+60a52,54
+> #endif
+> 
+> #ifndef LWA_ALPHA
+61a56
+> #endif
+75,78c70
+< #ifndef WA3_COMPONENT
+< static 
+< #endif
+< int cfg_x=100, cfg_y=100, cfg_w=400, cfg_h=300;
+---
+> static int cfg_x=100, cfg_y=100, cfg_w=400, cfg_h=300;
+95,97d86
+< #ifdef WA3_COMPONENT
+< HWND last_parent;
+< #endif
+117d105
+< #ifndef WA3_COMPONENT
+125d112
+< #endif
+149,152d135
+< HWND GetWinampHwnd(void){
+< 	return hwnd_WinampParent;
+< }
+< 
+172c155,156
+< void my_getViewport(RECT *r, RECT *sr) {
+---
+> void my_getViewport( RECT *r, RECT *sr )
+> {
+175,176c159,161
+< 	  HINSTANCE h=LoadLibrary("user32.dll");
+< 	  if (h) {
+---
+>         HINSTANCE h = LoadLibraryW( L"user32.dll" );
+>         if ( h )
+>         {
+178,179c163,165
+<       BOOL (WINAPI *Gmi)(HMONITOR mon, LPMONITORINFO lpmi) = (BOOL (WINAPI *)(HMONITOR,LPMONITORINFO)) GetProcAddress(h,"GetMonitorInfoA");    
+< 			if (Mfr && Gmi) {
+---
+>             BOOL( WINAPI * Gmi )( HMONITOR mon, LPMONITORINFO lpmi ) = ( BOOL( WINAPI * )( HMONITOR, LPMONITORINFO ) ) GetProcAddress( h, "GetMonitorInfoW" );
+>             if ( Mfr && Gmi )
+>             {
+182,183c168,170
+<         if (hm) {
+<           MONITORINFOEX mi;
+---
+>                 if ( hm )
+>                 {
+>                     MONITORINFOEXW mi;
+187c174,175
+<           if (Gmi(hm,&mi)) {
+---
+>                     if ( Gmi( hm, &mi ) )
+>                     {
+196c184
+<   SystemParametersInfo(SPI_GETWORKAREA,0,r,0);
+---
+>     SystemParametersInfoW( SPI_GETWORKAREA, 0, r, 0 );
+247c235
+< 
+---
+>     char title[48];
+249,251c237,239
+<       !isnew ? "Current preset may have been edited. Save preset before loading?" :
+<       "Current preset may have been edited. Save preset before creating new?",
+<       "AVS Preset Modified",MB_YESNOCANCEL);
+---
+> 		       WASABI_API_LNGSTRING(!isnew?IDS_CURRENT_PRESET_EDITED_SAVE_BEFORE_LOAD:
+> 						   IDS_CURRENT_PRESET_EDITED_SAVE_BEFORE_NEW),
+> 		       WASABI_API_LNGSTRING_BUF(IDS_AVS_PRESET_MODIFIED,title,48),MB_YESNOCANCEL);
+293,302c281
+< #ifdef WA3_COMPONENT
+< 		DDraw_SetFullScreen(0,cfg_w,cfg_h,cfg_fs_d&2,0);
+<     if (last_parent) 
+<     {
+<       ShowWindow(last_parent,SW_SHOWNA);
+<       SetParent(hwnd,last_parent);
+<       SetWindowLong(hwnd,GWL_STYLE,WS_VISIBLE|WS_CHILD);
+<     }
+<     last_parent=0;
+< #elif !defined(WA2_EMBED)
+---
+> #if !defined(WA2_EMBED)
+316,319c295
+< #ifdef WA3_COMPONENT
+<     SetWindowPos(hwnd,tm?HWND_TOPMOST:HWND_NOTOPMOST,0,0,cfg_w,cfg_h,SWP_NOACTIVATE);
+<     SetTimer(hwnd,66,500,NULL);
+< #elif !defined(WA2_EMBED)
+---
+> #if !defined(WA2_EMBED)
+335a312
+> #if 1
+342a320
+> #endif
+375,382c353
+< #ifdef WA3_COMPONENT
+<         if (!last_parent) 
+<         {
+<           SetWindowLong(hwnd,GWL_STYLE,WS_VISIBLE);
+<           last_parent=SetParent(hwnd,NULL);
+<           ShowWindow(last_parent,SW_HIDE);
+<         }
+< #elif defined(WA2_EMBED)
+---
+> #if defined(WA2_EMBED)
+449,459c420
+< #ifdef WA3_COMPONENT
+<     INI_FILE = reinterpret_cast<char *>(calloc(WA_MAX_PATH, sizeof(char)));
+< 		char *p=INI_FILE;
+< 		GetModuleFileName(NULL,INI_FILE,sizeof(INI_FILE));
+< 		if (p[0]) while (p[1]) p++;
+< 		while (p >= INI_FILE && *p != '.') p--;
+< 		*++p='i';
+< 		*++p='n';
+< 		*++p='i';
+< 		*++p=0;
+< #else
+---
+> #ifndef REAPLAY_PLUGIN
+460a422,424
+> #else
+>     extern const char *(*get_ini_file)();
+>     INI_FILE = (char *)get_ini_file();
+554,557d517
+< #ifdef WA3_COMPONENT
+<   int styles=WS_VISIBLE|WS_CHILD|WS_CLIPCHILDREN|WS_CLIPSIBLINGS;
+<   HWND par = this_mod->hwndParent;
+< #else
+562,563c522,524
+<   int styles=WS_VISIBLE|WS_CHILDWINDOW|WS_OVERLAPPED|WS_CLIPCHILDREN|WS_CLIPSIBLINGS;
+<   HWND (*e)(embedWindowState *v);
+---
+>   int styles=WS_CHILDWINDOW|WS_OVERLAPPED|WS_CLIPCHILDREN|WS_CLIPSIBLINGS;
+>   HWND (*e)(embedWindowState *v) = NULL;
+> #ifndef REAPLAY_PLUGIN
+567,571c528,530
+<   
+<   if (par)
+<     SetWindowText(par,"AVS");
+< 
+<   g_hWA2ParentWindow=par;
+---
+>   if (par) SetWindowText(par,"AVS");
+> #else
+>   HWND par = this_mod->hwndParent;
+572a532
+>   g_hWA2ParentWindow=par;
+587c547,549
+< 		MessageBox(this_mod->hwndParent,"Error creating window","Error",MB_OK);
+---
+> 		char title[32];
+> 		MessageBox(this_mod->hwndParent,WASABI_API_LNGSTRING(IDS_ERROR_CREATING_WINDOW),
+> 			   WASABI_API_LNGSTRING_BUF(IDS_AVS_ERROR,title,32),MB_OK);
+589a552
+> #ifndef REAPLAY_PLUGIN
+590a554
+>   ShowWindow(g_hwnd,SW_SHOWNA);
+593,597d556
+< #ifndef WA3_COMPONENT
+<   SetTransparency(g_hwnd,cfg_trans,cfg_trans_amount);
+< #endif
+< #ifdef WA3_COMPONENT
+<   InitializeCriticalSection(&g_title_cs);
+598a558
+>   SetTransparency(g_hwnd,cfg_trans,cfg_trans_amount);
+694,698d653
+< #ifdef WA3_COMPONENT
+<   DeleteCriticalSection(&g_title_cs);
+<   if(INI_FILE)
+<     free(INI_FILE);
+< #endif
+726d680
+< #ifndef WA3_COMPONENT
+738,740d691
+< #else
+<     ShowWindow(GetParent(last_parent),SW_HIDE);
+< #endif
+754,761d704
+< #ifdef WA3_COMPONENT
+<     ShowWindow(GetParent(last_parent),SW_SHOWNA);
+< 	  SetParent(hwnd, last_parent);
+<     last_parent=0;
+<     DDraw_Resize(cfg_w,cfg_h,cfg_fs_d&2);
+<     SetWindowPos(hwnd,0,0,0,cfg_w,cfg_h,SWP_NOACTIVATE|SWP_NOZORDER);
+<     SetTimer(hwnd,66,500,NULL);
+< #else
+787d729
+< #endif
+991,992c933,934
+< 		  i.dwTypeData="Fullscreen";
+< 		  i.cch=strlen("Fullscreen");
+---
+> 		  i.dwTypeData=WASABI_API_LNGSTRING(IDS_FULLSCREEN);
+> 		  i.cch=strlen(i.dwTypeData);
+998,999c940,941
+< 		    i.dwTypeData="AVS Editor";
+< 		    i.cch=strlen("AVS Editor");
+---
+> 		    i.dwTypeData=WASABI_API_LNGSTRING(IDS_AVS_EDITOR);
+> 		    i.cch=strlen(i.dwTypeData);
+1006c948
+< 	  		i.dwTypeData="Dock in AVS Editor";
+---
+> 	  		i.dwTypeData=WASABI_API_LNGSTRING(IDS_DOCK_IN_AVS_EDITOR);
+1220c1162,1165
+<         MessageBox(hwnd,"Cannot go fullscreen when video is playing","AVS Fullscreen",MB_OK|MB_ICONINFORMATION);
+---
+>                 char title[ 32 ];
+>                 MessageBox( hwnd, WASABI_API_LNGSTRING( IDS_CANNOT_GO_FULLSCREEN_WHEN_VIDEO_PLAYING ),
+>                             WASABI_API_LNGSTRING_BUF( IDS_AVS_FULLSCREEN, title, 32 ),
+>                             MB_OK | MB_ICONINFORMATION );
+1345c1290
+<         DDraw_SetStatusText(cfg_fs_fps&1?"fullscreen fps on":"fullscreen fps off");
+---
+>                 DDraw_SetStatusText( WASABI_API_LNGSTRING( cfg_fs_fps & 1 ? IDS_FULLSCREEN_FPS_ON : IDS_FULLSCREEN_FPS_OFF ) );
+1351c1296
+<         DDraw_SetStatusText(cfg_fs_rnd?"random presets on":"random presets off");
+---
+>                 DDraw_SetStatusText( WASABI_API_LNGSTRING( cfg_fs_rnd ? IDS_RANDOM_PRESETS_ON : IDS_RANDOM_PRESETS_OFF ) );
+1355c1300
+<         char s[128],*st;
+---
+>                 char s[ 128 ], *st, stBuf[ 48 ];
+1358c1303
+<           st="saved to";
+---
+>                     st = WASABI_API_LNGSTRING_BUF( IDS_SAVED_TO, stBuf, 48 );
+1365,1366c1310,1311
+<           if (LoadPreset(wParam-VK_F1)) st="loaded from";
+<           else st="error loading from";
+---
+>                     if ( LoadPreset( wParam - VK_F1 ) ) st = WASABI_API_LNGSTRING_BUF( IDS_LOADED_FROM, stBuf, 48 );
+>                     else st = WASABI_API_LNGSTRING_BUF( IDS_ERROR_LOADING_FROM, stBuf, 48 );
+1374c1319
+<         char s[128],*st;
+---
+>                 char s[ 128 ], *st, stBuf[ 48 ];
+1379c1324
+<           st="saved to";
+---
+>                     st = WASABI_API_LNGSTRING_BUF( IDS_SAVED_TO, stBuf, 48 );
+1385,1386c1330,1331
+<           if (LoadPreset(wParam-'0'+12+n)) st="loaded from";
+<           else st="error loading from";
+---
+>                     if ( LoadPreset( wParam - '0' + 12 + n ) ) st = WASABI_API_LNGSTRING_BUF( IDS_LOADED_FROM, stBuf, 48 );
+>                     else st = WASABI_API_LNGSTRING_BUF( IDS_ERROR_LOADING_FROM, stBuf, 48 );
+1388c1333
+<         wsprintf(s,"%s %s%d",st,n?"shift-":"",wParam-'0');
+---
+>                 wsprintf( s, "%s %s%d", st, n ? WASABI_API_LNGSTRING( IDS_SHIFT_ ) : "", wParam - '0' );
+1427,1433d1371
+< #ifdef WA3_COMPONENT
+<         EnterCriticalSection(&g_title_cs);
+<         const char *pitem=api->core_getCurrent(0);    
+<         if (!pitem || api->metadb_getMetaData(pitem, MT_NAME, g_title, 2047, MDT_STRINGZ) < 1)
+<           STRCPY(g_title,"");
+<         LeaveCriticalSection(&g_title_cs);
+< #endif
+1434a1373
+> #ifndef REAPLAY_PLUGIN
+1442a1382,1383
+> #endif
+> 
+1539c1480
+< #ifndef WA3_COMPONENT //FG> This totally fucks up a child layered window painting in wa3, i'm not even sure that's a good thing for wa2... basically the child window gets excluded from the layered update and ends up updating behind the layer, on top of the desktop
+---
+>             //FG> This totally fucks up a child layered window painting in wa3, i'm not even sure that's a good thing for wa2... basically the child window gets excluded from the layered update and ends up updating behind the layer, on top of the desktop
+1544d1484
+< #endif
+1558d1497
+< #ifndef WA3_COMPONENT
+1568d1506
+< #endif
+1589d1526
+< #ifndef WA3_COMPONENT
+1594d1530
+< #endif
+1599d1534
+< #ifndef WA3_COMPONENT
+1692d1626
+< #endif
+1717d1650
+< #ifndef WA3_COMPONENT
+1725d1657
+< #endif
+1733d1664
+< #ifndef WA3_COMPONENT
+1752d1682
+< #endif
+1758d1687
+< #ifndef WA3_COMPONENT
+1786d1714
+< #endif
+1792c1720,1721
+<     case WM_COMMAND: {
+---
+>         case WM_COMMAND:
+>         {
+1794c1723,1724
+<       switch (id) {
+---
+>             switch ( id )
+>             {
+1797c1727,1728
+<         case ID_VIS_RANDOM: {
+---
+>                 case ID_VIS_RANDOM:
+>                 {
+1799c1730,1731
+<           if (wParam >> 16 == 0xFFFF) {
+---
+>                     if ( wParam >> 16 == 0xFFFF )
+>                     {
+1805c1737
+<           DDraw_SetStatusText(cfg_fs_rnd?"random presets on":"random presets off");
+---
+>                     DDraw_SetStatusText( WASABI_API_LNGSTRING( cfg_fs_rnd ? IDS_RANDOM_PRESETS_ON : IDS_RANDOM_PRESETS_OFF ) );
+diff -w vis_avs/wnd.h vis_avs2/wnd.h
+33a34
+> void about(HWND hwndParent);

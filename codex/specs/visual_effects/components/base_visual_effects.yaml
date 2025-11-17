@@ -1,0 +1,321 @@
+avs_spec:
+  version: 0.1
+  target_os: linux
+  preset_model:
+    component_tree:
+      groups: ["Render", "Trans", "Misc"]   # Canonical AVS group taxonomy
+      output_modes: ["Replace", "Add", "50/50", "Max", "Min", "Ignore"] # per component
+      sampling:
+        filter: ["Nearest", "Bilinear"]
+        wrap: ["Clamp", "Wrap", "Mirror"]
+      coordinates:
+        # AVS uses normalized [-1..1] in X/Y and polar helpers for Trans/Movement
+        normalized_xy: true
+        pixel_space: true         # Text/Picture operate in pixel coords when needed
+    parameters:
+      primitive_types: ["bool","int","float","color","string","select","resource"]
+      compound_types: ["list"]    # For nested controls (Effect List, color stops, etc.)
+  engine:
+    timing:
+      fps_mode: "vsync | fixed | uncapped"
+      time_vars:
+        t: "seconds since preset load"
+        beat: "beat gate 0/1 with hold_ms, cooldown_ms"
+    buffers:
+      main: "RGBA8888"
+      accum: "optional: motion blur/work buffer"
+      registers: ["A","B","C","D","E"] # Save/Restore buffers
+      depth: false                      # base AVS had no z; optional for GPU effects
+    color:
+      format: "RGBA8888"
+      premultiplied_alpha: false
+      colorspace: "sRGB"
+    audio:
+      backend: ["PortAudio","JACK","PipeWire/ALSA"]
+      capture:
+        device_select_flag: "--input-device=<id|name>"
+        list_devices_flag: "--list-input-devices"
+      stream:
+        sample_rate: [44100,48000,96000]
+        channels: [1,2]
+        block_size: 1024
+      features:
+        windows: ["hann","hamming","blackman"]
+        fft_impl: ["kissFFT","FFTW3"]
+        nfft: [512,1024,2048,4096]
+        outputs:
+          - name: "oscL/oscR"
+            desc: "time-domain wave for scopes"
+          - name: "specL/specR"
+            desc: "magnitude spectrum (linear & log bins)"
+          - name: "beat"
+            desc: "energy-based beat gate with decay/hold"
+    scripting:
+      language: "EEL2 (NSEEL-compatible surface)"
+      variables_common:
+        per_frame: ["t","beat","bass","mid","treb"]     # derived audio bands
+        per_point: ["i","n","x","y","r","d","v"]        # v ~ audio/osc value
+      builtins:
+        trig: ["sin","cos","tan","atan2"]
+        math: ["abs","min","max","pow","sqrt","log","exp","rand","randf"]
+        mix: ["lerp(a,b,k)"]
+        signal:
+          - "getosc(ch,bin)"      # oscilloscope tap
+          - "getspec(ch,bin,log)" # spectrum tap
+        cond: ["if(cond,a,b)","select(idx,...)"]
+      safety:
+        max_ops_per_frame: 2_000_000
+        timeout_ms: 8
+      jit: false   # interpreter by default; optional LLVM/JIT later
+    renderer:
+      api: ["CPU blitter","OpenGL 3.x (optional)"]
+      sdl:
+        version: ["SDL2","SDL3"]
+        window: "Resizable, vsync toggle"
+        texture_upload: "streaming RGBA"
+      perf:
+        multithread: true
+        tiling: "row/column tiles for CPU effects"
+  # ----------------------------
+  # EFFECTS: BASE SET
+  # ----------------------------
+  effects:
+    Render:
+      - name: "Oscilloscope"
+        group: "Render"
+        params:
+          source: { type: "select", options: ["Left","Right","Mix"] }
+          draw_mode: { type: "select", options: ["Dots","Lines"] }
+          thickness: { type: "int", min: 1, max: 8 }
+          color: { type: "color" }
+          alpha: { type: "float", min: 0.0, max: 1.0 }
+          smoothing: { type: "float", min: 0.0, max: 1.0 }
+        impl:
+          path: "Sample osc buffer -> polyline/dots; line AA optional"
+          notes: "Time-domain scope; smoothing is EMA on samples"
+        output: "blended"
+      - name: "Spectrum Analyzer"
+        group: "Render"
+        params:
+          scale: { type: "select", options: ["Linear","Log"] }
+          falloff: { type: "float", min: 0.0, max: 1.0 }
+          color: { type: "color" }
+          bars: { type: "int", min: 32, max: 512 }
+          alpha: { type: "float", min: 0.0, max: 1.0 }
+        impl:
+          path: "FFT magnitudes -> bars/lines with peak hold & falloff"
+          notes: "Precompute bin map for log scale"
+        output: "blended"
+      - name: "Dots/Lines"
+        group: "Render"
+        params:
+          count: { type: "int", min: 1, max: 4096 }
+          distribution: { type: "select", options: ["Random","Circle","Grid"] }
+          color: { type: "color" }
+          thickness: { type: "int", min: 1, max: 8 }
+        impl:
+          path: "Deterministic RNG seeded per frame for repeatability"
+        output: "blended"
+      - name: "Starfield"
+        group: "Render"
+        params:
+          stars: { type: "int", min: 64, max: 8192 }
+          speed: { type: "float", min: 0.0, max: 5.0 }
+          warp_center: { type: "float", min: 0.0, max: 1.0 }
+          color: { type: "color" }
+        impl:
+          path: "Project Z-moving points with perspective divide; respawn on exit"
+        output: "blended"
+      - name: "Text"
+        group: "Render"
+        params:
+          string: { type: "string" }
+          font: { type: "resource", options: [] }  # FreeType/SDL_ttf
+          size_px: { type: "int", min: 6, max: 256 }
+          align: { type: "select", options: ["Left","Center","Right"] }
+          color: { type: "color" }
+          shadow: { type: "bool" }
+          pixel_snap: { type: "bool" }
+          position_px: { type: "list", children: [{name:"x",type:"int"},{name:"y",type:"int"}] }
+        impl:
+          path: "Glyph raster via FreeType/SDL_ttf -> alpha blend to buffer"
+        output: "blended"
+      - name: "Picture"
+        group: "Render"
+        params:
+          image: { type: "resource", options: [] }
+          fit: { type: "select", options: ["Stretch","Contain","Cover","Tile"] }
+          alpha: { type: "float", min: 0.0, max: 1.0 }
+          sampling: { type: "select", options: ["Nearest","Bilinear"] }
+        impl:
+          path: "Upload to texture or swizzle to CPU surface; draw quad"
+        output: "blended"
+      - name: "Superscope"
+        group: "Render"
+        params:
+          n: { type: "int", min: 1, max: 32768, description: "point count" }
+          mode: { type: "select", options: ["Dots","Lines"] }
+          thickness: { type: "int", min: 1, max: 8 }
+          color: { type: "color" }
+          code:
+            type: "list"
+            children:
+              - { name: "init", type: "string" }
+              - { name: "per_frame", type: "string" }
+              - { name: "per_point", type: "string" }
+        impl:
+          path: "Run EEL2 init/per_frame once; per_point for i∈[0..n): produce x,y,[col,thick]"
+          sampler: "No sampling; it *draws* geometry"
+          perf: "Vectorize per_point loop; early-out if disabled"
+        output: "blended"
+
+    Trans:
+      - name: "Movement"
+        group: "Trans"
+        params:
+          source_mapped: { type: "bool", description: "map from output to source coords" }
+          bilinear: { type: "bool" }
+          wrap: { type: "bool" }
+          code:
+            type: "list"
+            children:
+              - { name: "init", type: "string" }
+              - { name: "per_frame", type: "string" }
+              - { name: "per_pixel", type: "string", description: "set x,y (or r,d) to sample source" }
+        impl:
+          path: "For each dest pixel, eval per_pixel -> sample src(x,y) with selected filter/wrap"
+          coords: "Normalized [-1..1]; also expose polar r,d"
+        output: "Replace"
+      - name: "Dynamic Movement"
+        group: "Trans"
+        params:
+          code:
+            type: "list"
+            children:
+              - { name: "init", type: "string" }
+              - { name: "on_beat", type: "string" }
+              - { name: "per_frame", type: "string" }
+              - { name: "per_pixel", type: "string" }
+          bilinear: { type: "bool" }
+          wrap: { type: "bool" }
+        impl:
+          path: "As Movement + on_beat block & internal state vars"
+        output: "Replace"
+      - name: "Zoom/Rotate"
+        group: "Trans"
+        params:
+          zoom: { type: "float", min: 0.1, max: 5.0 }
+          rotate_deg: { type: "float", min: -360, max: 360 }
+          center: { type: "list", children: [{name:"x",type:"float"},{name:"y",type:"float"}] }
+          bilinear: { type: "bool" }
+          wrap: { type: "bool" }
+        impl:
+          path: "Affine inverse map with bilinear sample"
+        output: "Replace"
+      - name: "Mirror"
+        group: "Trans"
+        params:
+          axis: { type: "select", options: ["Horizontal","Vertical","Quad"] }
+        impl:
+          path: "Sample from mirrored coordinates"
+        output: "Replace"
+      - name: "Blur (Convolution 3x3)"
+        group: "Trans"
+        params:
+          kernel: { type: "list", children: [{name:"k00",type:"float"}, {name:"k01",type:"float"}, {name:"k02",type:"float"},
+                                             {name:"k10",type:"float"}, {name:"k11",type:"float"}, {name:"k12",type:"float"},
+                                             {name:"k20",type:"float"}, {name:"k21",type:"float"}, {name:"k22",type:"float"}] }
+          normalize: { type: "bool" }
+          clamp: { type: "bool" }
+        impl:
+          path: "Tiled separable fast path for Gaussian; general 3x3 fallback"
+        output: "Replace"
+      - name: "Color Map"
+        group: "Trans"
+        params:
+          palette: { type: "list", children: [{name:"stop",type:"float"}, {name:"color",type:"color"}] }
+          channel_mode: { type: "select", options: ["Luma","RGB"] }
+        impl:
+          path: "Palette lookup by luma or per-channel"
+        output: "Replace"
+      - name: "Invert"
+        group: "Trans"
+        params: {}
+        impl:
+          path: "c = 1 - c"
+        output: "Replace"
+      - name: "Fadeout"
+        group: "Trans"
+        params:
+          amount: { type: "float", min: 0.0, max: 1.0 }
+        impl:
+          path: "dst = lerp(src, black, amount)"
+        output: "Replace"
+      - name: "Bump"
+        group: "Trans"
+        params:
+          height_source: { type: "select", options: ["Luma","R","G","B"] }
+          amount: { type: "float", min: -2.0, max: 2.0 }
+          light_dir: { type: "list", children: [{name:"x",type:"float"},{name:"y",type:"float"}] }
+        impl:
+          path: "Compute gradient via Sobel; perturb sample coord along light_dir"
+        output: "Replace"
+
+    Misc:
+      - name: "Effect List"
+        group: "Misc"
+        can_have_children: true
+        params:
+          clear_frame: { type: "bool" }
+          code: { type: "list", children: [{name:"enabled",type:"bool"},{name:"init",type:"string"},{name:"per_frame",type:"string"}] }
+          output: { type: "select", options: ["Replace","Add","50/50","Max","Min","Ignore"] }
+        impl:
+          path: "Exec children in order; blend into parent according to output"
+      - name: "Global Variable Manager"
+        group: "Misc"
+        params:
+          variables: { type: "list", children: [{name:"name",type:"string"}, {name:"init",type:"string"}] }
+        impl:
+          path: "Shared EEL2 symbols across components"
+      - name: "Save Buffer"
+        group: "Misc"
+        params:
+          register: { type: "select", options: ["A","B","C","D","E"] }
+        impl:
+          path: "Copy main -> register"
+      - name: "Restore Buffer"
+        group: "Misc"
+        params:
+          register: { type: "select", options: ["A","B","C","D","E"] }
+          op: { type: "select", options: ["Replace","Add","50/50","Max","Min"] }
+        impl:
+          path: "Blend register -> main using op"
+      - name: "OnBeat Clear"
+        group: "Misc"
+        params:
+          amount: { type: "float", min: 0.0, max: 1.0 }
+        impl:
+          path: "If beat gate: fade to black by amount (one-shot)"
+  # ----------------------------
+  # LINUX IMPLEMENTATION NOTES
+  # ----------------------------
+  linux_impl:
+    graphics:
+      sdl: { preferred: "SDL2 (stable) | SDL3 (ok)", texture_streaming: true }
+      gl_optional:
+        benefits: "fast Movement/Blur with shaders"
+        fallback: "CPU tiles; AVX2 if available"
+    audio_routing:
+      default: "PipeWire (PortAudio hostapi) or JACK for graph routing"
+      device_selection: "map --input-device to PortAudio/JACK device index/name"
+      loopback: "Use JACK or PipeWire graph to route player → vis_avs input → speakers"
+    fonts_images:
+      fonts: "FreeType + SDL_ttf"
+      images: "stb_image"
+    eel2_runtime:
+      source: "Cockos WDL/EEL2"
+      compile_flags: "-DEEL_USE_FP64 -DEEL_NO_WARN"
+      integration: "bind getosc/getspec/time/beat; sandbox per-frame; deterministic RNG"
+    testing:
+      golden_presets: ["Oscilloscope basic","Superscope circle","Movement swirl","EffectList blend grid"]
+      headless_cli: "render N frames to PNGs for CI"

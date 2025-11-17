@@ -1,11 +1,16 @@
 #include "avs/effects/trans/effect_fadeout.h"
-
 #include <algorithm>
 #include <cstddef>
 
 #include "avs/effects/effect_registry.hpp"
 
 namespace avs::effects::trans {
+
+// NOTE: This effect uses the LegacyEffect interface which is incompatible with
+// the development-branch EffectRegistry that expects IEffect-derived classes.
+// To register this effect, it needs to be adapted to implement IEffect or
+// wrapped in an adapter factory function (see effect_registry.cpp for examples).
+
 
 namespace {
 constexpr std::size_t kFieldSize = sizeof(std::uint32_t);
@@ -25,9 +30,6 @@ void writeU32(std::uint32_t value, std::vector<std::uint8_t>& buffer) {
 }
 
 }  // namespace
-
-AVS_EFFECT_TOKEN("Trans / Fadeout");
-REGISTER_AVS_EFFECT(EffectFadeout, "Trans / Fadeout");
 
 EffectFadeout::EffectFadeout() = default;
 

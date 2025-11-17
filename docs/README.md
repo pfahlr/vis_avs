@@ -1,22 +1,35 @@
 # AVS Cross-Platform Port
 
+[![CI](https://github.com/pfahlr/vis_avs/actions/workflows/ci.yml/badge.svg?branch=development-branch)](https://github.com/pfahlr/vis_avs/actions/workflows/ci.yml)
+
 This project aims to reimplement Winamp's Advanced Visualization Studio (AVS) as a standalone,
 portable engine and tooling.
 
 ## Prerequisites
 
-Ensure the following packages are installed:
+Ensure the following packages are installed. The helper script mirrors the CI
+environment and pulls in the PortAudio development headers automatically.
 
 ```bash
+# Ubuntu container
+./run_setup_dev_environment.sh --platform ubuntu
+
+# Fedora container
+./run_setup_dev_environment.sh --platform fedora
+
+# Manual apt invocation (Ubuntu) if you prefer running the commands yourself
 sudo apt-get install cmake g++ clang-format git pkg-config \
   libsdl2-dev mesa-common-dev libglu1-mesa-dev \
   portaudio19-dev libportaudio2 libgtest-dev libsamplerate0-dev \
   libjack-dev libasound2-dev
 ```
 
-If your distribution only provides an SDL2 package older than 2.28, the
-top-level CMake project will automatically fetch and build SDL 2.28.5 during
-configuration so that development in clean containers continues to succeed.
+
+> **Tip:** CMake now invokes a lightweight bootstrapper that runs the helper
+> script automatically when the required development packages are missing.
+> Pass `AVS_SKIP_AUTO_DEPS=1` in the environment to disable the automatic
+> installation if you prefer to manage dependencies manually.
+
 
 ## Build Instructions
 
@@ -29,18 +42,33 @@ cmake --build .
 ctest
 ```
 
+## Build Options
+
+Configure the project with `-D<option>=<ON|OFF>` to toggle these components:
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `AVS_BUILD_PLAYER` | `ON` | Build the Winamp-compatible `apps/avs-player` binary. |
+| `AVS_BUILD_TOOLS` | `ON` | Compile utilities under `tools/`, including `gen_golden_md5`. |
+| `AVS_ENABLE_SDL3` | `OFF` | Experimental SDL3 backend switch; defaults to SDL2 when disabled. |
+| `AVS_INSTALL_RESOURCES` | `ON` | Install the asset payload under `share/vis_avs/resources/`. |
+
+Installed artifacts follow the Unix-style layout: executables in `bin/`, libraries in `lib/vis_avs/`, headers in `include/vis_avs/`, and resources in `share/vis_avs/resources/`.
+
 Run the stub player after building:
 
 ```bash
-./apps/avs-player/avs-player [--sample-rate 48000] [--channels 2]
+./apps/avs-player/avs-player [--sample-rate 48000|default] [--channels 2|default]
 ```
 
 The runtime can request specific capture parameters when talking to PortAudio.
 Use `--sample-rate` and `--channels` to ask the device for a particular format;
-the player will fall back to the device defaults if the request is not
-available and resample to the engine's 48 kHz internal representation. Library
-consumers can achieve the same behaviour by setting
-`AudioInputConfig::requestedSampleRate` and `AudioInputConfig::requestedChannels`.
+pass `default` to either flag to explicitly request the device defaults. The
+player falls back to the hardware defaults when the request is not available
+and resamples to the engine's 48 kHz internal representation. Library consumers
+can achieve the same behaviour by adjusting `AudioInputConfig::requestedSampleRate`,
+`AudioInputConfig::requestedChannels`, and the new `useDeviceDefaultSampleRate`
+and `useDeviceDefaultChannels` toggles.
 
 Enumerate capture devices (and their numeric identifiers) via:
 
@@ -71,4 +99,74 @@ To drive rendering from a WAV file, run the player in headless mode. Supplying
   --preset tests/data/simple.avs --frames 120 --out output_dir
 ```
 
+## Resource discovery
+
+Runtime assets live under the repository's `resources/` directory. CMake copies
+this tree next to the build outputs at `${CMAKE_BINARY_DIR}/resources` and, when
+`AVS_INSTALL_RESOURCES` is enabled (the default), installs it under
+`${CMAKE_INSTALL_PREFIX}/share/vis_avs/resources`.
+
+At runtime the engine resolves resources with the following priority:
+
+1. The directory referenced by the `AVS_RESOURCE_DIR` environment variable.
+2. The build-tree mirror (`${CMAKE_BINARY_DIR}/resources`).
+3. The install-tree payload (`${CMAKE_INSTALL_PREFIX}/share/vis_avs/resources`).
+
+Override `AVS_RESOURCE_DIR` to point the player or tests at an alternative
+payload, for example when packaging assets separately from the binaries.
+
 More documentation will be added as the project evolves.
+
+## Effects Core
+
+The modern effects core lives under `libs/avs/core` and exposes a small,
+deterministic pipeline. Effects are registered in an
+`avs::core::EffectRegistry` and assembled into an `avs::core::Pipeline`. The
+registry ships with a couple of utility effects (`clear`, `zoom`) from
+`avs::effects::registerCoreEffects`.
+
+```cpp
+#include "avs/core/EffectRegistry.hpp"
+#include "avs/core/Pipeline.hpp"
+#include "avs/core/RenderContext.hpp"
+#include "avs/effects/RegisterEffects.hpp"
+
+avs::core::EffectRegistry registry;
+avs::effects::registerCoreEffects(registry);
+
+avs::core::Pipeline pipeline(registry);
+avs::core::ParamBlock clearParams;
+clearParams.setInt("value", 16);
+pipeline.add("clear", clearParams);
+
+std::vector<std::uint8_t> pixels(640 * 480 * 4, 0);
+avs::core::RenderContext ctx;
+ctx.width = 640;
+ctx.height = 480;
+ctx.framebuffer = {pixels.data(), pixels.size()};
+ctx.frameIndex = 0;
+ctx.deltaSeconds = 1.0 / 60.0;
+
+pipeline.render(ctx);
+```
+
+Set the `AVS_SEED` environment variable (defaults to `0`) to guarantee
+deterministic random number generation across runs when effects rely on the
+provided `avs::core::DeterministicRng`.
+
+### Legacy Effect Registry
+
+- Each legacy implementation resides in `libs/avs-effects-legacy/src/<category>/effect_*.cpp`.
+  New code must register the factory with `AVS_LEGACY_REGISTER_EFFECT` so the
+  preset loader can resolve legacy tokens without hard-coded switch tables.
+- `libs/avs-effects-legacy/src/effect_registry.cpp` maintains the registry and
+  exposes `GetEffectRegistry()`; the corresponding public headers live under
+  `libs/avs-effects-legacy/include`.
+- When the loader cannot match a token, it instantiates
+  `avs::UnknownRenderObjectEffect`, storing the original token string and raw
+  payload bytes to guarantee lossless round-trips when saving presets.
+- Transition-style modules are expressed as single registry entries that expose
+  mode parameters instead of duplicating dozens of near-identical effect IDs.
+- The compatibility layer in `libs/avs-compat` now focuses on translating
+  legacy preset payloads into registry lookups, leaving implementation details
+  to the `avs-effects-legacy` library.

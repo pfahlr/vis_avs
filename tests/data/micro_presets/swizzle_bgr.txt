@@ -1,0 +1,2 @@
+# Swizzle only: reorder channels to BGR
+swizzle mode=bgr

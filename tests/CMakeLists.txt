@@ -8,19 +8,209 @@ if(NOT GTest_FOUND)
   set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
   FetchContent_MakeAvailable(googletest)
 endif()
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+
+set(AVS_EFFECTS_LINK_LIBS
+  avs::base
+  avs::math
+  avs::core
+  avs::audio-dsp
+  avs::audio-io
+  avs::compat
+  avs::dsl
+  avs::render-gl
+  avs::effects-legacy
+  avs::testing
+  avs::preset)
+
+add_executable(effects_registry_tests
+  ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/tests/test_registry.cpp)
+target_link_libraries(effects_registry_tests PRIVATE avs::effects-legacy GTest::gtest_main)
+target_compile_options(effects_registry_tests PRIVATE -Wall -Wextra -Werror)
+add_test(NAME effects_registry_tests COMMAND $<TARGET_FILE:effects_registry_tests>)
+
+add_executable(preset_binder_tests
+  ${CMAKE_SOURCE_DIR}/libs/avs-preset/tests/test_ir_and_binder.cpp)
+target_link_libraries(preset_binder_tests PRIVATE avs::preset avs::effects-legacy GTest::gtest_main)
+target_compile_options(preset_binder_tests PRIVATE -Wall -Wextra -Werror)
+add_test(NAME preset_binder_tests COMMAND $<TARGET_FILE:preset_binder_tests>)
 
 add_executable(avs_core_tests avs_core_tests.cpp)
-target_link_libraries(avs_core_tests PRIVATE avs-core avs-platform GTest::gtest_main)
+target_link_libraries(avs_core_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
 target_compile_options(avs_core_tests PRIVATE -Wall -Wextra -Werror)
-target_compile_definitions(avs_core_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
-add_test(NAME avs_core_tests COMMAND avs_core_tests)
+target_compile_definitions(avs_core_tests PRIVATE
+  BUILD_DIR="${CMAKE_BINARY_DIR}"
+  SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+  AVS_BUILD_AUDIO=$<BOOL:${AVS_BUILD_AUDIO}>
+  AVS_BUILD_PLATFORM=$<BOOL:${AVS_BUILD_PLATFORM}>)
+
+target_include_directories(avs_core_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/third_party)
+
+add_test(NAME avs_core_tests COMMAND $<TARGET_FILE:avs_core_tests>)
+
+if(AVS_BUILD_AUDIO)
+  add_executable(audio_underflow_tests audio_underflow_tests.cpp)
+  target_link_libraries(audio_underflow_tests PRIVATE avs-platform GTest::gtest_main)
+  target_compile_options(audio_underflow_tests PRIVATE -Wall -Wextra -Werror)
+  add_test(NAME audio_underflow_tests COMMAND $<TARGET_FILE:audio_underflow_tests>)
+
+  add_executable(audio_device_negotiation_tests audio/test_device_negotiation.cpp)
+  target_link_libraries(audio_device_negotiation_tests PRIVATE avs-audio GTest::gtest_main)
+  target_compile_options(audio_device_negotiation_tests PRIVATE -Wall -Wextra -Werror)
+  add_test(NAME audio_device_negotiation_tests COMMAND $<TARGET_FILE:audio_device_negotiation_tests>)
+
+  add_executable(audio_analyzer_tests audio/test_analyzer.cpp)
+  target_link_libraries(audio_analyzer_tests PRIVATE avs-platform avs-audio GTest::gtest_main)
+  target_compile_options(audio_analyzer_tests PRIVATE -Wall -Wextra -Werror)
+  add_test(NAME audio_analyzer_tests COMMAND $<TARGET_FILE:audio_analyzer_tests>)
+endif()
 
 add_executable(deterministic_render_test deterministic_render_test.cpp)
 target_link_libraries(deterministic_render_test PRIVATE GTest::gtest_main)
 target_compile_options(deterministic_render_test PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(deterministic_render_test PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
-add_test(NAME deterministic_render_test COMMAND deterministic_render_test)
-add_dependencies(deterministic_render_test avs-player)
+add_test(NAME deterministic_render_test COMMAND $<TARGET_FILE:deterministic_render_test>)
+if(TARGET avs-player)
+  add_dependencies(deterministic_render_test avs-player)
+endif()
+
+add_executable(core_effects_tests
+  core/test_effect_registry.cpp
+  core/test_pipeline.cpp
+  core/test_blend_ops.cpp
+  core/test_channel_shift.cpp
+  core/test_scripted_effect.cpp
+  core/test_globals_and_bump.cpp
+  core/test_misc_custom_bpm.cpp
+  core/test_transform_affine.cpp
+  core/test_roto_blitter.cpp
+  core/test_trans_brightness.cpp
+  core/test_trans_unique_tone.cpp
+  core/test_gating.cpp
+  core/test_primitives.cpp
+  core/test_trans_mosaic.cpp
+  core/test_colorfade.cpp
+  core/test_rotating_stars.cpp
+  core/test_simple_spectrum.cpp
+  core/test_oscilloscope_star.cpp
+  core/test_render_ring.cpp
+  core/test_render_dot_fountain.cpp
+  core/test_render_bass_spin.cpp
+  core/test_render_moving_particle.cpp
+  core/test_render_timescope.cpp
+  core/test_render_mode.cpp
+  core/test_misc_comment.cpp
+  core/test_trans_multiplier.cpp
+  core/test_trans_scatter.cpp
+  core/test_multi_delay.cpp
+  core/test_video_delay.cpp
+  core/test_color_modifier.cpp)
+
+target_link_libraries(core_effects_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
+target_compile_options(core_effects_tests PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(core_effects_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(core_effects_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
+add_test(NAME core_effects_tests COMMAND $<TARGET_FILE:core_effects_tests>)
+
+if(AVS_BUILD_AUDIO)
+  add_executable(audio_vis_tests
+    presets/audio_vis/test_audio_vis.cpp)
+  target_link_libraries(audio_vis_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
+  target_compile_options(audio_vis_tests PRIVATE -Wall -Wextra -Werror)
+  target_compile_definitions(audio_vis_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+  target_include_directories(audio_vis_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
+  add_test(NAME audio_vis_tests COMMAND $<TARGET_FILE:audio_vis_tests>)
+endif()
+
+add_executable(dynamic_effects_tests
+  presets/dynamic/test_dynamic.cpp
+  presets/fb_ops/md5_helper.cpp)
+target_link_libraries(dynamic_effects_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
+target_compile_options(dynamic_effects_tests PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(dynamic_effects_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(dynamic_effects_tests PRIVATE ${CMAKE_SOURCE_DIR}/tests/presets/fb_ops)
+target_include_directories(dynamic_effects_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
+add_test(NAME dynamic_effects_tests COMMAND $<TARGET_FILE:dynamic_effects_tests>)
+
+add_executable(filter_effects_tests
+  presets/filters/test_filters.cpp)
+target_link_libraries(filter_effects_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
+target_compile_options(filter_effects_tests PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(filter_effects_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(filter_effects_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
+add_test(NAME filter_effects_tests COMMAND $<TARGET_FILE:filter_effects_tests>)
+
+add_executable(trans_effects_tests
+  presets/trans/test_blitter_feedback.cpp
+  presets/trans/test_trans.cpp
+  presets/trans/test_trans_blur.cpp)
+
+target_link_libraries(trans_effects_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
+target_compile_options(trans_effects_tests PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(trans_effects_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(trans_effects_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
+add_test(NAME trans_effects_tests COMMAND $<TARGET_FILE:trans_effects_tests>)
+
+add_executable(runtime_resource_tests
+  runtime/test_resources.cpp)
+target_link_libraries(runtime_resource_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
+target_compile_options(runtime_resource_tests PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(runtime_resource_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(runtime_resource_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
+add_test(NAME runtime_resource_tests COMMAND $<TARGET_FILE:runtime_resource_tests>)
+if(TARGET avs-resources)
+  add_dependencies(runtime_resource_tests avs-resources)
+endif()
+
+add_executable(runtime_effect_list_parser_tests
+  runtime/parser/effect_list_parser_tests.cpp)
+target_link_libraries(runtime_effect_list_parser_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
+target_compile_options(runtime_effect_list_parser_tests PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(runtime_effect_list_parser_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(runtime_effect_list_parser_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
+add_test(NAME runtime_effect_list_parser_tests COMMAND $<TARGET_FILE:runtime_effect_list_parser_tests>)
+
+
+if(AVS_BUILD_AUDIO)
+  add_executable(offscreen_golden_test
+    regression/test_offscreen_golden.cpp)
+  target_link_libraries(offscreen_golden_test PRIVATE avs-offscreen GTest::gtest_main)
+  target_compile_options(offscreen_golden_test PRIVATE -Wall -Wextra -Werror)
+  target_compile_definitions(offscreen_golden_test PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+  add_test(NAME offscreen_golden_test COMMAND $<TARGET_FILE:offscreen_golden_test>)
+endif()
+
+add_executable(runtime_compositing_tests
+  runtime/test_runtime_compositing.cpp)
+target_link_libraries(runtime_compositing_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
+target_compile_options(runtime_compositing_tests PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(runtime_compositing_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(runtime_compositing_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/third_party)
+target_include_directories(runtime_compositing_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
+add_test(NAME runtime_compositing_tests COMMAND $<TARGET_FILE:runtime_compositing_tests>)
+
+
+
+add_executable(fb_ops_tests
+  presets/fb_ops/test_fb_ops.cpp
+  presets/fb_ops/md5_helper.cpp)
+target_link_libraries(fb_ops_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
+target_compile_options(fb_ops_tests PRIVATE -Wall -Wextra -Werror)
+target_compile_definitions(fb_ops_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(fb_ops_tests PRIVATE ${CMAKE_SOURCE_DIR}/libs/avs-effects-legacy/src)
+add_test(NAME fb_ops_tests COMMAND $<TARGET_FILE:fb_ops_tests>)
+
+if(TARGET gen_golden_md5)
+  add_test(NAME offscreen_golden_md5_snapshot
+    COMMAND Python3::Interpreter
+            ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_golden_md5.py
+            --binary $<TARGET_FILE:gen_golden_md5>
+            --expected ${CMAKE_CURRENT_SOURCE_DIR}/regression/data/expected_md5_320x240_seed1234.json
+            --frames 10 --width 320 --height 240 --seed 1234
+            --preset ${CMAKE_SOURCE_DIR}/tests/regression/data/tiny_preset_fragment.avs)
+else()
+  message(WARNING "Golden MD5 snapshot test disabled because gen_golden_md5 is not built")
+endif()
 
 set(PHASE1_DATA_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/data/phase1")
 set(PHASE1_GOLDEN_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/golden/phase1")

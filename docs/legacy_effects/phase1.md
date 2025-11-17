@@ -92,7 +92,7 @@ entries return `C_RBASE2` instances that advertise SMP support.
 | 18 | `R_Stack` | Misc / Buffer Save | No |
 | 19 | `R_DotFountain` | Render / Dot Fountain | No |
 | 20 | `R_Water` | Trans / Water | Yes |
-| 21 | `R_Comment` | Misc / Comment | No |
+| 21 | `R_Comment` | Misc / Comment | Yes |
 | 22 | `R_Brightness` | Trans / Brightness | Yes |
 | 23 | `R_Interleave` | Trans / Interleave | No |
 | 24 | `R_Grain` | Trans / Grain | No |
@@ -101,7 +101,7 @@ entries return `C_RBASE2` instances that advertise SMP support.
 | 27 | `R_StarField` | Render / Starfield | No |
 | 28 | `R_Text` | Render / Text | No |
 | 29 | `R_Bump` | Trans / Bump | No |
-| 30 | `R_Mosaic` | Trans / Mosaic | No |
+| 30 | `R_Mosaic` | Trans / Mosaic | Yes |
 | 31 | `R_WaterBump` | Trans / Water Bump | No |
 | 32 | `R_AVI` | Render / AVI | No |
 | 33 | `R_Bpm` | Misc / Custom BPM | No |

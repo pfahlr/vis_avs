@@ -2,12 +2,14 @@
 
 #include <utility>
 
-#include "avs/effects/effect_registry.hpp"
 
 namespace avs::effects::misc {
 
-AVS_EFFECT_TOKEN("Unknown Render Object");
-REGISTER_AVS_EFFECT(EffectUnknownRenderObject, "Unknown Render Object");
+// NOTE: This effect uses the LegacyEffect interface which is incompatible with
+// the development-branch EffectRegistry that expects IEffect-derived classes.
+// To register this effect, it needs to be adapted to implement IEffect or
+// wrapped in an adapter factory function (see effect_registry.cpp for examples).
+
 
 void EffectUnknownRenderObject::render(LegacyRenderContext& context) {
   (void)context;

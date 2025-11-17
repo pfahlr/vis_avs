@@ -1,6 +1,6 @@
 id: warn-gl-pointer-casts
 title: Fix OpenGL vertex attribute pointer casts
-status: READY
+status: DONE
 labels: [warnings, opengl, platform]
 depends_on: []
 goal: >
@@ -12,6 +12,7 @@ steps:
   - Rebuild avs-platform with -Werror.
 acceptance_criteria:
   - No -Wint-to-pointer-cast warnings in window_sdl_gl.cpp under -Werror.
+  - All required tests execute via ctest and pass.
 test_hook:
   - "Run GUI player startup smoke test; verify no runtime regressions."
 files_touched:

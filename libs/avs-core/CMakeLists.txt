@@ -1,23 +1,48 @@
-add_library(avs-core STATIC
-  src/core.cpp
-  src/engine.cpp
-  src/eel.cpp
-  src/cpu_features.cpp
-  src/effects/blur.cpp
-  src/effects/colormap.cpp
-  src/effects/convolution.cpp
-  src/effects/motion_blur.cpp
-  src/effects/color_transform.cpp
-  src/effects/glow.cpp
-  src/effects/zoom_rotate.cpp
-  src/effects/mirror.cpp
-  src/effects/tunnel.cpp
-  src/effects/radial_blur.cpp
-  src/effects/additive_blend.cpp
-  src/effects/composite.cpp
-  src/effects/scripted.cpp
-  src/preset.cpp
+add_library(avs-core)
+add_library(avs::core ALIAS avs-core)
+add_library(avs-core-runtime ALIAS avs-core)
+
+set(AVS_CORE_HEADERS
+  include/avs/core/DeterministicRng.hpp
+  include/avs/core/EffectRegistry.hpp
+  include/avs/core/IEffect.hpp
+  include/avs/core/ParamBlock.hpp
+  include/avs/core/Pipeline.hpp
+  include/avs/core/RenderContext.hpp
 )
-target_include_directories(avs-core PUBLIC include ../avs-platform/include)
+
+set(AVS_CORE_SOURCES
+  src/DeterministicRng.cpp
+  src/EffectRegistry.cpp
+  src/Pipeline.cpp
+)
+
+target_sources(avs-core
+  PRIVATE
+    ${AVS_CORE_SOURCES}
+  PUBLIC
+    FILE_SET public_headers
+      TYPE HEADERS
+      BASE_DIRS include
+      FILES ${AVS_CORE_HEADERS}
+)
+
+target_link_libraries(avs-core
+  PUBLIC
+    avs::base
+    avs::math
+)
+
+target_compile_features(avs-core PUBLIC cxx_std_20)
 target_compile_options(avs-core PRIVATE -Wall -Wextra -Werror)
-target_link_libraries(avs-core PUBLIC ns-eel)
+
+target_include_directories(avs-core PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+install(TARGETS avs-core
+  EXPORT ${AVS_EXPORT_NAME}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  FILE_SET public_headers DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

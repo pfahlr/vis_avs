@@ -1,0 +1,49 @@
+id: effects-implement-core-missing
+title: Implement remaining critical missing effects
+status: TODO
+labels: [effects, render, trans, medium-priority]
+depends_on:
+  - effects-implement-transition
+  - effects-implement-superscope
+goal: >
+  Implement the remaining high-priority missing effects to achieve basic preset compatibility.
+  Target: Mirror, Invert, Fadeout, Text, OnBeat Clear, Clear Screen, Picture, Interleave.
+steps:
+  - Mirror (r_mirror.cpp) - implement 4 symmetry modes (left, right, top, bottom).
+  - Invert (r_invert.cpp) - simple per-pixel color inversion.
+  - Fadeout (r_fadeout.cpp) - frame persistence/trail effect with configurable decay.
+  - Text (r_text.cpp) - overlay text rendering (NOTE - requires font rendering abstraction for Linux).
+  - OnBeat Clear (r_onbeatclear.cpp) - clear framebuffer on beat detection.
+  - Clear Screen (r_clearscreen.cpp) - fill with solid color, supports blend modes.
+  - Picture (r_picture.cpp) - load and composite static images.
+  - Interleave (r_interleave.cpp) - scanline effects, interlacing.
+  - For each effect - study original source, create .h/.cpp, add registration, add tests.
+  - Text effect may require SDL_ttf or FreeType integration for cross-platform font rendering.
+acceptance_criteria:
+  - All 8 effects implemented and rendering correctly.
+  - Each effect tested individually with golden hash verification.
+  - Binary preset parser supports all 8 effect types.
+  - Visual output matches original AVS (within tolerance, especially Text on different fonts).
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: core_effects_tests with individual test files for each effect."
+  - "Golden hash regression tests with presets using these effects."
+files_touched:
+  - libs/avs-effects-legacy/include/avs/effects/trans/effect_mirror.h
+  - libs/avs-effects-legacy/src/trans/effect_mirror.cpp
+  - libs/avs-effects-legacy/include/avs/effects/trans/effect_invert.h
+  - libs/avs-effects-legacy/src/trans/effect_invert.cpp
+  - libs/avs-effects-legacy/include/avs/effects/trans/effect_fadeout.h
+  - libs/avs-effects-legacy/src/trans/effect_fadeout.cpp
+  - libs/avs-effects-legacy/include/avs/effects/render/effect_text.h
+  - libs/avs-effects-legacy/src/render/effect_text.cpp
+  - libs/avs-effects-legacy/src/render/effect_onbeat_clear.cpp
+  - libs/avs-effects-legacy/src/render/effect_clear_screen.cpp
+  - libs/avs-effects-legacy/src/render/effect_picture.cpp
+  - libs/avs-effects-legacy/src/trans/effect_interleave.cpp
+  - libs/avs-effects-legacy/src/prime/RegisterEffects.cpp
+  - tests/core/test_mirror.cpp
+  - tests/core/test_invert.cpp
+  - tests/core/test_fadeout.cpp
+  - tests/core/test_text.cpp
+  - CMakeLists.txt (may need SDL_ttf dependency)

@@ -271,3 +271,4 @@ void PictureEffect::process(const ProcessContext&, FrameBufferView& dst) {
 }
 
 }  // namespace avs
+

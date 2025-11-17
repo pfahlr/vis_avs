@@ -198,3 +198,4 @@ class DotGridEffect : public IEffect {
 };
 
 }  // namespace avs
+

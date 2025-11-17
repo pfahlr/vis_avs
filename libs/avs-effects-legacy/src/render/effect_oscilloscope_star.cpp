@@ -91,6 +91,7 @@ std::string toLowerCopy(std::string_view value) {
 
 }  // namespace
 
+
 namespace avs::effects::render {
 
 OscilloscopeStar::OscilloscopeStar() { palette_.push_back(makeColor(255, 255, 255)); }
@@ -496,6 +497,7 @@ void OscilloscopeStar::setParams(const avs::core::ParamBlock& params) {
   if (params.contains("position")) {
     setAnchorFromString(params.getString("position", ""));
   }
+
 }
 
 }  // namespace avs::effects::render

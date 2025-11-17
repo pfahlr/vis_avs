@@ -54,6 +54,7 @@ class OscilloscopeStar : public avs::core::IEffect {
   int sizeParam_ = 8;
   ChannelMode channel_ = ChannelMode::Center;
   AnchorMode anchor_ = AnchorMode::Center;
+
 };
 
 }  // namespace avs::effects::render

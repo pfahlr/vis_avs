@@ -1,0 +1,41 @@
+id: audio-pipewire-backend
+title: Add Pipewire audio backend for modern Linux
+status: TODO
+labels: [audio, linux, platform]
+depends_on:
+  - engine-input-device-select
+goal: >
+  Add Pipewire audio input backend as alternative to PortAudio for modern Linux systems.
+  Pipewire is the successor to PulseAudio/JACK and provides lower latency and better device management.
+  Reference AVS2K25 Pipewire implementation.
+steps:
+  - Study AVS2K25 Pipewire integration (/tmp/AVS2K25/avs/vis_avs/audio_in_linux_pipewire.cpp).
+  - Create avs-audio-pipewire library in libs/ with conditional compilation (Linux only).
+  - Implement LibPipewire wrapper class for pw_stream non-blocking audio capture.
+  - Add CMake detection for libpipewire-0.3 (optional dependency).
+  - Define AVS_ENABLE_PIPEWIRE build option (default ON for Linux, OFF for others).
+  - Implement audio device enumeration via Pipewire API.
+  - Add automatic source selection (default to system monitor/loopback).
+  - Integrate with existing AudioInput abstraction in avs-audio-io.
+  - Add runtime backend selection - --audio-backend=portaudio|pipewire.
+  - Implement graceful fallback if Pipewire unavailable at runtime.
+  - Test on modern Linux distros (Ubuntu 22.04+, Fedora 35+, Arch).
+acceptance_criteria:
+  - Pipewire backend captures system audio with <10ms latency.
+  - Device enumeration lists all Pipewire sources correctly.
+  - Hot-swapping audio devices works without restart.
+  - Builds successfully on systems without Pipewire (degrades gracefully).
+  - avs-player supports --audio-backend CLI flag.
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "Manual testing on Linux with Pipewire installed."
+  - "ctest: audio_device_negotiation_tests with Pipewire mock."
+files_touched:
+  - libs/avs-audio-pipewire/CMakeLists.txt
+  - libs/avs-audio-pipewire/include/avs/audio/pipewire_input.h
+  - libs/avs-audio-pipewire/src/pipewire_input.cpp
+  - libs/avs-audio-io/src/AudioInput.cpp
+  - apps/avs-player/main.cpp
+  - CMakeLists.txt
+  - README.md
+  - docs/audio_backends.md

@@ -5,6 +5,7 @@ The legacy Nullsoft source is preserved under `docs/avs_original_source` for ref
 
 See [docs/README.md](docs/README.md) for build and contribution instructions.
 
+
 ## Live audio capture in `avs-player`
 
 `avs-player` uses PortAudio for real-time audio capture. The player selects an
@@ -52,3 +53,22 @@ the build directory:
 The command prints a JSON payload containing the per-frame hashes. The same
 snapshot check is wired into CTest via `offscreen_golden_md5_snapshot`, which
 invokes the tool and verifies the output JSON matches the committed version.
+
+
+## build dependencies
+
+`cmake g++ clang-format git pkg-config` 
+
+### Fedora
+
+`SDL2-devel mesa-libGL-devel mesa-libGLU-devel mesa-libGLU-devel portaudio-devel portaudio gtest-devel jack-audio-connection-kit-devel  alsa-lib-devel`
+
+### Debian
+
+`libsdl2-dev mesa-common-dev libglu1-mesa-dev portaudio19-dev libportaudio2 libgtest-dev libjack-dev libasound2-dev`
+
+> **Note:** If your distribution ships `libsdl2-dev` older than 2.28, the
+> build will automatically download and build SDL 2.28.5 locally during the
+> CMake configure step. Installing a system package `>= 2.28` is still
+> preferred when available.
+

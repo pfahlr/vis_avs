@@ -24,10 +24,12 @@ sudo apt-get install cmake g++ clang-format git pkg-config \
   libjack-dev libasound2-dev
 ```
 
+
 > **Tip:** CMake now invokes a lightweight bootstrapper that runs the helper
 > script automatically when the required development packages are missing.
 > Pass `AVS_SKIP_AUTO_DEPS=1` in the environment to disable the automatic
 > installation if you prefer to manage dependencies manually.
+
 
 ## Build Instructions
 

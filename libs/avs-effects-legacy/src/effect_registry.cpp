@@ -958,4 +958,181 @@ AVS_LEGACY_REGISTER_EFFECT("Trans / Dynamic Movement", makeDynamicMovement);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Fast Brightness", makeFastBrightness);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Color Modifier", makeColorModifier);
 
+//=============================================================================
+// Trans / Channel Shift (APE)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeChannelShift(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t mode = 0, onbeat = 0;
+
+  reader.readI32(mode);
+  reader.readI32(onbeat);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Channel Shift", entry.payload);
+}
+
+//=============================================================================
+// Trans / Color Reduction (APE)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeColorReduction(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  // Format: char fname[260] + int32 levels = 264 bytes
+  // Just preserve binary data as this is complex
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Color Reduction", entry.payload);
+}
+
+//=============================================================================
+// Trans / Multiplier (APE)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeMultiplier(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t ml = 0;
+
+  reader.readI32(ml);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Multiplier", entry.payload);
+}
+
+//=============================================================================
+// Trans / Multi Delay (APE)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeMultiDelay(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t mode = 0, activebuffer = 0;
+  std::int32_t usebeats[6] = {0, 0, 0, 0, 0, 0};
+  std::int32_t delay[6] = {0, 0, 0, 0, 0, 0};
+
+  reader.readI32(mode);
+  reader.readI32(activebuffer);
+  for (int i = 0; i < 6; ++i) {
+    reader.readI32(usebeats[i]);
+    reader.readI32(delay[i]);
+  }
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Multi Delay", entry.payload);
+}
+
+//=============================================================================
+// Trans / Video Delay (APE)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeVideoDelay(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 0, usebeats = 0, delay = 0;
+
+  reader.readI32(enabled);
+  reader.readI32(usebeats);
+  reader.readI32(delay);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Video Delay", entry.payload);
+}
+
+AVS_LEGACY_REGISTER_EFFECT("Trans / Channel Shift", makeChannelShift);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Color Reduction", makeColorReduction);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Multiplier", makeMultiplier);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Multi Delay", makeMultiDelay);
+AVS_LEGACY_REGISTER_EFFECT("Trans / Video Delay", makeVideoDelay);
+
+//=============================================================================
+// Misc / Beat Hold (Laser)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeBeatHold(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t decayMS = 0, beatSkip = 0;
+
+  reader.readI32(decayMS);
+  reader.readI32(beatSkip);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Misc / Beat Hold", entry.payload);
+}
+
+//=============================================================================
+// Render / Brennan's Effect (Laser)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeBrennan(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  // No configuration data - returns empty config
+  (void)preset;
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Brennan's Effect", entry.payload);
+}
+
+//=============================================================================
+// Render / Moving Cone (Laser)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeMovingCone(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  // Variable-length format: num_colors + colors array + 6 int32s
+  std::int32_t num_colors = 0;
+  reader.readI32(num_colors);
+
+  // Skip color array (variable length, up to 16 colors)
+  for (int i = 0; i < num_colors && i < 16; ++i) {
+    std::int32_t color = 0;
+    reader.readI32(color);
+  }
+
+  std::int32_t maxdist = 0, size = 0, size2 = 0, num_seg = 0, mode = 0, maxdist2 = 0;
+  reader.readI32(maxdist);
+  reader.readI32(size);
+  reader.readI32(size2);
+  reader.readI32(num_seg);
+  reader.readI32(mode);
+  reader.readI32(maxdist2);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Moving Cone", entry.payload);
+}
+
+//=============================================================================
+// Render / Moving Line (Laser)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeMovingLine(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  // Variable-length format: num_colors + colors array + 4 int32s
+  std::int32_t num_colors = 0;
+  reader.readI32(num_colors);
+
+  // Skip color array (variable length, up to 16 colors)
+  for (int i = 0; i < num_colors && i < 16; ++i) {
+    std::int32_t color = 0;
+    reader.readI32(color);
+  }
+
+  std::int32_t maxdist = 0, size = 0, size2 = 0, maxbeatcnt = 0;
+  reader.readI32(maxdist);
+  reader.readI32(size);
+  reader.readI32(size2);
+  reader.readI32(maxbeatcnt);
+
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Render / Moving Line", entry.payload);
+}
+
+//=============================================================================
+// Misc / Transform (Laser)
+//=============================================================================
+std::unique_ptr<avs::Effect> makeTransform(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  // Complex variable-length format with EEL expressions
+  // Format: int32 rectangular + byte version_flag + variable strings
+  // Just preserve binary data as this is complex
+  return std::make_unique<avs::UnknownRenderObjectEffect>("Misc / Transform", entry.payload);
+}
+
+AVS_LEGACY_REGISTER_EFFECT("Misc / Beat Hold", makeBeatHold);
+AVS_LEGACY_REGISTER_EFFECT("Render / Brennan's Effect", makeBrennan);
+AVS_LEGACY_REGISTER_EFFECT("Render / Moving Cone", makeMovingCone);
+AVS_LEGACY_REGISTER_EFFECT("Render / Moving Line", makeMovingLine);
+AVS_LEGACY_REGISTER_EFFECT("Misc / Transform", makeTransform);
+
 }  // namespace avs::effects::legacy

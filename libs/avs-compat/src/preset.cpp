@@ -16,6 +16,9 @@
 namespace avs {
 
 namespace {
+constexpr std::uint32_t kApeIdBase = 16384;  // APE effects have IDs >= this value
+constexpr size_t kApeIdLength = 32;          // APE ID string is fixed 32 bytes
+
 std::string trim(const std::string& s) {
   size_t b = 0;
   while (b < s.size() && std::isspace(static_cast<unsigned char>(s[b]))) ++b;
@@ -279,11 +282,37 @@ bool parseRenderListChunk(Reader& r,
   while (ensureRemaining(r, chunkEnd, 8)) {
     std::uint32_t effectId = 0;
     std::uint32_t payloadLen = 0;
-    if (!readU32Bounded(r, chunkEnd, effectId) || !readU32Bounded(r, chunkEnd, payloadLen)) {
+    if (!readU32Bounded(r, chunkEnd, effectId)) {
       result.warnings.push_back("truncated effect header");
       r.pos = chunkEnd;
       return false;
     }
+
+    // APE effects (ID >= 16384) have a 32-byte string identifier after the ID
+    std::string apeId;
+    if (effectId >= kApeIdBase) {
+      if (!ensureRemaining(r, chunkEnd, kApeIdLength)) {
+        result.warnings.push_back("truncated APE effect identifier");
+        r.pos = chunkEnd;
+        return false;
+      }
+      // Read and null-terminate the APE ID string
+      const char* apeIdStart = r.data.data() + r.pos;
+      apeId.assign(apeIdStart, apeIdStart + kApeIdLength);
+      // Trim to actual string length (null-terminated)
+      size_t nullPos = apeId.find('\0');
+      if (nullPos != std::string::npos) {
+        apeId.resize(nullPos);
+      }
+      r.pos += kApeIdLength;
+    }
+
+    if (!readU32Bounded(r, chunkEnd, payloadLen)) {
+      result.warnings.push_back("truncated effect payload length");
+      r.pos = chunkEnd;
+      return false;
+    }
+
     size_t payloadStart = r.pos;
     size_t payloadEnd = payloadStart + static_cast<size_t>(payloadLen);
     if (payloadEnd > chunkEnd || payloadEnd > r.data.size()) {
@@ -299,7 +328,8 @@ bool parseRenderListChunk(Reader& r,
 
     LegacyEffectEntry entry;
     entry.effectId = effectId;
-    entry.effectName = effectNameForId(effectId);
+    // For APE effects, use the APE ID string as the effect name; otherwise use ID lookup
+    entry.effectName = !apeId.empty() ? apeId : effectNameForId(effectId);
     if (payloadLen > 0) {
       const auto* payloadPtr = reinterpret_cast<const std::uint8_t*>(r.data.data() + payloadStart);
       entry.payload.assign(payloadPtr, payloadPtr + payloadLen);

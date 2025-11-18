@@ -390,7 +390,7 @@ bool parseRenderListChunk(Reader& r,
       // For APE effects, try Wine APE loader as fallback
       if (effectId >= kApeIdBase && !apeId.empty() && avs::ape::isWineAPESupported()) {
         std::fprintf(stderr, "INFO: Attempting to load APE plugin: %s\n", apeId.c_str());
-        auto wineEffect = avs::ape::createWineAPEEffect(apeId, entry, result);
+        auto wineEffect = avs::ape::createWineAPEEffect(apeId, entry, result, result.presetPath);
         if (wineEffect) {
           std::fprintf(stderr, "INFO: Successfully loaded APE plugin via Wine emulator: %s\n", apeId.c_str());
           chain.push_back(std::move(wineEffect));
@@ -569,6 +569,7 @@ ParsedPreset parseTextPreset(const std::string& text) {
 
 ParsedPreset parsePreset(const std::filesystem::path& file) {
   ParsedPreset result;
+  result.presetPath = file;  // Store preset path for APE DLL discovery
   std::ifstream f(file, std::ios::binary);
   if (!f) {
     result.warnings.push_back("failed to open preset");
@@ -579,12 +580,15 @@ ParsedPreset parsePreset(const std::filesystem::path& file) {
   std::string version;
   if (parseBinaryMagicHeader(buffer, headerLen, version)) {
     auto preset = parseBinaryPreset(buffer, headerLen);
+    preset.presetPath = file;  // Ensure preset path is set
     if (!isKnownMagicVersion(version)) {
       preset.warnings.push_back("unknown preset version: " + version);
     }
     return preset;
   }
-  return parseTextPreset(std::string(buffer.begin(), buffer.end()));
+  auto preset = parseTextPreset(std::string(buffer.begin(), buffer.end()));
+  preset.presetPath = file;  // Ensure preset path is set
+  return preset;
 }
 
 }  // namespace avs

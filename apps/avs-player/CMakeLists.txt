@@ -9,7 +9,7 @@ target_link_libraries(avs-player PRIVATE
   avs::compat
   avs::dsl
   avs::render-gl
-  avs::effects-legacy
+  -Wl,--whole-archive avs::effects-legacy -Wl,--no-whole-archive
   avs::preset)
 target_compile_options(avs-player PRIVATE -Wall -Wextra -Werror)
 target_compile_features(avs-player PRIVATE cxx_std_20)

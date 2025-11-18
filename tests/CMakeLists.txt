@@ -41,6 +41,12 @@ target_link_libraries(framebuffer_backend_tests PRIVATE avs::core GTest::gtest_m
 target_compile_options(framebuffer_backend_tests PRIVATE -Wall -Wextra -Werror)
 add_test(NAME framebuffer_backend_tests COMMAND $<TARGET_FILE:framebuffer_backend_tests>)
 
+add_executable(rendercontext_framebuffer_tests
+  integration/test_rendercontext_framebuffer.cpp)
+target_link_libraries(rendercontext_framebuffer_tests PRIVATE avs::core avs::effects-legacy GTest::gtest_main)
+target_compile_options(rendercontext_framebuffer_tests PRIVATE -Wall -Wextra -Werror)
+add_test(NAME rendercontext_framebuffer_tests COMMAND $<TARGET_FILE:rendercontext_framebuffer_tests>)
+
 add_executable(avs_core_tests avs_core_tests.cpp)
 target_link_libraries(avs_core_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
 target_compile_options(avs_core_tests PRIVATE -Wall -Wextra -Werror)

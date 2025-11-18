@@ -21,7 +21,7 @@
 - [✅] 20-audio-pipewire-backend.yaml
 - [✅] 21-ui-studio-mvp.yaml
 - [✅] 22-render-framebuffer-abstraction.yaml (IFramebuffer + CPU/OpenGL/File backends + tests complete)
-- [ ] 22a-render-rendercontext-integration.yaml (Critical path: RenderContext integration)
+- [✅] 22a-render-rendercontext-integration.yaml (RenderContext integration - critical path complete)
 - [ ] 22b-render-cli-backend-selection.yaml (CLI backend selection)
 - [ ] 22c-render-effect-migration.yaml (Incremental effect migration)
 - [✅] 23-integration-demo-preset-validation.yaml

@@ -1,5 +1,6 @@
 #include <avs/effects/prime/Swizzle.hpp>
 
+#include <avs/core/IFramebuffer.hpp>
 #include <algorithm>
 #include <array>
 #include <cctype>
@@ -42,11 +43,23 @@ std::array<std::uint8_t, 3> orderForMode(avs::effects::SwizzleMode mode) {
 namespace avs::effects {
 
 bool Swizzle::render(avs::core::RenderContext& context) {
-  if (!context.framebuffer.data || context.framebuffer.size == 0) {
-    return true;
+  // Modern path: use framebuffer backend if available
+  std::uint8_t* data = nullptr;
+  std::size_t size = 0;
+
+  if (context.framebufferBackend) {
+    data = context.framebufferBackend->data();
+    size = context.framebufferBackend->sizeBytes();
+  } else {
+    // Legacy path: direct pixel buffer access
+    if (!context.framebuffer.data || context.framebuffer.size == 0) {
+      return true;
+    }
+    data = context.framebuffer.data;
+    size = context.framebuffer.size;
   }
-  std::uint8_t* data = context.framebuffer.data;
-  const std::size_t size = context.framebuffer.size;
+
+  // Swizzle RGB channels
   for (std::size_t offset = 0; offset + 3 < size; offset += 4) {
     const std::uint8_t original[3] = {data[offset + 0], data[offset + 1], data[offset + 2]};
     data[offset + 0] = original[order_[0]];

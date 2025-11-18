@@ -3,6 +3,7 @@ add_library(avs::compat ALIAS avs-compat)
 add_library(avs-runtime ALIAS avs-compat)
 
 set(AVS_COMPAT_HEADERS
+  include/avs/compat/ape_loader.hpp
   include/avs/compat/core.hpp
   include/avs/compat/cpu_features.hpp
   include/avs/compat/effect.hpp
@@ -36,6 +37,8 @@ set(AVS_COMPAT_HEADERS
 )
 
 set(AVS_COMPAT_SOURCES
+  src/ape_eel_bridge.cpp
+  src/ape_loader.cpp
   src/core.cpp
   src/cpu_features.cpp
   src/effects/additive_blend.cpp
@@ -87,6 +90,11 @@ target_link_libraries(avs-compat
     avs::audio-dsp
     ns-eel
 )
+
+# Add dlopen support for APE loader on Unix systems
+if(UNIX AND NOT APPLE)
+  target_link_libraries(avs-compat PRIVATE ${CMAKE_DL_LIBS})
+endif()
 
 target_compile_features(avs-compat PUBLIC cxx_std_20)
 target_compile_options(avs-compat PRIVATE -Wall -Wextra -Werror)

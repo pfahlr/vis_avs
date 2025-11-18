@@ -218,6 +218,12 @@ void ScriptedEffect::update(float time,
                             int frame,
                             const AudioState& audio,
                             const MouseState& mouse) {
+  static int updateDebug = 0;
+  if (updateDebug < 3 || (frame % 60 == 0 && updateDebug < 10)) {
+    std::fprintf(stderr, "ScriptedEffect::update: frame=%d time=%.3f time_ptr=%p\n",
+                 frame, time, (void*)time_);
+    updateDebug++;
+  }
   if (time_) *time_ = time;
   if (frame_) *frame_ = frame;
   if (bass_) *bass_ = audio.bands[0];

@@ -20,7 +20,7 @@
 - [✅] 19-render-multithreaded-effects.yaml
 - [✅] 20-audio-pipewire-backend.yaml
 - [✅] 21-ui-studio-mvp.yaml
-- [🚧] 22-render-framebuffer-abstraction.yaml (20% - IFramebuffer + CPU backend done)
+- [🚧] 22-render-framebuffer-abstraction.yaml (50% - IFramebuffer + CPU/OpenGL/File backends + CMake done)
 - [ ] 23-integration-demo-preset-validation.yaml
-- [⏸️] 24-cleanup-registry-consolidation.yaml (BLOCKED - needs architectural decision)
+- [✅] 24-cleanup-registry-consolidation.yaml
 

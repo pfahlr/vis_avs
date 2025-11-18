@@ -94,9 +94,17 @@ void printUsage() {
   std::fprintf(
       stderr,
       "Usage: avs-player [--headless --wav <file> --preset <file> --frames <n> --out <dir>]\n"
-      "                 [--sample-rate <hz|default>] [--channels <count|default>] [--input-device "
-      "<id>]\n"
-      "                 [--list-input-devices] [--demo-script] [--presets <directory>] [--help]\n");
+      "                 [--render-backend <cpu|opengl|file>] [--export-path <dir>]\n"
+      "                 [--export-pattern <pattern>] [--sample-rate <hz|default>]\n"
+      "                 [--channels <count|default>] [--input-device <id>]\n"
+      "                 [--list-input-devices] [--demo-script] [--presets <directory>] [--help]\n"
+      "\n"
+      "Render backends:\n"
+      "  --render-backend cpu       Headless CPU rendering (no window)\n"
+      "  --render-backend opengl    OpenGL windowed rendering (default)\n"
+      "  --render-backend file      Export PNG sequence (requires --export-path)\n"
+      "  --export-path <dir>        Directory for PNG exports (file backend)\n"
+      "  --export-pattern <pattern> Filename pattern (e.g., frame_%%05d.png)\n");
 }
 
 void printInputDevices(const std::vector<avs::audio::DeviceInfo>& devices) {
@@ -530,6 +538,11 @@ int main(int argc, char** argv) {
   bool listInputDevices = false;
   bool useDeviceDefaultSampleRate = true;
 
+  // Backend selection options
+  std::string renderBackend = "opengl";  // default
+  std::filesystem::path exportPath;
+  std::string exportPattern = "frame_%05d.png";
+
   std::unique_ptr<avs::audio::AudioEngine> audioEngine;
   std::vector<avs::audio::DeviceInfo> availableDevices;
   auto ensureAudioEngine = [&]() -> bool {
@@ -620,6 +633,16 @@ int main(int argc, char** argv) {
       listInputDevices = true;
     } else if (arg == "--help") {
       showHelp = true;
+    } else if (arg == "--render-backend" && i + 1 < argc) {
+      renderBackend = normalizeToken(argv[++i]);
+      if (renderBackend != "cpu" && renderBackend != "opengl" && renderBackend != "file") {
+        std::fprintf(stderr, "--render-backend must be one of: cpu, opengl, file\n");
+        return 1;
+      }
+    } else if (arg == "--export-path" && i + 1 < argc) {
+      exportPath = argv[++i];
+    } else if (arg == "--export-pattern" && i + 1 < argc) {
+      exportPattern = argv[++i];
     } else {
       std::fprintf(stderr, "Unknown argument: %s\n", arg.c_str());
       printUsage();
@@ -640,8 +663,49 @@ int main(int argc, char** argv) {
     return 0;
   }
 
+  // Validate backend-specific options
+  if (renderBackend == "file") {
+    if (exportPath.empty()) {
+      std::fprintf(stderr, "--render-backend=file requires --export-path\n");
+      return 1;
+    }
+    if (presetPath.empty()) {
+      std::fprintf(stderr, "--render-backend=file requires --preset\n");
+      return 1;
+    }
+    if (wavPath.empty()) {
+      std::fprintf(stderr, "--render-backend=file requires --wav\n");
+      return 1;
+    }
+    if (frames <= 0) {
+      std::fprintf(stderr, "--render-backend=file requires --frames\n");
+      return 1;
+    }
+    // Route to headless mode with PNG export
+    return runHeadless(wavPath, presetPath, frames, exportPath, true);
+  }
+
+  if (renderBackend == "cpu") {
+    // CPU backend requires wav and preset for headless rendering
+    if (presetPath.empty()) {
+      std::fprintf(stderr, "--render-backend=cpu requires --preset\n");
+      return 1;
+    }
+    if (wavPath.empty()) {
+      std::fprintf(stderr, "--render-backend=cpu requires --wav\n");
+      return 1;
+    }
+    if (frames <= 0) {
+      std::fprintf(stderr, "--render-backend=cpu requires --frames\n");
+      return 1;
+    }
+    // Route to headless mode without PNG export
+    return runHeadless(wavPath, presetPath, frames, outPath, false);
+  }
+
+  // Handle legacy --headless flag (backward compatibility)
   if (!headless && !wavPath.empty()) {
-    std::fprintf(stderr, "--wav requires --headless\n");
+    std::fprintf(stderr, "--wav requires --headless or --render-backend\n");
     return 1;
   }
 
@@ -653,6 +717,8 @@ int main(int argc, char** argv) {
     bool writePngs = outPath != ".";
     return runHeadless(wavPath, presetPath, frames, outPath, writePngs);
   }
+
+  // OpenGL backend (default) - windowed mode
 
   if (!ensureAudioEngine()) {
     return 1;

@@ -35,6 +35,12 @@ target_link_libraries(preset_binder_tests PRIVATE avs::preset avs::effects-legac
 target_compile_options(preset_binder_tests PRIVATE -Wall -Wextra -Werror)
 add_test(NAME preset_binder_tests COMMAND $<TARGET_FILE:preset_binder_tests>)
 
+add_executable(framebuffer_backend_tests
+  framebuffer/test_framebuffer_backends.cpp)
+target_link_libraries(framebuffer_backend_tests PRIVATE avs::core GTest::gtest_main)
+target_compile_options(framebuffer_backend_tests PRIVATE -Wall -Wextra -Werror)
+add_test(NAME framebuffer_backend_tests COMMAND $<TARGET_FILE:framebuffer_backend_tests>)
+
 add_executable(avs_core_tests avs_core_tests.cpp)
 target_link_libraries(avs_core_tests PRIVATE ${AVS_EFFECTS_LINK_LIBS} GTest::gtest_main)
 target_compile_options(avs_core_tests PRIVATE -Wall -Wextra -Werror)

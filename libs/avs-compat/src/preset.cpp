@@ -290,8 +290,9 @@ bool parseRenderListChunk(Reader& r,
     }
 
     // APE effects (ID >= 16384) have a 32-byte string identifier after the ID
+    // However, special sentinel values like kListId (0xFFFFFFFE) should not be treated as APE effects
     std::string apeId;
-    if (effectId >= kApeIdBase) {
+    if (effectId >= kApeIdBase && effectId != kListId) {
       if (!ensureRemaining(r, chunkEnd, kApeIdLength)) {
         result.warnings.push_back("truncated APE effect identifier");
         r.pos = chunkEnd;

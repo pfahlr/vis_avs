@@ -114,6 +114,9 @@ class WineAPELoader {
   // Load an APE DLL from file system
   bool load(const std::filesystem::path& dllPath);
 
+  // Set APEinfo structure (must be called before createEffectInstance)
+  bool setAPEinfo(APEinfo* info);
+
   // Check if loader is initialized
   bool isLoaded() const { return dllHandle_ != nullptr; }
 
@@ -126,10 +129,22 @@ class WineAPELoader {
   // Get last error message
   std::string getLastError() const { return lastError_; }
 
+  // Get DLL handle (for keeping DLL alive)
+  void* getDllHandle() const { return dllHandle_; }
+
+  // Transfer ownership of DLL handle (caller must free it)
+  void* releaseDllHandle() {
+    void* handle = dllHandle_;
+    dllHandle_ = nullptr;
+    return handle;
+  }
+
  private:
   void* dllHandle_ = nullptr;
   typedef C_RBASE* (*CreateFunc)();
+  typedef void (*SetExtInfoFunc)(APEinfo*);
   CreateFunc createFunc_ = nullptr;
+  SetExtInfoFunc setExtInfoFunc_ = nullptr;
   std::string identifier_;
   std::string lastError_;
 };
@@ -138,14 +153,16 @@ class WineAPELoader {
 class WineAPEEffect : public Effect {
  public:
   explicit WineAPEEffect(std::unique_ptr<C_RBASE> apeInstance,
-                         const std::vector<std::uint8_t>& config);
-  ~WineAPEEffect() override = default;
+                         const std::vector<std::uint8_t>& config,
+                         void* dllHandle);
+  ~WineAPEEffect() override;
 
   void init(int w, int h) override;
   void process(const Framebuffer& in, Framebuffer& out) override;
 
  private:
   std::unique_ptr<C_RBASE> apeInstance_;
+  void* dllHandle_;  // Keep DLL loaded for the lifetime of this effect
   APEinfo apeInfo_;
   std::vector<double> globalRegisters_;
   int lineBlendMode_ = 0;

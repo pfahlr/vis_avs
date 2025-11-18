@@ -384,8 +384,11 @@ bool parseRenderListChunk(Reader& r,
       }
     } else {
       if (!entry.effectName.empty()) {
-        result.warnings.push_back("preset loader does not yet decode effect: " +
-                                  describeEffect(effectId));
+        std::string msg = "preset loader does not yet decode effect: " + describeEffect(effectId);
+        if (effectId >= kApeIdBase && !apeId.empty()) {
+          msg += " (APE plugin: '" + apeId + "')";
+        }
+        result.warnings.push_back(msg);
       } else {
         result.warnings.push_back("unsupported effect index: " + describeEffect(effectId));
       }

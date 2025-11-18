@@ -26,15 +26,21 @@ public:
   size_t sizeBytes() const override { return pixels_.size(); }
 
   void upload(const uint8_t* sourceData, size_t numBytes) override {
-    if (numBytes > pixels_.size()) {
-      throw std::invalid_argument("CPUFramebuffer::upload: source data too large");
+    if (!sourceData) {
+      throw std::invalid_argument("CPUFramebuffer::upload: null source data");
+    }
+    if (numBytes != pixels_.size()) {
+      throw std::invalid_argument("CPUFramebuffer::upload: size mismatch");
     }
     std::memcpy(pixels_.data(), sourceData, numBytes);
   }
 
   void download(uint8_t* destData, size_t numBytes) const override {
-    if (numBytes > pixels_.size()) {
-      throw std::invalid_argument("CPUFramebuffer::download: destination buffer too small");
+    if (!destData) {
+      throw std::invalid_argument("CPUFramebuffer::download: null destination");
+    }
+    if (numBytes != pixels_.size()) {
+      throw std::invalid_argument("CPUFramebuffer::download: size mismatch");
     }
     std::memcpy(destData, pixels_.data(), numBytes);
   }
@@ -44,7 +50,11 @@ public:
   }
 
   void clear(uint8_t r, uint8_t g, uint8_t b, uint8_t a) override {
-    const uint32_t color = (a << 24) | (r << 16) | (g << 8) | b;
+    // Pack as RGBA in memory (little-endian uint32)
+    const uint32_t color = (static_cast<uint32_t>(a) << 24) |
+                          (static_cast<uint32_t>(b) << 16) |
+                          (static_cast<uint32_t>(g) << 8) |
+                          static_cast<uint32_t>(r);
     uint32_t* pixels32 = reinterpret_cast<uint32_t*>(pixels_.data());
     const int totalPixels = width_ * height_;
 

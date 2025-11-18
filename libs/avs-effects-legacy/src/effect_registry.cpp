@@ -8,6 +8,13 @@
 #include <string>
 #include <vector>
 
+// Forward declarations for effect factory functions
+namespace avs {
+std::unique_ptr<Effect> createMovementEffect(int effect, bool blend, bool sourcemapped,
+                                              bool rectangular, bool subpixel, bool wrap,
+                                              const std::string& effect_exp);
+}
+
 namespace avs::effects::legacy {
 namespace {
 
@@ -240,17 +247,83 @@ std::unique_ptr<avs::Effect> makeMovement(const LegacyEffectEntry& entry, Parsed
   PayloadReader reader(entry.payload);
 
   std::int32_t effect = 0;
+  std::int32_t blend = 0;
+  std::int32_t sourcemapped = 0;
+  std::int32_t rectangular = 0;
+  std::int32_t subpixel = 1;  // Default to enabled
+  std::int32_t wrap = 0;
+  std::string effect_exp;
 
   if (!reader.readI32(effect)) {
     preset.warnings.push_back("movement: truncated payload");
     return nullptr;
   }
 
-  // Movement has complex variable-length format depending on effect value
-  // For now, just validate the first field and preserve the data
+  // If effect is 32767, there's an EEL expression following
+  if (effect == 32767) {
+    // Check for "!rect " prefix
+    if (reader.pos + 6 <= entry.payload.size()) {
+      if (std::memcmp(entry.payload.data() + reader.pos, "!rect ", 6) == 0) {
+        reader.pos += 6;
+        rectangular = 1;
+      }
+    }
 
-  // Use UnknownRenderObjectEffect to preserve binary data
-  return std::make_unique<avs::UnknownRenderObjectEffect>("Trans / Movement", entry.payload);
+    // Read version byte
+    std::uint8_t version = 0;
+    if (reader.pos < entry.payload.size()) {
+      version = entry.payload[reader.pos++];
+    }
+
+    if (version == 1) {
+      // New format: 4-byte length + string
+      std::uint32_t length = 0;
+      if (!reader.readU32(length)) {
+        preset.warnings.push_back("movement: truncated expression length");
+        return nullptr;
+      }
+      if (length > 0 && reader.pos + length <= entry.payload.size()) {
+        effect_exp.assign(reinterpret_cast<const char*>(entry.payload.data() + reader.pos), length);
+        reader.pos += length;
+        // Remove null terminator if present
+        if (!effect_exp.empty() && effect_exp.back() == '\0') {
+          effect_exp.pop_back();
+        }
+      }
+    } else if (reader.pos + 256 <= entry.payload.size()) {
+      // Old format: 256-byte fixed string (or less if rectangular prefix was found)
+      size_t str_len = 256 - (rectangular ? 6 : 0);
+      if (reader.pos + str_len <= entry.payload.size()) {
+        effect_exp.assign(reinterpret_cast<const char*>(entry.payload.data() + reader.pos), str_len);
+        // Trim at null terminator
+        size_t null_pos = effect_exp.find('\0');
+        if (null_pos != std::string::npos) {
+          effect_exp.resize(null_pos);
+        }
+        reader.pos += str_len;
+      }
+    }
+  }
+
+  // Read additional parameters
+  reader.readI32(blend);
+  reader.readI32(sourcemapped);
+  reader.readI32(rectangular);
+  reader.readI32(subpixel);
+  reader.readI32(wrap);
+
+  // Check for effect ID at end (for effects > 15)
+  if (effect == 0 && reader.pos + 4 <= entry.payload.size()) {
+    reader.readI32(effect);
+  }
+
+  // Validate effect range
+  if (effect != 32767 && (effect > 23 || effect < 0)) {
+    effect = 0;
+  }
+
+  return avs::createMovementEffect(effect, blend != 0, sourcemapped != 0, rectangular != 0,
+                                    subpixel != 0, wrap != 0, effect_exp);
 }
 
 //=============================================================================

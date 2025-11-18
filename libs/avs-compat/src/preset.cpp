@@ -1,6 +1,7 @@
 #include <avs/preset.hpp>
 
 #include <avs/effects/effect_registry.hpp>
+#include <avs/compat/ape_loader.hpp>
 
 #include <algorithm>
 #include <array>
@@ -384,16 +385,31 @@ bool parseRenderListChunk(Reader& r,
         chain.push_back(makeUnknown(entry.effectName));
       }
     } else {
-      if (!entry.effectName.empty()) {
-        std::string msg = "preset loader does not yet decode effect: " + describeEffect(effectId);
-        if (effectId >= kApeIdBase && !apeId.empty()) {
-          msg += " (APE plugin: '" + apeId + "')";
+      // Effect not handled by native registry
+      // For APE effects, try Wine APE loader as fallback
+      if (effectId >= kApeIdBase && !apeId.empty() && avs::ape::isWineAPESupported()) {
+        std::fprintf(stderr, "INFO: Attempting to load APE plugin: %s\n", apeId.c_str());
+        auto wineEffect = avs::ape::createWineAPEEffect(apeId, entry, result);
+        if (wineEffect) {
+          std::fprintf(stderr, "INFO: Successfully loaded APE plugin via Wine emulator: %s\n", apeId.c_str());
+          chain.push_back(std::move(wineEffect));
+        } else {
+          std::fprintf(stderr, "WARNING: Failed to load APE plugin via Wine emulator: %s\n", apeId.c_str());
+          chain.push_back(makeUnknown(entry.effectName));
         }
-        result.warnings.push_back(msg);
       } else {
-        result.warnings.push_back("unsupported effect index: " + describeEffect(effectId));
+        // Not an APE effect, or Wine not available
+        if (!entry.effectName.empty()) {
+          std::string msg = "preset loader does not yet decode effect: " + describeEffect(effectId);
+          if (effectId >= kApeIdBase && !apeId.empty()) {
+            msg += " (APE plugin: '" + apeId + "')";
+          }
+          result.warnings.push_back(msg);
+        } else {
+          result.warnings.push_back("unsupported effect index: " + describeEffect(effectId));
+        }
+        chain.push_back(makeUnknown(entry.effectName));
       }
-      chain.push_back(makeUnknown(entry.effectName));
     }
 
     r.pos = payloadEnd;

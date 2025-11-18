@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 
 #include <avs/audio.hpp>
 #include <avs/effects.hpp>
@@ -47,6 +48,21 @@ void Engine::step(float dt) {
   // Effects will render on top of this
   int in = cur_;
   int out = 1 - cur_;
+
+  // Debug: Check buffer contents before effects
+  if (frame_ <= 3) {
+    int nonzero = 0;
+    for (size_t i = 0; i < std::min(size_t(100), fb_[in].rgba.size()); ++i) {
+      if (fb_[in].rgba[i] != 0) nonzero++;
+    }
+    std::fprintf(stderr, "Frame %d BEFORE: cur_=%d in=%d out=%d, first 100 bytes nonzero=%d, first pixels: %d %d %d %d\n",
+                 frame_, cur_, in, out, nonzero,
+                 fb_[in].rgba.size() > 0 ? fb_[in].rgba[0] : -1,
+                 fb_[in].rgba.size() > 1 ? fb_[in].rgba[1] : -1,
+                 fb_[in].rgba.size() > 2 ? fb_[in].rgba[2] : -1,
+                 fb_[in].rgba.size() > 3 ? fb_[in].rgba[3] : -1);
+  }
+
   for (auto& e : chain_) {
     if (auto* se = dynamic_cast<ScriptedEffect*>(e.get())) {
       se->update(time_, frame_, audio_, mouse_);
@@ -55,6 +71,20 @@ void Engine::step(float dt) {
     std::swap(in, out);
   }
   cur_ = in;
+
+  // Debug: Check buffer contents after effects
+  if (frame_ <= 3) {
+    int nonzero = 0;
+    for (size_t i = 0; i < std::min(size_t(100), fb_[cur_].rgba.size()); ++i) {
+      if (fb_[cur_].rgba[i] != 0) nonzero++;
+    }
+    std::fprintf(stderr, "Frame %d AFTER: cur_=%d, first 100 bytes nonzero=%d, first pixels: %d %d %d %d\n",
+                 frame_, cur_, nonzero,
+                 fb_[cur_].rgba.size() > 0 ? fb_[cur_].rgba[0] : -1,
+                 fb_[cur_].rgba.size() > 1 ? fb_[cur_].rgba[1] : -1,
+                 fb_[cur_].rgba.size() > 2 ? fb_[cur_].rgba[2] : -1,
+                 fb_[cur_].rgba.size() > 3 ? fb_[cur_].rgba[3] : -1);
+  }
 }
 
 const Framebuffer& Engine::frame() const { return fb_[cur_]; }

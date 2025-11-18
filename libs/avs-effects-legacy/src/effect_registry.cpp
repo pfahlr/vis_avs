@@ -1,6 +1,7 @@
 #include <avs/effects/effect_registry.hpp>
 
 #include <avs/core/ParamBlock.hpp>
+#include <avs/effects/trans/effect_add_borders.h>
 
 #include <array>
 #include <cstdint>
@@ -1031,6 +1032,34 @@ AVS_LEGACY_REGISTER_EFFECT("Trans / Dynamic Shift", makeDynamicShift);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Dynamic Movement", makeDynamicMovement);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Fast Brightness", makeFastBrightness);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Color Modifier", makeColorModifier);
+
+//=============================================================================
+// Trans / Add Borders
+//=============================================================================
+std::unique_ptr<avs::Effect> makeAddBorders(const LegacyEffectEntry& entry, ParsedPreset& preset) {
+  (void)preset;
+  PayloadReader reader(entry.payload);
+
+  std::int32_t enabled = 1;
+  std::uint32_t color = 0x000000;
+  std::int32_t size = 10;
+
+  reader.readI32(enabled);
+  reader.readU32(color);
+  reader.readI32(size);
+
+  auto effect = std::make_unique<avs::effects::trans::AddBorders>();
+
+  avs::core::ParamBlock params;
+  params.set("enabled", enabled != 0);
+  params.set("color", static_cast<int>(color));
+  params.set("size", size);
+  effect->setParams(params);
+
+  return effect;
+}
+
+AVS_LEGACY_REGISTER_EFFECT("Trans / Add Borders", makeAddBorders);
 
 //=============================================================================
 // Trans / Channel Shift (APE)

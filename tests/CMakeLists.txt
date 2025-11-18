@@ -184,6 +184,13 @@ if(AVS_BUILD_AUDIO)
   target_compile_options(offscreen_golden_test PRIVATE -Wall -Wextra -Werror)
   target_compile_definitions(offscreen_golden_test PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
   add_test(NAME offscreen_golden_test COMMAND $<TARGET_FILE:offscreen_golden_test>)
+
+  add_executable(preset_validation_tests
+    integration/test_preset_validation.cpp)
+  target_link_libraries(preset_validation_tests PRIVATE avs-offscreen GTest::gtest_main)
+  target_compile_options(preset_validation_tests PRIVATE -Wall -Wextra -Werror)
+  target_compile_definitions(preset_validation_tests PRIVATE BUILD_DIR="${CMAKE_BINARY_DIR}" SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+  add_test(NAME preset_validation_tests COMMAND $<TARGET_FILE:preset_validation_tests>)
 endif()
 
 add_executable(runtime_compositing_tests

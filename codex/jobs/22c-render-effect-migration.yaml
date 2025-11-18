@@ -1,0 +1,51 @@
+id: render-effect-migration
+title: Migrate effects to use IFramebuffer abstraction
+status: TODO
+labels: [rendering, effects, incremental]
+depends_on:
+  - render-rendercontext-integration
+goal: >
+  Incrementally migrate legacy effects from direct pixel buffer access to
+  IFramebuffer abstraction. This is low-priority gradual work that can happen
+  over time as effects are touched for other reasons.
+
+steps:
+  - Identify effects still using raw pixel buffer access (RenderContext::frame()).
+  - For each effect update:
+    - Replace RenderContext::frame() calls with framebuffer->data().
+    - Update pixel manipulation to use framebuffer upload/download if needed.
+    - Use framebuffer->width() and framebuffer->height() instead of cached values.
+    - Test that effect renders identically to before migration.
+  - Update effect documentation to reference framebuffer API.
+  - Add migration guide for effect authors.
+
+acceptance_criteria:
+  - No requirement for specific number of effects migrated (incremental work).
+  - Each migrated effect passes its existing tests.
+  - Preset validation tests continue to pass (no visual regressions).
+  - Migration guide exists for community effect authors.
+  - RenderContext backward compatibility maintained until all effects migrated.
+
+test_hook:
+  - "ctest: preset_validation_tests ensures no visual regressions."
+  - "ctest: Per-effect tests validate individual effect migrations."
+
+estimated_time: Ongoing (30 minutes per effect)
+
+files_touched:
+  - libs/avs-effects-legacy/src/*/effect_*.cpp (56 effects total)
+  - libs/avs-effects-builtin/src/*/effect_*.cpp (future custom effects)
+  - docs/EFFECT_MIGRATION_GUIDE.md
+
+priority: LOW
+blockers: [render-rendercontext-integration]
+notes: >
+  This is INCREMENTAL WORK, not blocking. Effects can continue using the
+  old RenderContext::frame() accessor indefinitely. Migration happens
+  opportunistically when effects are touched for bug fixes or enhancements.
+
+  The framebuffer abstraction is already usable via RenderContext without
+  migrating individual effects. This job tracks the gradual cleanup work.
+
+  Estimated 56 legacy effects * 30 min = 28 hours total if done all at once,
+  but this should happen gradually over months/years as effects are maintained.

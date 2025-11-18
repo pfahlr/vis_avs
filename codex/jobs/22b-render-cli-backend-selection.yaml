@@ -1,0 +1,48 @@
+id: render-cli-backend-selection
+title: Add CLI backend selection to avs-player
+status: TODO
+labels: [rendering, cli, user-facing]
+depends_on:
+  - render-rendercontext-integration
+goal: >
+  Add command-line options to avs-player allowing users to select rendering backend
+  (CPU, OpenGL, File export). Makes framebuffer abstraction user-accessible.
+
+steps:
+  - Add --render-backend CLI option to avs-player (values: cpu, opengl, file).
+  - Add --export-path CLI option for file backend (PNG sequence output directory).
+  - Add --export-pattern CLI option for custom filename patterns (e.g., "frame_%05d.png").
+  - Update Engine to create appropriate framebuffer based on CLI args.
+  - Add validation for incompatible options (e.g., file backend without export path).
+  - Update help text to document new backend options.
+  - Add examples to documentation (headless rendering, video export workflow).
+  - Test all three backends via CLI invocation.
+
+acceptance_criteria:
+  - avs-player --render-backend=cpu runs headless (no window).
+  - avs-player --render-backend=opengl runs windowed (current behavior, default).
+  - avs-player --render-backend=file --export-path=./frames exports PNG sequence.
+  - Invalid combinations produce clear error messages.
+  - Documentation includes examples of each backend usage.
+  - All existing CLI tests continue to pass.
+
+test_hook:
+  - "Manual: avs-player --render-backend=cpu --preset=test.avs runs without GPU."
+  - "Manual: avs-player --render-backend=file --export-path=./out exports frames."
+  - "ctest: CLI option parsing tests validate backend selection."
+
+estimated_time: 1-2 hours
+
+files_touched:
+  - apps/avs-player/src/main.cpp
+  - apps/avs-player/README.md
+  - libs/avs-compat/include/avs/compat/engine.hpp
+  - libs/avs-compat/src/engine.cpp
+  - docs/JOB_22B_CLI_BACKENDS.md
+
+priority: MEDIUM
+blockers: [render-rendercontext-integration]
+notes: >
+  This makes the framebuffer abstraction accessible to users. Critical for
+  video export workflow and headless CI testing. Should default to OpenGL
+  for backward compatibility.

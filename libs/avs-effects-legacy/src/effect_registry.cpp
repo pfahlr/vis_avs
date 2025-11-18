@@ -915,6 +915,7 @@ std::unique_ptr<avs::Effect> makeSetRenderMode(const LegacyEffectEntry& entry, P
 AVS_LEGACY_REGISTER_EFFECT("Render / Simple", makeSimple);
 AVS_LEGACY_REGISTER_EFFECT("Render / Dot Plane", makeDotPlane);
 AVS_LEGACY_REGISTER_EFFECT("Render / Oscilliscope Star", makeOscilloscopeStar);
+AVS_LEGACY_REGISTER_EFFECT("Render / Oscilloscope Star", makeOscilloscopeStar);  // Correct spelling
 AVS_LEGACY_REGISTER_EFFECT("Trans / Movement", makeMovement);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Fadeout", makeFadeout);
 AVS_LEGACY_REGISTER_EFFECT("Trans / Blitter Feedback", makeBlitterFeedback);

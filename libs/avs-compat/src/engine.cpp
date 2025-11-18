@@ -43,6 +43,11 @@ void Engine::step(float dt) {
   time_ += dt;
   ++frame_;
 
+  // Debug: Print every 60 frames to verify step is being called
+  if (frame_ % 60 == 0) {
+    std::fprintf(stderr, "Engine::step frame %d, time %.2f, dt %.4f\n", frame_, time_, dt);
+  }
+
   // Start with the current framebuffer (previous frame)
   // Effects will render on top of this
   int in = cur_;

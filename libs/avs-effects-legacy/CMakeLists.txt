@@ -23,7 +23,9 @@ target_include_directories(avs-effects-api INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-add_library(avs-effects-legacy)
+# Use OBJECT library to ensure static initializers run (for effect registration)
+# This prevents the linker from dropping registration code when using static linking
+add_library(avs-effects-legacy OBJECT)
 add_library(avs::effects-legacy ALIAS avs-effects-legacy)
 add_library(avs-effects-core ALIAS avs-effects-legacy)
 

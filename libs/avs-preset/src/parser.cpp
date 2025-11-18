@@ -137,7 +137,35 @@ avs::preset::IRParam makeParam(std::string name, std::string value) {
 void parseParamList(std::string_view section, std::vector<avs::preset::IRParam>& out) {
   size_t pos = 0;
   while (pos < section.size()) {
-    size_t next = section.find_first_of(";,", pos);
+    // Find next delimiter, but respect quotes
+    bool inQuote = false;
+    bool escape = false;
+    size_t next = std::string_view::npos;
+
+    for (size_t i = pos; i < section.size(); ++i) {
+      char c = section[i];
+
+      if (escape) {
+        escape = false;
+        continue;
+      }
+
+      if (c == '\\') {
+        escape = true;
+        continue;
+      }
+
+      if (c == '"') {
+        inQuote = !inQuote;
+        continue;
+      }
+
+      if (!inQuote && (c == ';' || c == ',')) {
+        next = i;
+        break;
+      }
+    }
+
     std::string_view part =
         section.substr(pos, next == std::string_view::npos ? std::string_view::npos : next - pos);
     pos = (next == std::string_view::npos) ? section.size() : next + 1;

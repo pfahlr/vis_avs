@@ -62,6 +62,16 @@ bool WineAPELoader::load(const std::filesystem::path& dllPath) {
     return false;
   }
 
+  // Find the APE SetExtInfo function (must be called before factory)
+  setExtInfoFunc_ = reinterpret_cast<SetExtInfoFunc>(
+      GetProcAddress(static_cast<HMODULE>(dllHandle_), "_AVS_APE_SetExtInfo"));
+
+  if (!setExtInfoFunc_) {
+    // Try without underscore (some compilers)
+    setExtInfoFunc_ = reinterpret_cast<SetExtInfoFunc>(
+        GetProcAddress(static_cast<HMODULE>(dllHandle_), "AVS_APE_SetExtInfo"));
+  }
+
   // Find the APE factory function
   createFunc_ = reinterpret_cast<CreateFunc>(
       GetProcAddress(static_cast<HMODULE>(dllHandle_), "_AVS_APE_RetrFunc"));
@@ -96,6 +106,14 @@ bool WineAPELoader::load(const std::filesystem::path& dllPath) {
     return false;
   }
 
+  // Try to find the SetExtInfo function (must be called before factory)
+  setExtInfoFunc_ = reinterpret_cast<SetExtInfoFunc>(dlsym(dllHandle_, "_AVS_APE_SetExtInfo"));
+
+  if (!setExtInfoFunc_) {
+    // Try without underscore
+    setExtInfoFunc_ = reinterpret_cast<SetExtInfoFunc>(dlsym(dllHandle_, "AVS_APE_SetExtInfo"));
+  }
+
   // Try to find the factory function
   createFunc_ = reinterpret_cast<CreateFunc>(dlsym(dllHandle_, "_AVS_APE_RetrFunc"));
 
@@ -124,6 +142,29 @@ bool WineAPELoader::load(const std::filesystem::path& dllPath) {
   return true;
 }
 
+bool WineAPELoader::setAPEinfo(APEinfo* info) {
+  if (!isLoaded() || !info) {
+    lastError_ = "Cannot set APEinfo: loader not initialized or info is null";
+    return false;
+  }
+
+  if (setExtInfoFunc_) {
+    try {
+      setExtInfoFunc_(info);
+      return true;
+    } catch (const std::exception& e) {
+      lastError_ = std::string("Exception setting APEinfo: ") + e.what();
+      return false;
+    } catch (...) {
+      lastError_ = "Unknown exception setting APEinfo";
+      return false;
+    }
+  }
+
+  // SetExtInfo is optional in some older APE plugins
+  return true;
+}
+
 std::unique_ptr<C_RBASE> WineAPELoader::createEffectInstance() {
   if (!isLoaded() || !createFunc_) {
     return nullptr;
@@ -146,8 +187,10 @@ std::unique_ptr<C_RBASE> WineAPELoader::createEffectInstance() {
 // ============================================================================
 
 WineAPEEffect::WineAPEEffect(std::unique_ptr<C_RBASE> apeInstance,
-                             const std::vector<std::uint8_t>& config)
+                             const std::vector<std::uint8_t>& config,
+                             void* dllHandle)
     : apeInstance_(std::move(apeInstance)),
+      dllHandle_(dllHandle),
       globalRegisters_(100, 0.0) {
   // Initialize visdata to zero
   std::memset(visdata_, 0, sizeof(visdata_));
@@ -160,6 +203,20 @@ WineAPEEffect::WineAPEEffect(std::unique_ptr<C_RBASE> apeInstance,
   }
 
   setupAPEinfo();
+}
+
+WineAPEEffect::~WineAPEEffect() {
+  // Destroy APE instance first (while DLL is still loaded)
+  apeInstance_.reset();
+
+  // Now free the DLL
+  if (dllHandle_) {
+#ifdef _WIN32
+    FreeLibrary(static_cast<HMODULE>(dllHandle_));
+#else
+    dlclose(dllHandle_);
+#endif
+  }
 }
 
 void WineAPEEffect::setupAPEinfo() {
@@ -300,6 +357,18 @@ std::unique_ptr<Effect> createWineAPEEffect(const std::string& apeIdentifier,
     return nullptr;
   }
 
+  // Setup APEinfo structure
+  APEinfo apeInfo;
+  setupAPEinfoCallbacks(&apeInfo);
+
+  // Call SetExtInfo to pass APEinfo to the DLL (required before creating instances)
+  if (!loader.setAPEinfo(&apeInfo)) {
+    std::string warning = "Failed to set APEinfo: " + loader.getLastError();
+    std::cerr << "WARNING: " << warning << std::endl;
+    result.warnings.push_back(warning);
+    // Continue anyway - some older APE plugins don't have SetExtInfo
+  }
+
   // Create effect instance
   auto apeInstance = loader.createEffectInstance();
   if (!apeInstance) {
@@ -309,8 +378,11 @@ std::unique_ptr<Effect> createWineAPEEffect(const std::string& apeIdentifier,
     return nullptr;
   }
 
+  // Transfer DLL handle ownership to the effect (so DLL stays loaded)
+  void* dllHandle = loader.releaseDllHandle();
+
   // Wrap in Effect interface
-  return std::make_unique<WineAPEEffect>(std::move(apeInstance), entry.payload);
+  return std::make_unique<WineAPEEffect>(std::move(apeInstance), entry.payload, dllHandle);
 }
 
 }  // namespace avs::ape

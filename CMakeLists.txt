@@ -6,19 +6,26 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(NOT DEFINED ENV{AVS_SKIP_AUTO_DEPS})
-  set(_avs_auto_dep_script "${CMAKE_SOURCE_DIR}/tools/ensure_build_dependencies.sh")
-  if(EXISTS "${_avs_auto_dep_script}")
-    execute_process(
-      COMMAND "${_avs_auto_dep_script}" "${CMAKE_BINARY_DIR}"
-      RESULT_VARIABLE _avs_auto_dep_result
-      OUTPUT_VARIABLE _avs_auto_dep_stdout
-      ERROR_VARIABLE _avs_auto_dep_stderr
-      COMMAND_ECHO STDOUT)
-    if(NOT _avs_auto_dep_result EQUAL 0)
-      message(STATUS "Automatic dependency bootstrap output:\n${_avs_auto_dep_stdout}")
-      message(STATUS "Automatic dependency bootstrap errors:\n${_avs_auto_dep_stderr}")
-      message(FATAL_ERROR "Failed to ensure build dependencies. Set AVS_SKIP_AUTO_DEPS=1 to skip automatic installation and install prerequisites manually by running run_setup_dev_environment.sh.")
+  # Only run auto-dependency script on Linux (where ensure_build_dependencies.sh is supported)
+  if(UNIX AND NOT APPLE)
+    set(_avs_auto_dep_script "${CMAKE_SOURCE_DIR}/tools/ensure_build_dependencies.sh")
+    if(EXISTS "${_avs_auto_dep_script}")
+      execute_process(
+        COMMAND "${_avs_auto_dep_script}" "${CMAKE_BINARY_DIR}"
+        RESULT_VARIABLE _avs_auto_dep_result
+        OUTPUT_VARIABLE _avs_auto_dep_stdout
+        ERROR_VARIABLE _avs_auto_dep_stderr
+        COMMAND_ECHO STDOUT)
+      if(NOT _avs_auto_dep_result EQUAL 0)
+        message(STATUS "Automatic dependency bootstrap output:\n${_avs_auto_dep_stdout}")
+        message(STATUS "Automatic dependency bootstrap errors:\n${_avs_auto_dep_stderr}")
+        message(FATAL_ERROR "Failed to ensure build dependencies. Set AVS_SKIP_AUTO_DEPS=1 to skip automatic installation and install prerequisites manually by running run_setup_dev_environment.sh.")
+      endif()
     endif()
+  elseif(UNIX AND APPLE)
+    message(STATUS "Skipping automatic dependency installation on macOS. Please ensure dependencies are installed manually.")
+  elseif(WIN32)
+    message(STATUS "Skipping automatic dependency installation on Windows. Please ensure dependencies are installed manually.")
   endif()
 endif()
 

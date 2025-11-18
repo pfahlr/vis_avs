@@ -42,16 +42,9 @@ void Engine::setChain(std::vector<std::unique_ptr<Effect>> chain) {
 void Engine::step(float dt) {
   time_ += dt;
   ++frame_;
-  auto& base = fb_[0];
-  for (int y = 0; y < h_; ++y) {
-    for (int x = 0; x < w_; ++x) {
-      size_t idx = (static_cast<size_t>(y) * w_ + x) * 4;
-      base.rgba[idx + 0] = static_cast<std::uint8_t>(x + time_ * 100);
-      base.rgba[idx + 1] = static_cast<std::uint8_t>(y + time_ * 100);
-      base.rgba[idx + 2] = static_cast<std::uint8_t>((x + y) + time_ * 100);
-      base.rgba[idx + 3] = 255;
-    }
-  }
+
+  // Start with the current framebuffer (previous frame)
+  // Effects will render on top of this
   int in = 0;
   int out = 1;
   for (auto& e : chain_) {

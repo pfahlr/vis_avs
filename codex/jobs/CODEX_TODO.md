@@ -22,8 +22,8 @@
 - [✅] 21-ui-studio-mvp.yaml
 - [✅] 22-render-framebuffer-abstraction.yaml (IFramebuffer + CPU/OpenGL/File backends + tests complete)
 - [✅] 22a-render-rendercontext-integration.yaml (RenderContext integration - critical path complete)
-- [ ] 22b-render-cli-backend-selection.yaml (CLI backend selection)
-- [ ] 22c-render-effect-migration.yaml (Incremental effect migration)
+- [✅] 22b-render-cli-backend-selection.yaml (CLI backend selection - user-facing complete)
+- [ ] 22c-render-effect-migration.yaml (Incremental effect migration - optional)
 - [✅] 23-integration-demo-preset-validation.yaml
 - [✅] 24-cleanup-registry-consolidation.yaml
 

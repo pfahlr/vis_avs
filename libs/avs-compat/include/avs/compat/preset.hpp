@@ -22,6 +22,7 @@ struct ParsedPreset {
   std::vector<std::string> unknown;
   std::vector<std::string> comments;
   std::vector<LegacyEffectEntry> effects;
+  std::filesystem::path presetPath;  // Path to the preset file (for APE DLL discovery)
 };
 
 ParsedPreset parsePreset(const std::filesystem::path& file);

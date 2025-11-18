@@ -300,7 +300,8 @@ std::vector<std::filesystem::path> getAPESearchPaths() {
   return gAPESearchPaths;
 }
 
-std::filesystem::path findAPEDLL(const std::string& identifier) {
+std::filesystem::path findAPEDLL(const std::string& identifier,
+                                  const std::filesystem::path& presetPath) {
   // Normalize identifier (remove path separators, etc.)
   std::string normalizedId = identifier;
   std::replace(normalizedId.begin(), normalizedId.end(), '/', '_');
@@ -311,19 +312,85 @@ std::filesystem::path findAPEDLL(const std::string& identifier) {
   std::vector<std::string> patterns = {
       normalizedId + ".dll",
       normalizedId + ".so",
+      normalizedId + ".ape",
       "ape_" + normalizedId + ".dll",
       "ape_" + normalizedId + ".so",
+      "ape_" + normalizedId + ".ape",
   };
 
-  for (const auto& searchPath : gAPESearchPaths) {
+  // Build search paths list:
+  // 1. Preset directory tree (if provided) - highest priority
+  // 2. Global APE search paths
+  std::vector<std::filesystem::path> searchPaths;
+
+  if (!presetPath.empty() && std::filesystem::exists(presetPath)) {
+    std::filesystem::path presetDir;
+    if (std::filesystem::is_directory(presetPath)) {
+      presetDir = presetPath;
+    } else {
+      presetDir = presetPath.parent_path();
+    }
+
+    // Search in preset directory and all parent directories up to root
+    std::filesystem::path current = presetDir;
+    while (!current.empty() && current != current.root_path()) {
+      searchPaths.push_back(current);
+      searchPaths.push_back(current / "APE");
+      searchPaths.push_back(current / "ape");
+      searchPaths.push_back(current / "plugins");
+      searchPaths.push_back(current / "Plugins");
+      current = current.parent_path();
+    }
+  }
+
+  // Add global search paths
+  for (const auto& path : gAPESearchPaths) {
+    searchPaths.push_back(path);
+  }
+
+  // Search in all paths
+  for (const auto& searchPath : searchPaths) {
     if (!std::filesystem::exists(searchPath)) {
       continue;
     }
 
+    // Try direct match first
     for (const auto& pattern : patterns) {
       auto candidate = searchPath / pattern;
       if (std::filesystem::exists(candidate)) {
+        std::cerr << "INFO: Found APE DLL: " << candidate << std::endl;
         return candidate;
+      }
+    }
+
+    // Try case-insensitive search in directory
+    if (std::filesystem::is_directory(searchPath)) {
+      std::string lowerIdentifier = normalizedId;
+      std::transform(lowerIdentifier.begin(), lowerIdentifier.end(),
+                     lowerIdentifier.begin(), ::tolower);
+
+      try {
+        for (const auto& entry : std::filesystem::directory_iterator(searchPath)) {
+          if (entry.is_regular_file()) {
+            std::string filename = entry.path().filename().string();
+            std::string lowerFilename = filename;
+            std::transform(lowerFilename.begin(), lowerFilename.end(),
+                          lowerFilename.begin(), ::tolower);
+
+            // Check if filename matches identifier (case-insensitive)
+            for (const auto& pattern : patterns) {
+              std::string lowerPattern = pattern;
+              std::transform(lowerPattern.begin(), lowerPattern.end(),
+                            lowerPattern.begin(), ::tolower);
+              if (lowerFilename == lowerPattern) {
+                std::cerr << "INFO: Found APE DLL (case-insensitive): " << entry.path() << std::endl;
+                return entry.path();
+              }
+            }
+          }
+        }
+      } catch (...) {
+        // Ignore directory iteration errors
       }
     }
   }
@@ -333,14 +400,19 @@ std::filesystem::path findAPEDLL(const std::string& identifier) {
 
 std::unique_ptr<Effect> createWineAPEEffect(const std::string& apeIdentifier,
                                             const LegacyEffectEntry& entry,
-                                            ParsedPreset& result) {
-  // Try to find the APE DLL
-  auto dllPath = findAPEDLL(apeIdentifier);
+                                            ParsedPreset& result,
+                                            const std::filesystem::path& presetPath) {
+  // Try to find the APE DLL (search preset directory tree first)
+  auto dllPath = findAPEDLL(apeIdentifier, presetPath);
 
   if (dllPath.empty()) {
     std::string warning = "APE DLL not found for: " + apeIdentifier;
     std::cerr << "WARNING: " << warning << std::endl;
-    std::cerr << "Searched in:" << std::endl;
+    std::cerr << "Searched in preset directory tree";
+    if (!presetPath.empty()) {
+      std::cerr << " (from " << presetPath << ")";
+    }
+    std::cerr << " and global paths:" << std::endl;
     for (const auto& path : getAPESearchPaths()) {
       std::cerr << "  - " << path << std::endl;
     }

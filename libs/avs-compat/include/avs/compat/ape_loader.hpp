@@ -179,7 +179,8 @@ class WineAPEEffect : public Effect {
 // Factory function to create APE effect from DLL
 std::unique_ptr<Effect> createWineAPEEffect(const std::string& apeIdentifier,
                                             const LegacyEffectEntry& entry,
-                                            ParsedPreset& result);
+                                            ParsedPreset& result,
+                                            const std::filesystem::path& presetPath = std::filesystem::path());
 
 // Check if Wine APE loader is available on this system
 bool isWineAPESupported();
@@ -191,7 +192,9 @@ void setAPESearchPaths(const std::vector<std::filesystem::path>& paths);
 std::vector<std::filesystem::path> getAPESearchPaths();
 
 // Find an APE DLL by identifier string
-std::filesystem::path findAPEDLL(const std::string& identifier);
+// If presetPath is provided, searches in preset directory tree first
+std::filesystem::path findAPEDLL(const std::string& identifier,
+                                  const std::filesystem::path& presetPath = std::filesystem::path());
 
 // Setup APEinfo with EEL VM callbacks
 void setupAPEinfoCallbacks(APEinfo* info);

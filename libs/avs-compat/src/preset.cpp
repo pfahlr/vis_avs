@@ -338,6 +338,7 @@ bool parseRenderListChunk(Reader& r,
     auto makeUnknown = [&](const std::string& token) {
       const std::string label = token.empty() ? describeEffect(effectId) : token;
       result.unknown.push_back("effect:" + label);
+      std::fprintf(stderr, "WARNING: Unknown binary effect: %s (ID=%u)\n", label.c_str(), effectId);
       return std::make_unique<UnknownRenderObjectEffect>(label, entry.payload);
     };
 
@@ -537,6 +538,7 @@ ParsedPreset parseTextPreset(const std::string& text) {
           std::make_unique<ScriptedEffect>(initScript, frameScript, beatScript, pixelScript, mode, recompute));
     } else {
       result.warnings.push_back("unsupported effect: " + type);
+      std::fprintf(stderr, "WARNING: Unsupported text effect: %s\n", type.c_str());
       std::vector<std::uint8_t> payload(t.begin(), t.end());
       result.chain.push_back(
           std::make_unique<UnknownRenderObjectEffect>(type, std::move(payload)));

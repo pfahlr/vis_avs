@@ -45,8 +45,8 @@ void Engine::step(float dt) {
 
   // Start with the current framebuffer (previous frame)
   // Effects will render on top of this
-  int in = 0;
-  int out = 1;
+  int in = cur_;
+  int out = 1 - cur_;
   for (auto& e : chain_) {
     if (auto* se = dynamic_cast<ScriptedEffect*>(e.get())) {
       se->update(time_, frame_, audio_, mouse_);

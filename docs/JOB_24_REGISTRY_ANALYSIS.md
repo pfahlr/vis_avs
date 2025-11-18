@@ -104,8 +104,33 @@ Uses static initialization to register 54 effects for binary preset parsing.
 
 **Total**: 6-17 hours depending on approach
 
+## Resolution (Completed)
+
+**UNBLOCKED** - Simplest approach taken: Remove `register_all()` stub.
+
+### Actions Taken
+
+1. **Deleted redundant files**:
+   - `libs/avs-effects-legacy/src/register_all.cpp`
+   - `libs/avs-effects-legacy/include/avs/effects/legacy/register_all.h`
+
+2. **Updated tests**:
+   - `libs/avs-effects-legacy/tests/test_registry.cpp` - Kept token normalization test, removed effect registration test
+   - `libs/avs-preset/tests/test_ir_and_binder.cpp` - Updated to test fallback behavior with empty registry
+
+3. **Verified functionality**:
+   - All tests pass (effects_registry_tests, preset_binder_tests)
+   - Preset loading works correctly (offscreen_golden_test passes)
+   - Binary preset parsing uses `AVS_LEGACY_REGISTER_EFFECT` macro system (56 effects)
+
+### Outcome
+
+Registry consolidation complete. The codebase now uses a single, clear registration system:
+- **Production**: `AVS_LEGACY_REGISTER_EFFECT` macro (static initialization, 56 effects)
+- **Utility**: `avs::effects::Registry::normalize_legacy_token()` (static method, no registration needed)
+
+The incomplete `register_all()` stub has been removed, eliminating confusion.
+
 ## Status
 
-**BLOCKED** - Requires architectural decision before proceeding.
-
-Recommend pausing Job 24 and focusing on Jobs 22 and 23 which have clearer paths.
+**COMPLETED** ✅ - Registry consolidation successful using simplest approach.

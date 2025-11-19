@@ -1,0 +1,93 @@
+id: vst-midi-host-sync
+title: Implement MIDI CC learn and DAW transport synchronization
+status: TODO
+labels: [vst, plugin, midi, sync]
+depends_on:
+  - vst-engine-integration
+goal: >
+  Add MIDI CC learning for hardware controller integration and DAW transport sync (tempo, beat position)
+  for beat-quantized scene triggers and tempo-synced effects. This enables live performance workflows
+  where users control AVS with MIDI controllers while staying locked to DAW tempo.
+
+technical_decisions:
+  midi_input: "Enabled, receives CC and note messages"
+  midi_output: "Disabled (no need to send MIDI)"
+
+  cc_learn_workflow: >
+    1. User clicks "Learn" button on Macro/Button/XY control in plugin UI
+    2. Plugin enters learn mode for that control
+    3. User moves hardware controller (sends CC message)
+    4. Plugin captures CC number, creates binding (CC → Parameter)
+    5. Binding saved in plugin state, persists in DAW session
+
+  cc_mapping_storage: >
+    Per-instance MIDI map (not per-preset). Users can override per-preset CC maps via
+    preset metadata (from task 28), but instance-level map takes precedence.
+
+  host_sync_features:
+    tempo_bpm: true         # Feed to beat detector, tempo-sync effects
+    time_signature: true    # For beat grid visualization (optional)
+    transport_state: true   # Playing/stopped (pause rendering when stopped, optional)
+    ppq_position: true      # Musical position (quarter notes), for scene quantization
+
+  scene_quantization: >
+    When user triggers Scene button (via automation, MIDI, or UI), engine delays activation
+    until next beat boundary (using PPQ position). Configurable quantize grid (1/4, 1/2, 1 bar).
+
+steps:
+  - Extend PluginProcessor to accept MIDI input (JUCE acceptsMidi() → true).
+  - Implement MIDI CC message parsing in processBlock() (extract CC number and value).
+  - Create MIDICCMap class to store CC → Parameter bindings.
+  - Add CC learn UI component (Learn button, visual feedback, cancel/confirm).
+  - Wire MIDI CC values to parameter bank (apply same smoothing as DAW automation).
+  - Implement host transport info retrieval (JUCE AudioPlayHead API).
+  - Feed host tempo/PPQ to engine (update beat detector, tempo-sync modules).
+  - Implement scene trigger quantization (delay activation to next beat boundary).
+  - Add MIDI map serialization to plugin state (save/restore CC bindings).
+  - Create MIDI map editor UI (view/edit/delete CC bindings).
+  - Add conflict detection (warn if two parameters map to same CC).
+  - Write unit tests for CC mapping, transport sync, quantization.
+
+acceptance_criteria:
+  - MIDI CC messages from hardware controller modulate plugin parameters.
+  - CC learn workflow works (click Learn, move controller, binding created).
+  - CC bindings persist across DAW session save/load.
+  - Host tempo/beat position correctly drives engine beat detector.
+  - Scene triggers quantize to beat boundary (no off-beat scene changes).
+  - Transport state (playing/stopped) correctly reflects in engine (optional).
+  - MIDI map editor displays all current bindings, allows deletion.
+  - No MIDI message processing in audio thread (parsed on MIDI thread, queued).
+  - Unit tests validate MIDI parsing, CC mapping, quantization logic.
+
+test_hook:
+  - "ctest: test_midi_cc_mapping, test_transport_sync, test_scene_quantization."
+  - "Manual: Connect MIDI controller, learn CC to Macro 1, verify control works."
+  - "Manual: Set DAW tempo to 120 BPM, trigger scene, verify quantization."
+
+files_touched:
+  - libs/avs-vst-plugin/include/avs/vst/MIDICCMap.hpp
+  - libs/avs-vst-plugin/include/avs/vst/TransportSync.hpp
+  - libs/avs-vst-plugin/src/MIDICCMap.cpp
+  - libs/avs-vst-plugin/src/TransportSync.cpp
+  - libs/avs-vst-plugin/src/PluginProcessor.cpp  # MIDI handling, transport sync
+  - apps/avs-vst3/PluginEditor.cpp  # CC learn UI
+  - apps/avs-vst3/components/CCLearnButton.cpp
+  - apps/avs-vst3/components/MIDIMapEditor.cpp
+  - libs/avs-core/include/avs/core/SceneQuantizer.hpp  # Scene quantization logic
+  - libs/avs-core/src/SceneQuantizer.cpp
+  - tests/vst/test_midi_cc.cpp
+  - tests/vst/test_transport_sync.cpp
+  - docs/vst_midi_and_sync.md
+
+notes: >
+  MIDI CC learn is essential for live performance. Users expect to map any hardware
+  controller knob/slider to any plugin parameter without diving into DAW MIDI learn menus.
+
+  Scene quantization is a killer feature for live sets. Imagine triggering a drop scene
+  on an Ableton Push pad - it waits until the next bar to activate, staying perfectly in sync.
+
+  Implementation note: MIDI CC processing must be efficient (many controllers send CC at ~100 Hz).
+  Use a lookup table (CC number → Parameter ID) for O(1) mapping, not linear search.
+
+  Future enhancement: Support MIDI note messages for scene triggers (e.g., C3 = Scene 1, D3 = Scene 2).
+  This would allow using drum pads or keyboard as scene launcher (task for later).

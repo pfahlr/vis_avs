@@ -1,0 +1,95 @@
+id: vst-engine-integration
+title: Integrate AVS rendering engine with VST plugin lifecycle
+status: TODO
+labels: [vst, plugin, engine, rendering]
+depends_on:
+  - vst-audio-feature-bridge
+  - vst-preset-control-mapping
+  - render-framebuffer-abstraction
+goal: >
+  Wire the AVS rendering engine to the VST plugin, creating a complete visualization pipeline:
+  Audio Features + Parameter Changes → Engine Update → Render → Plugin Editor Display.
+  Handle plugin lifecycle (open/close editor, suspend/resume, sample rate changes).
+
+technical_decisions:
+  engine_architecture: >
+    One AVS engine instance per plugin instance. Engine runs on a dedicated render thread
+    (separate from audio thread and UI thread) to avoid blocking either.
+
+  threading_model: >
+    - Audio thread: Feature extraction → ring buffer (non-blocking)
+    - Render thread: Consumes features, applies parameter changes, renders frames
+    - UI thread: Displays rendered frames (via shared texture or framebuffer copy)
+
+  opengl_context: >
+    JUCE OpenGLContext attached to plugin editor component. Render thread acquires
+    context, renders to FBO, releases context. UI thread displays FBO texture.
+
+  frame_rate: "60 FPS (configurable, vsync aware)"
+
+  preset_loading: >
+    Load presets on render thread (not audio thread) to avoid blocking audio.
+    Queue preset change request → render thread loads preset → update control mapping.
+
+  state_management: >
+    Plugin state includes: current preset, parameter values, control mapping, engine config.
+    Saved in DAW session via getStateInformation() / setStateInformation().
+
+steps:
+  - Create AVSEngineWrapper class to manage engine lifecycle in plugin context.
+  - Implement render thread with fixed 60 FPS update loop (or vsync-synced).
+  - Wire audio feature bridge output → engine audio input (consume ring buffer).
+  - Wire control mapping table → engine parameter updates (apply on render thread).
+  - Integrate OpenGL context creation in JUCE editor component.
+  - Implement render-to-FBO pipeline (engine renders to FBO, UI displays texture).
+  - Add preset loading mechanism (queue preset change, load on render thread).
+  - Implement plugin state save/restore (preset + parameters + mapping).
+  - Handle editor open/close (start/stop render thread, create/destroy GL context).
+  - Handle plugin suspend/resume (pause rendering when editor closed, resume when opened).
+  - Add error handling (preset load failure, GL context loss, resource cleanup).
+  - Create performance monitoring (frame time, dropped frames, CPU usage).
+  - Write integration tests (engine init, preset load, parameter update, render).
+
+acceptance_criteria:
+  - Plugin editor displays live AVS visualization at 60 FPS.
+  - Audio features correctly drive visualization (spectrum, waveform, beat detection).
+  - Parameter changes (DAW automation or UI) update visualization in real-time.
+  - Preset switching works without audio dropouts or visual glitches.
+  - Plugin state saves/restores correctly in DAW session.
+  - Opening/closing editor does not leak resources (valgrind clean on Linux).
+  - Multiple plugin instances can run simultaneously without interference.
+  - Plugin handles host suspend/resume gracefully (no crashes on laptop sleep/wake).
+  - Frame rate stays at 60 FPS with <10% CPU usage for typical preset.
+
+test_hook:
+  - "ctest: test_engine_integration, test_plugin_lifecycle."
+  - "Manual: Load in DAW, play audio, verify visualization matches audio."
+  - "Performance: Measure CPU/GPU usage with multiple instances."
+
+files_touched:
+  - libs/avs-vst-plugin/include/avs/vst/AVSEngineWrapper.hpp
+  - libs/avs-vst-plugin/include/avs/vst/RenderThread.hpp
+  - libs/avs-vst-plugin/src/AVSEngineWrapper.cpp
+  - libs/avs-vst-plugin/src/RenderThread.cpp
+  - libs/avs-vst-plugin/src/PluginProcessor.cpp  # State save/restore
+  - apps/avs-vst3/PluginEditor.h
+  - apps/avs-vst3/PluginEditor.cpp  # JUCE OpenGL component
+  - apps/avs-vst3/OpenGLRenderer.cpp
+  - tests/vst/test_engine_integration.cpp
+  - docs/vst_engine_architecture.md
+
+notes: >
+  This is the task where everything comes together. At this point we have:
+  - Audio features flowing from host → engine (task 27)
+  - Parameters flowing from DAW → engine via mapping (tasks 26 + 28)
+  - Now we add: Engine rendering → plugin editor display
+
+  Key challenge: Thread synchronization. We have three threads that must cooperate:
+  1. Audio thread (high priority, real-time, cannot block)
+  2. Render thread (medium priority, 60 FPS, can tolerate occasional frame drop)
+  3. UI thread (low priority, handles mouse/keyboard, updates display)
+
+  Solution: Lock-free queues between threads, double/triple buffering for frame display.
+
+  After this task, the plugin should be fully functional for basic use cases.
+  Remaining tasks (30-33) add advanced features (MIDI, host sync, renderer hub, packaging).

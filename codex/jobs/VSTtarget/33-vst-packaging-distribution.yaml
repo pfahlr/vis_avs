@@ -1,0 +1,122 @@
+id: vst-packaging-distribution
+title: VST plugin packaging, installers, and distribution pipeline
+status: TODO
+labels: [vst, plugin, packaging, distribution, release]
+depends_on:
+  - vst-testing-validation
+goal: >
+  Create professional installers and distribution packages for the AVS VST3 plugin across
+  Windows, macOS, and Linux. Set up automated build pipeline for releases, code signing,
+  notarization (macOS), and installer creation. Prepare plugin for public distribution.
+
+technical_decisions:
+  package_formats:
+    windows: "VST3 bundle + NSIS installer (.exe) or MSI"
+    macos: "VST3 bundle + DMG with installer app (code signed + notarized)"
+    linux: "VST3 bundle + .deb/.rpm packages + AppImage (optional)"
+
+  installation_paths:
+    windows: "C:\\Program Files\\Common Files\\VST3\\NewLiteracy\\AVS.vst3"
+    macos: "/Library/Audio/Plug-Ins/VST3/AVS.vst3 (system) or ~/Library/... (user)"
+    linux: "~/.vst3/AVS.vst3 or /usr/lib/vst3/AVS.vst3"
+
+  resources_bundled:
+    - Presets (example presets with control mappings)
+    - Shaders (if not embedded in binary)
+    - Documentation (PDF user guide, quick start)
+    - License file (MIT or commercial license)
+
+  code_signing:
+    windows: "Authenticode signing (requires certificate)"
+    macos: "Apple Developer ID signing + notarization (requires Apple Developer account)"
+    linux: "GPG signing of packages (optional)"
+
+  versioning: "Semantic versioning (0.1.0 → 1.0.0 for public release)"
+
+  auto_update: "Optional: Check for updates on plugin load (with user consent)"
+
+steps:
+  - Create CMake install targets for VST3 plugin + resources.
+  - Set up CPack configuration for .deb/.rpm packages (Linux).
+  - Create NSIS installer script for Windows (UI, license agreement, install paths).
+  - Create macOS DMG template with drag-to-install interface.
+  - Implement build script for cross-platform compilation (CI/CD pipeline).
+  - Set up code signing for Windows (Authenticode, need certificate).
+  - Set up code signing + notarization for macOS (Xcode, Apple Developer account).
+  - Create installer graphics (logo, banner, background for DMG/NSIS).
+  - Bundle example presets with control mappings (10-20 quality presets).
+  - Write user manual (PDF, covering installation, DAW setup, controls, MIDI).
+  - Create quick start guide (one-page, get started in 5 minutes).
+  - Set up GitHub Releases or website download page.
+  - Implement version check (optional, plugin queries server for updates).
+  - Test installers on clean systems (Windows 10/11, macOS 12+, Ubuntu 22.04+).
+  - Create uninstaller (Windows) and uninstall instructions (macOS/Linux).
+
+acceptance_criteria:
+  - Windows installer (.exe) installs plugin to correct VST3 path.
+  - macOS DMG installs plugin, passes Gatekeeper (code signed + notarized).
+  - Linux .deb package installs plugin, works in Reaper/Bitwig/Ardour.
+  - All installers include resources (presets, docs, license).
+  - Plugin appears in DAW plugin list after installation (no manual rescanning).
+  - Uninstaller removes all files cleanly (no leftover registry entries or files).
+  - Version number displayed correctly in DAW plugin info.
+  - User manual covers all features (parameters, MIDI, presets, troubleshooting).
+  - Installers tested on at least 2 systems per platform (clean installs).
+  - Code signing verified (no security warnings on installation).
+
+test_hook:
+  - "Manual: Install on fresh Windows 10, verify plugin loads in Reaper."
+  - "Manual: Install on macOS 13, verify Gatekeeper allows installation, plugin works in Logic."
+  - "Manual: Install .deb on Ubuntu 22.04, verify plugin in Bitwig."
+
+files_touched:
+  - CMakeLists.txt  # Install targets
+  - cmake/Packaging.cmake
+  - installers/windows/avs_vst3.nsi  # NSIS script
+  - installers/macos/create_dmg.sh
+  - installers/macos/AVS_Installer.app/  # Optional graphical installer
+  - installers/linux/debian/control
+  - installers/linux/debian/postinst
+  - .github/workflows/release-build.yml  # CI/CD for releases
+  - resources/presets/factory/*.json  # Example presets
+  - docs/AVS_VST3_User_Manual.md  # Convert to PDF for distribution
+  - docs/QuickStart.md
+  - LICENSE
+  - VERSION
+
+notes: >
+  Professional packaging is what separates hobby projects from production tools.
+  Users expect one-click installation, not "copy .vst3 to folder X manually."
+
+  Code signing is essential:
+  - Windows: Without Authenticode, SmartScreen shows scary warnings
+  - macOS: Without notarization, Gatekeeper blocks installation entirely
+  - Linux: Optional, but GPG-signed packages increase trust
+
+  Costs to consider:
+  - Windows code signing certificate: ~$100-400/year (Sectigo, DigiCert)
+  - macOS Apple Developer Program: $99/year
+  - Linux: Free (self-signed GPG key)
+
+  Installer best practices:
+  - Windows: Use NSIS or WiX, support silent install (/S flag), add to uninstaller list
+  - macOS: DMG with pretty background, drag-to-install, include uninstall script
+  - Linux: .deb for Debian/Ubuntu, .rpm for Fedora/RHEL, AppImage for universal
+
+  Distribution channels:
+  - Self-hosted: GitHub Releases (free, unlimited bandwidth)
+  - Plugin Boutique / Splice / KVR (commercial, takes 30-50% commission)
+  - Free plugin directories: KVR, VST4Free, Bedroom Producers Blog
+
+  Version numbering:
+  - 0.x.y: Beta/preview releases (for early adopters, testing)
+  - 1.0.0: First stable release (feature-complete, tested, documented)
+  - 1.x.y: Minor updates (new features, non-breaking changes)
+  - 2.0.0: Major update (breaking changes, e.g., new preset format)
+
+  Auto-update considerations:
+  - Pros: Users stay up-to-date, easier to deprecate old versions
+  - Cons: Privacy concerns (phoning home), DAW certification issues
+  - Recommendation: Implement check-for-updates, but make it opt-in
+
+  After this task, the plugin is ready for public release! 🎉

@@ -1,0 +1,120 @@
+id: vst-testing-validation
+title: Comprehensive VST plugin testing and DAW compatibility validation
+status: TODO
+labels: [vst, plugin, testing, qa, compatibility]
+depends_on:
+  - vst-engine-integration
+  - vst-midi-host-sync
+goal: >
+  Establish comprehensive testing for the VST plugin including unit tests, integration tests,
+  plugin validation (pluginval), and real-world DAW compatibility testing across major hosts.
+  Ensure plugin meets VST3 specification and works reliably in production scenarios.
+
+technical_decisions:
+  test_categories:
+    - unit: Individual components (parameter bank, ring buffer, mapping, etc.)
+    - integration: End-to-end workflows (load preset, automate, render)
+    - validation: VST3 spec compliance (pluginval, Steinberg validator)
+    - compatibility: Real DAW testing (Reaper, Bitwig, Ableton, FL Studio, etc.)
+
+  pluginval: >
+    Industry-standard VST plugin validator from Tracktion.
+    Tests: parameter handling, state save/restore, threading, crashes, memory leaks.
+    Must pass "strict" mode for release.
+
+  daw_test_matrix:
+    tier_1_linux:   [Reaper, Bitwig Studio, Ardour]
+    tier_1_windows: [Reaper, Ableton Live, FL Studio]
+    tier_1_macos:   [Reaper, Logic Pro, Ableton Live]
+    tier_2:         [Renoise, Mixbus, Waveform, Studio One]
+
+  test_scenarios:
+    - Basic: Load plugin, play audio, see visualization
+    - Automation: Record automation, playback, switch presets
+    - MIDI: CC learn, map to hardware controller, live tweaking
+    - State: Save project, close DAW, reopen, verify state restored
+    - Multi-instance: Load 4+ instances, verify no interference
+    - Performance: CPU/GPU usage, frame rate, audio latency
+    - Edge cases: Suspend/resume, sample rate change, buffer size change
+
+  performance_targets:
+    cpu_usage: "<5% per instance at 512 samples/48kHz (Intel i5 or equivalent)"
+    gpu_usage: "<10% for typical preset at 1080p/60fps (integrated GPU)"
+    memory_per_instance: "<100 MB resident"
+    frame_rate: "60 FPS stable (no drops during automation)"
+    audio_latency: "0 samples reported latency"
+
+steps:
+  - Set up pluginval in CI pipeline (download, run on VST3 build artifact).
+  - Create comprehensive unit test suite (expand existing tests from tasks 26-30).
+  - Write integration test suite (preset load, automation, MIDI, state save/restore).
+  - Develop DAW testing checklist (manual QA for each DAW).
+  - Test plugin in tier 1 Linux DAWs (Reaper, Bitwig, Ardour).
+  - Fix any crashes, hangs, or compatibility issues found.
+  - Run pluginval in strict mode, fix all failures.
+  - Measure performance (CPU/GPU/memory) with profiling tools.
+  - Optimize hot paths if performance targets not met.
+  - Test edge cases (suspend/resume, sample rate changes, etc.).
+  - Create automated test that loads plugin, plays audio, captures frames, validates output.
+  - Document known issues and workarounds for specific DAWs.
+  - Set up regression testing (run full test suite on every commit).
+
+acceptance_criteria:
+  - All unit tests pass (ctest reports 0 failures).
+  - All integration tests pass (preset load, automation, MIDI, state).
+  - pluginval strict mode passes with 0 errors, 0 warnings.
+  - Plugin loads and works in at least 3 tier 1 DAWs on Linux.
+  - No crashes during 1-hour stress test (automation + preset changes).
+  - Performance targets met (CPU <5%, GPU <10%, 60 FPS).
+  - Multi-instance test passes (8 instances simultaneously, no interference).
+  - State save/restore validated (close/reopen project, verify exact state).
+  - Edge case tests pass (suspend/resume, sample rate change, buffer size change).
+  - CI pipeline runs pluginval automatically on every build.
+
+test_hook:
+  - "ctest: All VST unit and integration tests (from tasks 26-30 + new tests)."
+  - "CI: pluginval --strictness-level 10 --validate-in-process --timeout-ms 120000."
+  - "Manual: DAW compatibility testing checklist (documented in QA guide)."
+
+files_touched:
+  - tests/vst/CMakeLists.txt
+  - tests/vst/test_vst_integration.cpp  # End-to-end integration tests
+  - tests/vst/test_vst_state_management.cpp
+  - tests/vst/test_vst_multi_instance.cpp
+  - tests/vst/test_vst_performance.cpp
+  - .github/workflows/vst-validation.yml  # CI pipeline for pluginval
+  - tools/run_pluginval.sh
+  - tools/test_vst_in_daw.sh  # Automated DAW testing (if possible)
+  - docs/vst_testing_guide.md
+  - docs/vst_daw_compatibility.md
+  - docs/vst_performance_tuning.md
+
+notes: >
+  Testing is critical for VST plugins. Users have zero tolerance for crashes, state loss,
+  or audio glitches. A plugin that crashes in Ableton will get immediately uninstalled.
+
+  pluginval is non-negotiable. It tests scenarios that are hard to reproduce manually:
+  - Rapid parameter changes (thousands per second)
+  - State save/restore with partial data
+  - Threading edge cases (audio thread + UI thread conflicts)
+  - Memory leaks and resource cleanup
+
+  Real-world DAW testing is equally important. Each DAW has quirks:
+  - Ableton: Aggressive parameter smoothing, expects fast UI updates
+  - FL Studio: Unique state save format, MIDI timing differences
+  - Reaper: Extremely permissive, but users expect low CPU usage
+  - Bitwig: Modern architecture, tests VST3 features thoroughly
+
+  Performance testing must include:
+  - Profiling (perf on Linux, Instruments on macOS, VTune on Windows)
+  - Memory leak detection (Valgrind, AddressSanitizer)
+  - Frame time measurement (ensure 60 FPS is consistent, not just average)
+
+  Known challenge: Headless testing of OpenGL rendering.
+  Solution: Use xvfb on Linux for CI, or CPU framebuffer backend (from task 22).
+
+  Recommended CI strategy:
+  - Unit tests: Run on every commit (fast, <1 minute)
+  - Integration tests: Run on every commit (medium, ~5 minutes)
+  - pluginval: Run on every commit (slow, ~10 minutes, but catches critical bugs)
+  - DAW testing: Manual QA before releases (not automatable for most DAWs)

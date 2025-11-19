@@ -1,0 +1,109 @@
+id: vst-renderer-hub-ipc
+title: Implement Renderer Hub for multi-screen and multi-instance visualization
+status: TODO
+labels: [vst, plugin, rendering, ipc, advanced]
+depends_on:
+  - vst-engine-integration
+priority: low  # Optional advanced feature, not required for MVP
+goal: >
+  Create a separate "Renderer Hub" process that can receive audio features and render commands
+  from multiple VST plugin instances via IPC (shared memory or UDP). This enables advanced live
+  performance scenarios: multiple projectors, LED walls, preview monitors, or combining visuals
+  from multiple tracks (drums + bass + synth → one unified visualization).
+
+technical_decisions:
+  architecture: "Separate renderer process, plugin instances act as clients"
+
+  ipc_transport: "Shared memory (primary) with optional UDP fallback"
+
+  shared_memory_layout: >
+    Per-plugin-instance ring buffer in named shared memory segment.
+    Plugin writes: audio features + parameter snapshot + frame metadata.
+    Renderer Hub reads: combines data from N plugin instances, renders composite output.
+
+  discovery_mechanism: >
+    UDP broadcast on localhost. Plugin announces "I'm instance X" on port 19735.
+    Renderer Hub responds "I'm listening on shm://avs_hub_instance_X".
+
+  multi_instance_modes:
+    - independent: Each plugin instance → separate output window/projector
+    - mixed: Combine features from multiple instances (e.g., kickdrum + melodic visuals)
+    - lockstep: All instances render same preset, different parameters (VJ mixer style)
+
+  video_output: >
+    Renderer Hub creates fullscreen windows on configured displays (X11/Wayland/Windows).
+    Supports multiple outputs (e.g., projector 1 = main vis, projector 2 = background layer).
+
+  fallback_mode: >
+    If Renderer Hub not running, plugin renders in embedded editor (task 29 behavior).
+    Renderer Hub is optional enhancement, not required for basic functionality.
+
+steps:
+  - Design shared memory layout (audio features + params + metadata struct).
+  - Implement shared memory IPC library (libs/avs-ipc/) - create, write, read, unlink.
+  - Create UDP discovery protocol (plugin broadcasts, hub responds with SHM path).
+  - Build Renderer Hub application (apps/avs-renderer-hub/) - separate executable.
+  - Implement plugin-side IPC client (write features to SHM, register with hub).
+  - Implement hub-side IPC server (read from N plugin SHM segments, manage instances).
+  - Add multi-instance rendering modes (independent, mixed, lockstep).
+  - Create hub configuration UI (map instances to outputs, set mode, manage displays).
+  - Handle instance lifecycle (plugin closed → hub removes instance, cleanup SHM).
+  - Add latency compensation (align audio features from multiple instances, account for network jitter).
+  - Implement fallback mode (hub unavailable → render in plugin editor).
+  - Write integration tests (plugin → hub communication, multi-instance scenarios).
+
+acceptance_criteria:
+  - Renderer Hub launches as standalone app, discovers plugin instances automatically.
+  - Plugin detects hub, switches from embedded rendering to IPC mode.
+  - Audio features flow from plugin → hub with <10ms latency.
+  - Multiple plugin instances (different tracks) can feed one hub instance.
+  - Hub can output to multiple displays (tested with 2+ monitors or projectors).
+  - Plugin instance closes → hub gracefully removes it from rendering.
+  - Hub crashes/exits → plugins fall back to embedded rendering (no DAW crash).
+  - Mixed mode combines visuals from 2+ instances convincingly.
+  - Configuration persists (hub remembers instance → output mappings).
+  - Unit tests validate SHM protocol, UDP discovery, multi-instance data flow.
+
+test_hook:
+  - "ctest: test_ipc_shared_memory, test_renderer_hub_discovery."
+  - "Manual: Launch hub + 3 plugin instances, verify multi-screen output."
+  - "Stress test: 8 plugin instances → 1 hub, measure latency/CPU."
+
+files_touched:
+  - libs/avs-ipc/include/avs/ipc/SharedMemory.hpp
+  - libs/avs-ipc/include/avs/ipc/UDPDiscovery.hpp
+  - libs/avs-ipc/src/SharedMemory.cpp
+  - libs/avs-ipc/src/UDPDiscovery.cpp
+  - libs/avs-ipc/CMakeLists.txt
+  - libs/avs-vst-plugin/include/avs/vst/RendererHubClient.hpp
+  - libs/avs-vst-plugin/src/RendererHubClient.cpp
+  - apps/avs-renderer-hub/main.cpp
+  - apps/avs-renderer-hub/HubServer.cpp
+  - apps/avs-renderer-hub/MultiInstanceRenderer.cpp
+  - apps/avs-renderer-hub/ConfigUI.cpp
+  - apps/avs-renderer-hub/CMakeLists.txt
+  - tests/ipc/test_shared_memory.cpp
+  - tests/ipc/test_renderer_hub.cpp
+  - docs/vst_renderer_hub_guide.md
+
+notes: >
+  This is an advanced feature for professional VJs and live visual artists. Not required
+  for the MVP VST plugin, but enables workflows that are impossible with a single embedded editor.
+
+  Use cases:
+  - VJ rig: 3 projectors, each showing a different AVS instance (drums, bass, pads)
+  - LED wall: Renderer Hub outputs 4K to LED processor, plugin instances stay in DAW
+  - Preview monitor: Main projector + DJ booth preview, same visuals, different crop/zoom
+  - Recording: Renderer Hub records high-res video while DAW handles audio
+
+  Why separate process?
+  - Plugin crashes don't kill visuals (hub keeps running)
+  - GPU isolation (hub runs on dedicated GPU, DAW uses another)
+  - Lower latency (hub runs real-time priority, DAW audio thread unaffected)
+
+  Alternative simpler approach for future:
+  - Instead of full Renderer Hub, support "duplicate to window" mode in plugin
+  - Plugin editor stays embedded, but can also open external fullscreen window(s)
+  - Easier to implement, but doesn't support multi-instance mixing
+
+  Decision: Implement full hub for maximum flexibility. Mark as optional/advanced.

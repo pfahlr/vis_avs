@@ -1,0 +1,189 @@
+id: vst-plugin-build-target
+title: "Meta-task: VST3 Plugin Build Target for AVS"
+status: TODO
+labels: [vst, plugin, meta, epic]
+depends_on:
+  - render-framebuffer-abstraction
+  - presets-json-format-support
+goal: >
+  Transform vis_avs into a professional VST3 plugin that runs inside DAWs, enabling real-time
+  audio-reactive visualizations with DAW automation, MIDI control, and multi-instance support.
+  This meta-task tracks the overall VST plugin initiative, which is broken down into 9 sub-tasks.
+
+overview: >
+  The VST plugin build target is a major feature addition that brings AVS to music producers,
+  DJs, and VJs working in DAW environments. By implementing this, AVS becomes:
+  - Accessible to millions of DAW users (Ableton, FL Studio, Bitwig, Reaper, Logic, etc.)
+  - Controllable via standard DAW workflows (automation lanes, MIDI mapping)
+  - Suitable for live performance (low latency, stable, multi-instance)
+  - Professional-grade (code signed, validated, tested across platforms)
+
+sub_tasks:
+  - id: vst-framework-integration
+    file: 25-vst-framework-integration.yaml
+    status: TODO
+    priority: critical
+    description: Integrate JUCE framework for VST3 support
+
+  - id: vst-stable-parameter-bank
+    file: 26-vst-stable-parameter-bank.yaml
+    status: TODO
+    priority: critical
+    description: Implement stable parameter bank (56 params) with DAW automation
+
+  - id: vst-audio-feature-bridge
+    file: 27-vst-audio-feature-bridge.yaml
+    status: TODO
+    priority: critical
+    description: Zero-latency audio passthrough with lock-free feature extraction
+
+  - id: vst-preset-control-mapping
+    file: 28-vst-preset-control-mapping.yaml
+    status: TODO
+    priority: critical
+    description: Extend preset format with control mapping metadata
+
+  - id: vst-engine-integration
+    file: 29-vst-engine-integration.yaml
+    status: TODO
+    priority: critical
+    description: Wire AVS engine to plugin lifecycle (render, state, threading)
+
+  - id: vst-midi-host-sync
+    file: 30-vst-midi-host-sync.yaml
+    status: TODO
+    priority: high
+    description: MIDI CC learn and DAW transport sync (tempo, quantization)
+
+  - id: vst-renderer-hub-ipc
+    file: 31-vst-renderer-hub-ipc.yaml
+    status: TODO
+    priority: low
+    description: Optional multi-screen renderer hub via IPC (advanced feature)
+
+  - id: vst-testing-validation
+    file: 32-vst-testing-validation.yaml
+    status: TODO
+    priority: critical
+    description: Comprehensive testing (pluginval, DAW compatibility, performance)
+
+  - id: vst-packaging-distribution
+    file: 33-vst-packaging-distribution.yaml
+    status: TODO
+    priority: high
+    description: Installers, code signing, distribution for Win/Mac/Linux
+
+critical_path:
+  - vst-framework-integration
+  - vst-stable-parameter-bank
+  - vst-preset-control-mapping
+  - vst-engine-integration
+  - vst-testing-validation
+  - vst-packaging-distribution
+
+optional_enhancements:
+  - vst-renderer-hub-ipc  # Can be deferred to post-MVP
+
+estimated_effort:
+  critical_path: "21-29 days"
+  full_implementation: "26-36 days (including optional Renderer Hub)"
+  team_size: "1-2 developers"
+
+milestones:
+  mvp_alpha:
+    tasks: [25, 26, 27, 28, 29]
+    deliverable: "Plugin loads, renders, responds to automation (internal testing only)"
+
+  beta:
+    tasks: [25, 26, 27, 28, 29, 30, 32]
+    deliverable: "Feature-complete, passes pluginval, ready for beta testers"
+
+  release_candidate:
+    tasks: [25, 26, 27, 28, 29, 30, 32, 33]
+    deliverable: "Installers ready, code signed, tested in major DAWs"
+
+  v1_0:
+    tasks: [all]
+    deliverable: "Public release with full documentation and support"
+
+success_criteria:
+  technical:
+    - Plugin loads in 3+ major DAWs (Reaper, Bitwig, Ableton)
+    - Passes pluginval strict mode (0 errors)
+    - Zero-latency audio passthrough verified
+    - 60 FPS rendering with <5% CPU usage
+    - State save/restore works correctly
+    - 8+ simultaneous instances supported
+
+  user_experience:
+    - One-click installation via installer
+    - Clear documentation (user manual + quick start)
+    - Intuitive parameter layout in DAW automation
+    - MIDI CC learn works on first try
+    - No crashes in 1-hour stress test
+
+  distribution:
+    - Code signed (Windows Authenticode, macOS notarized)
+    - Installers for Windows/macOS/Linux
+    - Listed in plugin directories (KVR, VST4Free)
+
+risks_and_mitigations:
+  - risk: JUCE integration increases build complexity
+    mitigation: Use FetchContent, provide clear build docs, CI automation
+
+  - risk: OpenGL context issues in some DAWs
+    mitigation: Test early across multiple DAWs, provide CPU fallback renderer
+
+  - risk: Plugin crashes break user's DAW session
+    mitigation: Extensive testing (pluginval + manual QA), defensive error handling
+
+  - risk: Performance issues with complex presets
+    mitigation: Profiling, optimization, preset complexity budget
+
+  - risk: Code signing costs ($100-500/year)
+    mitigation: Budget for certificates, or distribute unsigned with warnings
+
+resources_required:
+  development:
+    - JUCE 7 (MIT license, free)
+    - VST3 SDK (Steinberg, free)
+    - OpenGL 3.3+ or Vulkan 1.1+
+
+  testing:
+    - pluginval (Tracktion, free)
+    - Multiple DAWs (some free: Reaper trial, Ardour, Bitwig demo)
+    - Test systems (Windows 10+, macOS 11+, Ubuntu 22.04+)
+
+  distribution:
+    - Apple Developer account ($99/year, required for macOS notarization)
+    - Windows code signing certificate ($100-400/year, recommended)
+    - Web hosting for download page (GitHub Releases is free)
+
+next_steps:
+  1. Review all task files (25-33) and README.md in VSTtarget/
+  2. Set up development environment (JUCE, dependencies)
+  3. Start with Task 25 (Framework Integration)
+  4. Follow critical path: 25 → 26 → 28 → 29 → 32 → 33
+  5. Add optional features (30, 31) as time allows
+
+documentation:
+  - See VSTtarget/README.md for detailed architecture overview
+  - Each task file (25-33) contains technical decisions and implementation steps
+  - Reference docs will be created during implementation in docs/vst_*.md
+
+notes: >
+  This is a high-value feature that significantly expands AVS's user base. DAW users are
+  a massive market (millions of Ableton, FL Studio, Logic users), and there are very few
+  high-quality visualizer plugins available.
+
+  The stable parameter bank architecture is the key innovation that makes this feasible.
+  By decoupling DAW automation from preset content, we avoid the common plugin UX problem
+  of "automation breaks when you change presets."
+
+  Start small (MVP with just automation), then add features (MIDI, multi-screen) incrementally.
+  It's better to ship a simple, rock-solid plugin than a feature-rich but buggy one.
+
+files_touched:
+  - See individual task files (25-33) for detailed file lists
+  - New directories: libs/avs-vst-plugin/, apps/avs-vst3/, tests/vst/, installers/
+  - Modified: CMakeLists.txt, libs/CMakeLists.txt, apps/CMakeLists.txt

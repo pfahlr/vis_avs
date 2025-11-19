@@ -1,0 +1,118 @@
+id: vst-preset-control-mapping
+title: Extend preset format with VST control mapping metadata
+status: TODO
+labels: [vst, plugin, presets, parameters]
+depends_on:
+  - vst-stable-parameter-bank
+  - presets-json-format-support
+goal: >
+  Extend the AVS preset JSON format to include a "controls" section that maps stable VST parameters
+  (Macros, Buttons, XY pads, etc.) to engine parameters with range/curve/smoothing metadata.
+  When a preset loads, the plugin updates its internal mapping table but keeps VST parameter IDs stable.
+
+technical_decisions:
+  preset_format_extension: >
+    Add "controls" object to JSON preset schema. Binary .avs presets without this section
+    get default mappings (Macro 1-8 map to common effect params, rest unmapped).
+
+  mapping_schema: |
+    {
+      "preset": {
+        "name": "Example Preset",
+        "controls": {
+          "pages": [
+            {
+              "id": "main",
+              "label": "Main Controls",
+              "slots": [
+                {
+                  "control": "macro.1",
+                  "target": "effect.superscope.n_points",
+                  "range": {"min": 100, "max": 4000},
+                  "curve": "log",
+                  "smoothing_ms": 40,
+                  "label": "Point Count"
+                },
+                {
+                  "control": "xypad.1.x",
+                  "target": "effect.movement.x_offset",
+                  "range": {"min": -1.0, "max": 1.0},
+                  "curve": "linear"
+                }
+              ]
+            }
+          ],
+          "midi_map": {
+            "cc1": "macro.1",
+            "cc2": "macro.2"
+          }
+        }
+      }
+    }
+
+  curve_types: ["linear", "log", "exp", "s", "inv_s", "step"]
+
+  runtime_mapping: >
+    Store mapping in ControlMappingTable (std::unordered_map<ParamID, EngineTarget>).
+    On preset load: (1) parse controls section, (2) update mapping table, (3) ramp parameters.
+    On parameter change: Look up target in mapping table, apply curve/range, push to engine.
+
+  unmapped_behavior: >
+    Parameters without mappings in the current preset are ignored (no effect on engine).
+    This allows presets to use a subset of the 56 available parameters.
+
+steps:
+  - Define controls schema in libs/avs-preset/schema/preset_v2_controls.json.
+  - Extend PresetLoader to parse "controls" section from JSON presets.
+  - Create ControlMapping class to represent control → target mappings with metadata.
+  - Implement ControlMappingTable for efficient runtime lookup (param ID → engine target).
+  - Add curve evaluation functions (linear, log, exp, s-curve, etc.).
+  - Create parameter ramping logic to avoid pops when switching presets (crossfade old → new).
+  - Implement preset load workflow - parse controls, update mapping table, ramp parameters.
+  - Add default mapping generator for legacy presets without controls section.
+  - Create example presets with controls metadata (2-3 test cases covering common scenarios).
+  - Write JSON schema validator for controls section.
+  - Add unit tests for mapping table, curve evaluation, preset loading.
+
+acceptance_criteria:
+  - JSON presets with "controls" section load successfully.
+  - Parameter changes apply correct curve/range transformations.
+  - Switching presets updates mapping table without breaking DAW automation.
+  - Legacy .avs presets load with default mappings (no crashes).
+  - Unmapped parameters have no effect on engine (safe to ignore).
+  - Preset transitions are smooth (60ms ramp, configurable per-mapping).
+  - JSON schema validation catches malformed controls sections.
+  - Unit tests validate all curve types and range mapping edge cases.
+
+test_hook:
+  - "ctest: test_preset_control_mapping, test_curve_evaluation."
+  - "Manual: Load preset with controls, automate Macro 1, verify correct effect parameter changes."
+
+files_touched:
+  - libs/avs-preset/schema/preset_v2_controls.json
+  - libs/avs-preset/include/avs/preset/ControlMapping.hpp
+  - libs/avs-preset/src/ControlMapping.cpp
+  - libs/avs-preset/src/PresetLoader.cpp  # Extend to parse controls
+  - libs/avs-vst-plugin/include/avs/vst/ControlMappingTable.hpp
+  - libs/avs-vst-plugin/src/ControlMappingTable.cpp
+  - libs/avs-vst-plugin/src/PluginProcessor.cpp  # Wire preset load
+  - resources/presets/examples/with_controls_example1.json
+  - resources/presets/examples/with_controls_example2.json
+  - tests/preset/test_control_mapping.cpp
+  - docs/vst_preset_control_mapping.md
+
+notes: >
+  This is the "secret sauce" of the stable parameter bank architecture. By storing mappings
+  in preset metadata rather than changing VST parameter IDs, we achieve:
+  - DAW automation survives preset changes (automation lane stays valid)
+  - Flexible preset design (presets can map any subset of 56 params)
+  - Future extensibility (add new engine params without breaking existing presets)
+
+  Example workflow:
+  1. User loads "Neon City" preset → Macro 1 maps to "camera.radius"
+  2. DAW automation modulates Macro 1 → camera moves
+  3. User loads "Fluid Dreams" preset → Macro 1 now maps to "fluid.viscosity"
+  4. DAW automation still modulates Macro 1 → fluid behavior changes
+  5. VST parameter ID (macro.1) never changed, so automation keeps working
+
+  This is how hardware synths work (same MIDI CC controls different params per patch).

@@ -1,0 +1,96 @@
+id: effects-implement-unified-3d-generator
+title: Implement Unified 3D Generator with multi-mode rendering
+status: TODO
+labels: [effects, 3d, render, shaders, compute, pbr, audio-reactive, high-complexity]
+depends_on:
+  - render-framebuffer-abstraction
+  - render-rendercontext-integration
+  - render-cli-backend-selection
+goal: >
+  Implement a unified 3D rendering node that exposes multiple 3D techniques in a single
+  effect, switchable at runtime via the "implementation" parameter. Supports SDF raymarching,
+  rasterized mesh PBR with instancing, and compute-driven particle fields. All modes share
+  common camera, lighting, and audio modulation infrastructure.
+steps:
+  - Design unified architecture for multi-mode 3D renderer with shared camera/lighting.
+  - Create effect_unified_3d.h/cpp in libs/avs-effects-modern/src/render/3d/.
+  - Implement backend selection system (GL 4.3+, Vulkan 1.1+) with capability detection.
+  - Implement camera system (orbit, lookat, freefly modes) with smooth parameter transitions.
+  - Implement shared lighting model (key light, environment IBL, fog) for all modes.
+  - "Mode 1: SDF Raymarcher - implement raymarching fragment shader with multiple SDF primitives (mandelbulb, torus, metaballs, repeatbox)."
+  - "Mode 1: Add domain repetition, smooth blending, and palette-based coloring."
+  - "Mode 2: Mesh Rasterizer - implement PBR material system (metallic-roughness workflow)."
+  - "Mode 2: Add instanced rendering with audio-driven instance count and distribution."
+  - "Mode 2: Support built-in parametric meshes (supershape, torus knot) and external assets (GLB, OBJ)."
+  - "Mode 3: Compute Particles - implement GPU compute shader for particle advection/physics."
+  - "Mode 3: Add audio-driven force fields, noise, spawn rates, and particle lifecycle."
+  - "Mode 3: Implement point sprite or instanced quad rendering for particles."
+  - Implement stereo rendering modes (off, anaglyph, side-by-side).
+  - Create comprehensive parameter system with conditional visibility (when clauses).
+  - Implement audio routing to camera, lighting, and mode-specific parameters.
+  - Add UI macro system for grouped parameter control.
+  - Implement performance tier presets (low/mid/high) with automatic overrides.
+  - Create shader resources for all modes (GL GLSL + Vulkan SPIR-V).
+  - Add fallback system for missing GPU features (e.g., no compute → mesh_raster).
+  - Create HDR pipeline with exposure control and tone mapping (gamma correction).
+  - Implement optional depth output sidechain for depth-aware compositing.
+  - Add modulation smoothing (lag/EMA) for camera and parameter transitions.
+  - Create comprehensive tests for each mode with golden frame comparison.
+  - Write example presets demonstrating all three modes with audio reactivity.
+acceptance_criteria:
+  - All three modes (SDF, mesh, particles) render correctly and can be switched at runtime.
+  - Camera system supports orbit/lookat/freefly with smooth audio-driven motion.
+  - Lighting system works consistently across all modes (key light, env, fog).
+  - SDF raymarcher renders complex shapes with domain repetition and smooth blending.
+  - Mesh rasterizer renders instanced PBR geometry (10k+ instances at 60fps).
+  - Particle compute simulates 500k-2M particles at 60fps depending on tier.
+  - Audio modulation works for all specified targets with configurable curves and lag.
+  - Stereo modes render correctly (anaglyph color separation, SBS alignment).
+  - Backend selection chooses GL/Vulkan based on availability and preference.
+  - Performance tiers automatically adjust quality/quantity parameters.
+  - Fallback system gracefully degrades when features unavailable.
+  - HDR pipeline produces correct exposure and gamma output.
+  - Parameter smoothing prevents audio jitter (configurable smoothing_ms).
+  - External mesh assets load correctly (GLB/OBJ with materials).
+  - All modes run at 60fps on mid-tier hardware (RTX 3060 / RX 6700 XT equivalent).
+  - Conditional parameter visibility works (when clauses hide irrelevant params).
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: modern_3d_effects_tests with test_unified_3d.cpp covering all three modes."
+  - "Golden frame tests for each mode with deterministic audio input."
+  - "Performance benchmarks measuring fps/frame_time for each tier preset."
+  - "Shader compilation tests for all GL/Vulkan shader variants."
+  - "Audio modulation tests verifying smooth parameter transitions."
+files_touched:
+  - libs/avs-effects-modern/include/avs/effects/render/3d/effect_unified_3d.h
+  - libs/avs-effects-modern/src/render/3d/effect_unified_3d.cpp
+  - libs/avs-effects-modern/src/render/3d/Camera3D.h
+  - libs/avs-effects-modern/src/render/3d/Camera3D.cpp
+  - libs/avs-effects-modern/src/render/3d/Lighting3D.h
+  - libs/avs-effects-modern/src/render/3d/Lighting3D.cpp
+  - resources/shaders/3d_unified/sdf_raymarch.frag.glsl
+  - resources/shaders/3d_unified/mesh.vert.glsl
+  - resources/shaders/3d_unified/mesh.frag.glsl
+  - resources/shaders/3d_unified/particles.comp.glsl
+  - resources/shaders/3d_unified/particles_draw.vert.glsl
+  - resources/shaders/3d_unified/particles_draw.frag.glsl
+  - resources/shaders/3d_unified/*.spv (Vulkan SPIR-V variants)
+  - libs/avs-render/src/backend/gl/GLComputeShader.cpp
+  - libs/avs-render/src/backend/vk/VulkanComputePipeline.cpp
+  - libs/avs-audio/include/avs/audio/AudioFeatures.h (RMS, onset, centroid)
+  - libs/avs-audio/src/AudioFeatures.cpp
+  - libs/avs-effects-modern/src/prime/RegisterModernEffects.cpp
+  - libs/avs-core/include/avs/core/MeshLoader.h (GLB/OBJ loading)
+  - libs/avs-core/src/MeshLoader.cpp
+  - tests/modern/test_unified_3d.cpp
+  - tests/data/presets/unified_3d_*.json
+  - tests/data/meshes/test_mesh.glb
+  - docs/effects/unified_3d_generator.md
+  - CMakeLists.txt (shader compilation, asset installation)
+notes: >
+  This is the most complex modern effect, serving as a "Swiss Army knife" for 3D rendering.
+  Requires significant infrastructure: compute shaders, instancing, PBR lighting, mesh loading,
+  HDR pipeline, and sophisticated parameter routing. Consider implementing in phases:
+  Phase 1 - SDF only, Phase 2 - add mesh, Phase 3 - add particles. Audio feature extraction
+  (RMS, onset, spectral centroid) must be available before effect render. GL 4.3+ required
+  for compute; fallback to mesh_raster on older hardware. Vulkan support can be stubbed initially.

@@ -1,0 +1,60 @@
+id: effects-implement-supershape-bloom
+title: Implement Supershape Bloom 3D effect with audio-reactive morphing
+status: TODO
+labels: [effects, 3d, render, shaders, audio-reactive, modern]
+depends_on:
+  - render-framebuffer-abstraction
+  - render-rendercontext-integration
+goal: >
+  Implement Supershape Bloom effect, a modern 3D/2D parametric shape renderer using
+  the superformula (Gielis formula) with audio-driven parameter morphing and emissive
+  bloom. This is a new effect (not legacy AVS) that requires OpenGL 4.1+ or Vulkan 1.1+.
+steps:
+  - Research superformula mathematics (2D/3D Gielis formula: r(θ) = (|cos(m*θ/4)/a|^n2 + |sin(m*θ/4)/b|^n3)^(-1/n1)).
+  - Create effect_supershape_bloom.h/cpp in libs/avs-effects-modern/src/render/ (or appropriate modern effects location).
+  - Implement parameter structure with m, n1, n2, n3, rot_speed, thickness, emissive (f32 types with specified ranges).
+  - Create vertex shader (shaders/supershape/super.vert.glsl) for shape generation.
+  - Create fragment shader (shaders/supershape/super.frag.glsl) with emissive bloom support.
+  - Implement GL 4.1+ backend path with proper shader compilation and uniform binding.
+  - Implement Vulkan 1.1+ backend path (or stub for future implementation).
+  - Add audio routing system - map audio.chroma[7] → m, audio.mel[2] → n2, audio.mel[20] → emissive.
+  - Implement real-time rotation using rot_speed parameter with time accumulation.
+  - Add thickness control for line/wireframe rendering modes.
+  - Support emissive parameter (0.0-3.0) for bloom-like glow effect.
+  - Create effect registration and metadata (id: "3d/supershape", version: 0.1, tags).
+  - Integrate with audio feature extraction (chroma, mel-frequency bands).
+  - Add tests with various parameter combinations (circle, star, flower patterns).
+  - Create example presets demonstrating audio-reactive morphing.
+acceptance_criteria:
+  - Supershape Bloom renders smooth parametric shapes matching superformula mathematics.
+  - Audio reactivity works - bass/chroma modulates m, mids modulate n2, highs modulate emissive.
+  - Real-time rotation animates smoothly at specified rot_speed (-2.0 to 2.0).
+  - Emissive parameter produces visible bloom/glow effect (additive blending or post-process).
+  - Effect runs at 60fps on GL 4.1+ hardware at 1920x1080.
+  - Backend selection works (GL preferred, Vulkan future-ready).
+  - Parameters validate within specified ranges (m: 0-12, n1/n2/n3: 0.1-8, thickness: 0.5-4, emissive: 0-3).
+  - Effect integrates with existing preset loading system.
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: modern_effects_tests with test_supershape_bloom.cpp using various m/n combinations."
+  - "Visual regression tests with known superformula patterns (circle m=4, star m=5, flower m=6)."
+  - "Audio reactivity test with synthetic audio input (sweep chroma/mel bands)."
+files_touched:
+  - libs/avs-effects-modern/include/avs/effects/render/effect_supershape_bloom.h
+  - libs/avs-effects-modern/src/render/effect_supershape_bloom.cpp
+  - resources/shaders/supershape/super.vert.glsl
+  - resources/shaders/supershape/super.frag.glsl
+  - libs/avs-render/src/backend/gl/GLShaderLoader.cpp
+  - libs/avs-render/src/backend/vk/VulkanPipeline.cpp (stub)
+  - libs/avs-effects-modern/src/prime/RegisterModernEffects.cpp
+  - libs/avs-audio/include/avs/audio/AudioFeatures.h (chroma/mel extraction)
+  - libs/avs-audio/src/AudioFeatures.cpp
+  - tests/modern/test_supershape_bloom.cpp
+  - tests/data/presets/supershape_*.json
+  - docs/effects/supershape_bloom.md
+  - CMakeLists.txt (shader installation rules)
+notes: >
+  This effect requires modern graphics API features (geometry shaders or instanced rendering
+  for efficient superformula evaluation). Audio features (chroma, mel bands) must be computed
+  by audio pipeline before effect render. Consider implementing as compute shader for best
+  performance on modern hardware.

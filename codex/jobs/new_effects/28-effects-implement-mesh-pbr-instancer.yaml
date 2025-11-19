@@ -1,0 +1,83 @@
+id: effects-implement-mesh-pbr-instancer
+title: Implement Mesh PBR Instancer with audio-driven instancing
+status: TODO
+labels: [effects, 3d, render, mesh, pbr, instancing, audio-reactive]
+depends_on:
+  - render-framebuffer-abstraction
+  - render-rendercontext-integration
+goal: >
+  Implement a PBR (physically-based rendering) mesh instancer that can render thousands
+  to hundreds of thousands of instances of parametric or asset-based geometry with
+  metallic-roughness materials. Supports built-in procedural meshes (supershape, torus knot)
+  and external assets (GLB, OBJ). Audio drives instance count, emissive intensity, and jitter.
+steps:
+  - Study PBR metallic-roughness workflow and lighting equations (Cook-Torrance BRDF).
+  - Research GPU instancing techniques (instanced arrays, instance divisor).
+  - Create effect_mesh_pbr.h/cpp in libs/avs-effects-modern/src/render/3d/.
+  - Implement mesh loader interface supporting multiple sources (builtin, GLB, OBJ).
+  - "Builtin meshes: implement supershape generator (Gielis formula, same as Supershape Bloom)."
+  - "Builtin meshes: implement torus knot generator (parametric (p,q)-torus knot)."
+  - "External assets: integrate GLB loader (glTF 2.0 binary format with materials)."
+  - "External assets: integrate OBJ loader (Wavefront OBJ with MTL materials)."
+  - Implement PBR material system - metallic, roughness, base color, emissive parameters.
+  - Implement vertex shader with instanced rendering (gl_InstanceID → transform matrix).
+  - Implement fragment shader with PBR lighting (diffuse + specular microfacet BRDF).
+  - Add support for key light (directional) and environment light (constant ambient or IBL).
+  - Implement instance distribution - grid, sphere surface, audio-driven jitter.
+  - Add audio modulation - RMS to emissive, mel bands to jitter, beat to instance count.
+  - Implement dynamic instance count (reallocate instance buffer when count changes).
+  - Optimize for high instance counts (frustum culling, LOD if needed).
+  - Add GL 4.2+ backend with instanced arrays extension.
+  - Add Vulkan 1.1+ backend with storage buffers for instance data.
+  - Create tests with various mesh sources and material configurations.
+  - Write example presets with audio-reactive instancing and emissive pulses.
+acceptance_criteria:
+  - PBR lighting produces realistic metallic and rough surface appearance.
+  - Instanced rendering supports 10k-200k instances at 60fps (depends on mesh complexity).
+  - Built-in supershape generator creates smooth parametric surfaces.
+  - Built-in torus knot generator creates correct (p,q)-knot topology.
+  - GLB loader imports meshes with materials (albedo, metallic, roughness maps if present).
+  - OBJ loader imports meshes with MTL materials (Kd, Ks, Ns parameters).
+  - Audio modulation works - loud bass increases emissive, beat adds instances, mids jitter positions.
+  - Instance count changes smoothly without frame hitches (async buffer reallocation).
+  - Material parameters (metallic 0-1, roughness 0-1, emissive 0-4) produce expected appearance.
+  - Jitter scale randomizes instance positions deterministically (seeded RNG).
+  - Lighting integrates with shared 3D lighting system (if used with Unified 3D Generator).
+  - Effect runs at 60fps with 10k instances at 1920x1080 on mid-tier GPU.
+  - External asset paths resolve correctly (relative to preset or absolute).
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: modern_3d_effects_tests with test_mesh_pbr.cpp for all mesh sources."
+  - "Golden frame tests with builtin meshes (deterministic)."
+  - "Asset loading tests with sample GLB/OBJ files."
+  - "Performance benchmarks measuring instance count vs frame time."
+files_touched:
+  - libs/avs-effects-modern/include/avs/effects/render/3d/effect_mesh_pbr.h
+  - libs/avs-effects-modern/src/render/3d/effect_mesh_pbr.cpp
+  - libs/avs-core/include/avs/core/MeshLoader.h
+  - libs/avs-core/src/MeshLoader.cpp
+  - libs/avs-core/include/avs/core/mesh/SupershapeGenerator.h
+  - libs/avs-core/src/mesh/SupershapeGenerator.cpp
+  - libs/avs-core/include/avs/core/mesh/TorusKnotGenerator.h
+  - libs/avs-core/src/mesh/TorusKnotGenerator.cpp
+  - libs/avs-core/include/avs/core/mesh/GLBLoader.h
+  - libs/avs-core/src/mesh/GLBLoader.cpp
+  - libs/avs-core/include/avs/core/mesh/OBJLoader.h
+  - libs/avs-core/src/mesh/OBJLoader.cpp
+  - resources/shaders/mesh/instanced.vert.glsl
+  - resources/shaders/mesh/pbr.frag.glsl
+  - resources/shaders/mesh/*.spv (Vulkan variants)
+  - libs/avs-effects-modern/src/prime/RegisterModernEffects.cpp
+  - tests/modern/test_mesh_pbr.cpp
+  - tests/data/meshes/test_mesh.glb
+  - tests/data/meshes/test_mesh.obj
+  - tests/data/presets/mesh_pbr_*.json
+  - docs/effects/mesh_pbr_instancer.md
+  - CMakeLists.txt (link mesh loading library, e.g., tinygltf, tinyobjloader)
+notes: >
+  PBR lighting can be simplified (no IBL, just directional + ambient) or full
+  (image-based lighting with environment maps). Start with simplified Cook-Torrance
+  BRDF. GLB loading requires tinygltf library; OBJ requires tinyobjloader or custom parser.
+  Instance buffer reallocation should be async to avoid stalls. Frustum culling is optional
+  but recommended for very high instance counts. Supershape generator shares math with
+  Supershape Bloom effect.

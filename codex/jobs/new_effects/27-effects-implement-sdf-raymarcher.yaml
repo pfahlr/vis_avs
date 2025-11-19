@@ -1,0 +1,65 @@
+id: effects-implement-sdf-raymarcher
+title: Implement SDF Raymarcher standalone effect
+status: TODO
+labels: [effects, 3d, render, shaders, sdf, raymarch, audio-reactive]
+depends_on:
+  - render-framebuffer-abstraction
+  - render-rendercontext-integration
+goal: >
+  Implement a standalone signed distance field (SDF) raymarcher effect that renders
+  procedural 3D shapes using fragment shader raymarching. Supports multiple SDF primitives,
+  domain warping, audio-driven parameter modulation, and palette-based coloring.
+steps:
+  - Study SDF raymarching techniques (sphere tracing, distance estimation).
+  - Research SDF primitives - mandelbulb, torus, metaballs, gyroid TPMS surfaces.
+  - Create effect_sdf_raymarch.h/cpp in libs/avs-effects-modern/src/render/3d/.
+  - Implement fragment shader with raymarching loop (march along ray, sample SDF, accumulate).
+  - Add multiple SDF shape functions (mandelbulb iteration, torus equation, metaball blending, gyroid).
+  - Implement domain repetition/tiling (infinite grid of shapes).
+  - Add domain warping (sin/noise-based coordinate perturbation before SDF sampling).
+  - Implement normal calculation via gradient (finite differences on SDF).
+  - Add palette-based shading (map distance/iteration count to color LUT).
+  - Support multiple color palettes (spectral, neon, heat, cool).
+  - Implement configurable march parameters (max_steps, step_scale for over/under-relaxation).
+  - Add normal epsilon tuning for quality vs performance tradeoff.
+  - Implement audio routing - bass to warp_amount, beat to repeat_period, LFO to step_scale.
+  - Optimize shader - early ray termination, adaptive step size, hoisted constants.
+  - Add GL 4.3+ backend with image_load_store for output.
+  - Add Vulkan 1.1+ backend (SPIR-V shaders, storage image writes).
+  - Create tests with golden frames for each shape type.
+  - Write example presets with audio-reactive domain warping.
+acceptance_criteria:
+  - Raymarcher renders all four shape types correctly (mandelbulb, torus, metaballs, gyroid).
+  - Domain repetition creates infinite tiling without artifacts.
+  - Domain warping produces smooth organic deformations driven by audio.
+  - Audio modulation works - bass warps space, beat pulses repetition, LFO varies march speed.
+  - Normal calculation produces smooth shading (no faceting at default epsilon).
+  - Palette shading maps correctly to all four color schemes.
+  - March parameters tune quality/performance (lower max_steps faster but noisier).
+  - Effect runs at 60fps at 1920x1080 on mid-tier GPU (RTX 3060 equivalent).
+  - No ray marching artifacts (banding, noise, missed surfaces) at default settings.
+  - Shader compiles on both GL and Vulkan backends without errors.
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: modern_3d_effects_tests with test_sdf_raymarch.cpp for all shape types."
+  - "Golden frame comparison tests with deterministic seeds."
+  - "Performance benchmark measuring raymarching cost per frame."
+files_touched:
+  - libs/avs-effects-modern/include/avs/effects/render/3d/effect_sdf_raymarch.h
+  - libs/avs-effects-modern/src/render/3d/effect_sdf_raymarch.cpp
+  - resources/shaders/sdf/sdf.frag.glsl
+  - resources/shaders/sdf/sdf.frag.spv
+  - resources/shaders/sdf/sdf_primitives.glsl (shared SDF functions)
+  - libs/avs-effects-modern/src/prime/RegisterModernEffects.cpp
+  - libs/avs-audio/include/avs/audio/LFO.h (low-frequency oscillator)
+  - libs/avs-audio/src/LFO.cpp
+  - tests/modern/test_sdf_raymarch.cpp
+  - tests/data/presets/sdf_*.json
+  - docs/effects/sdf_raymarcher.md
+  - CMakeLists.txt (shader compilation)
+notes: >
+  SDF raymarching is compute-intensive in fragment shader. Performance depends on
+  max_steps and scene complexity. Gyroid surfaces are computationally cheaper than
+  mandelbulb. Domain warping adds minimal cost but creates organic motion. Consider
+  adaptive step size based on distance to surface for better performance. LFO system
+  needs to generate smooth oscillators (sine, triangle, saw) synchronized to audio BPM.

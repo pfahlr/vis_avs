@@ -1,0 +1,76 @@
+id: effects-implement-spectro-terrain
+title: Implement Spectro Terrain 3D heightfield effect
+status: TODO
+labels: [effects, 3d, render, terrain, spectrogram, audio-reactive]
+depends_on:
+  - render-framebuffer-abstraction
+  - render-rendercontext-integration
+goal: >
+  Implement a 3D terrain heightfield effect that visualizes audio spectrum as a rolling
+  landscape. The spectrogram is extruded into a mesh with height mapped to frequency
+  magnitude, scrolling over time. Features orbit camera, color LUT mapping, fog, and
+  audio-driven camera tilt.
+steps:
+  - Study heightfield terrain rendering techniques (grid mesh, displacement mapping).
+  - Research spectrogram visualization and frequency band mapping.
+  - Create effect_spectro_terrain.h/cpp in libs/avs-effects-modern/src/render/3d/.
+  - Implement spectrogram buffer management - rolling window of FFT frames (circular buffer).
+  - Create terrain mesh generator - grid of vertices (bands × history_frames).
+  - Implement vertex shader with height displacement from spectrogram texture.
+  - Add scrolling animation - shift texture coordinates over time (scroll_speed parameter).
+  - Implement fragment shader with color LUT mapping (magnitude → color).
+  - Support multiple color LUTs (magma, viridis, inferno, turbo).
+  - Add orbit camera with configurable tilt angle (audio-driven camera tilt).
+  - Implement fog rendering (linear or exponential depth fog).
+  - Add audio modulation - spectral centroid to tilt, RMS to height scale, beat to scroll speed.
+  - Optimize mesh LOD - reduce vertex count for distant sections (optional).
+  - Support configurable frequency band count (16-256 bands across mesh width).
+  - Add GL 4.1+ backend with texture buffer for spectrogram data.
+  - Add Vulkan 1.1+ backend with storage image or texture array.
+  - Create tests with synthetic spectrogram input (deterministic).
+  - Write example presets demonstrating terrain scrolling with music.
+acceptance_criteria:
+  - Terrain mesh renders as smooth heightfield with audio spectrum as displacement.
+  - Spectrogram scrolls continuously at configurable speed (0.1-5.0 units/sec).
+  - Height scaling maps frequency magnitude to visible terrain peaks and valleys.
+  - Color LUT mapping produces visually distinct palettes (magma warm, viridis cool, turbo rainbow).
+  - Orbit camera circles terrain with smooth motion (fixed orbit or audio-driven).
+  - Camera tilt responds to spectral centroid (high freqs → look up, low freqs → look down).
+  - Fog creates depth perception and fades distant terrain smoothly.
+  - Frequency band count configurable (16 bands = blocky, 256 bands = smooth).
+  - Effect runs at 60fps at 1920x1080 with 64 bands × 120 frames history.
+  - Spectrogram buffer updates efficiently (circular buffer, no full copy per frame).
+  - Audio features (spectral centroid, RMS, beat) modulate parameters smoothly.
+  - Mesh topology has no gaps or tears (correct triangle strip or indexed triangles).
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: modern_3d_effects_tests with test_spectro_terrain.cpp."
+  - "Golden frame tests with synthetic spectrogram (swept sine, white noise)."
+  - "Performance benchmarks with various band counts (16, 64, 256)."
+files_touched:
+  - libs/avs-effects-modern/include/avs/effects/render/3d/effect_spectro_terrain.h
+  - libs/avs-effects-modern/src/render/3d/effect_spectro_terrain.cpp
+  - resources/shaders/terrain/terrain.vert.glsl
+  - resources/shaders/terrain/terrain.frag.glsl
+  - resources/shaders/terrain/*.spv (Vulkan variants)
+  - resources/luts/magma_lut.png
+  - resources/luts/viridis_lut.png
+  - resources/luts/inferno_lut.png
+  - resources/luts/turbo_lut.png
+  - libs/avs-audio/include/avs/audio/SpectrogramBuffer.h
+  - libs/avs-audio/src/SpectrogramBuffer.cpp
+  - libs/avs-audio/include/avs/audio/AudioFeatures.h (spectral centroid)
+  - libs/avs-audio/src/AudioFeatures.cpp
+  - libs/avs-effects-modern/src/prime/RegisterModernEffects.cpp
+  - tests/modern/test_spectro_terrain.cpp
+  - tests/data/presets/spectro_terrain_*.json
+  - docs/effects/spectro_terrain.md
+  - CMakeLists.txt (install LUT textures)
+notes: >
+  Spectrogram buffer should store N frames of FFT magnitudes in a 2D texture or buffer.
+  Scrolling is achieved by shifting texture coordinates or rotating circular buffer index.
+  Mesh can be dynamically generated or precomputed as an indexed grid. Color LUTs can be
+  1D textures (256 entries) or embedded gradients. Spectral centroid is weighted mean
+  frequency - calculate as Σ(freq[i] * mag[i]) / Σ(mag[i]). Terrain mesh benefits from
+  backface culling and depth testing. Consider adding wireframe overlay mode for debugging.
+  LOD is optional but helps with very high band counts (256+).

@@ -1,0 +1,83 @@
+id: effects-implement-compute-particle-field
+title: Implement GPU Compute Particle Field effect
+status: TODO
+labels: [effects, 3d, particles, compute, gpu, audio-reactive, high-performance]
+depends_on:
+  - render-framebuffer-abstraction
+  - render-rendercontext-integration
+goal: >
+  Implement a massively parallel GPU particle system using compute shaders to simulate
+  hundreds of thousands to millions of particles with audio-driven forces, noise fields,
+  and spawn behavior. Particles are rendered as point sprites or instanced quads with
+  audio-reactive coloring and size.
+steps:
+  - Study GPU compute shader particle systems and parallel simulation techniques.
+  - Research particle physics integration (Euler, Verlet, RK4 methods).
+  - Create effect_particle_field.h/cpp in libs/avs-effects-modern/src/render/3d/.
+  - Design particle data structure (position, velocity, life, color, size) in GPU buffer.
+  - Implement compute shader for particle advection (update positions, velocities each frame).
+  - Add force field system - audio-driven attraction/repulsion, curl noise, gravity.
+  - Implement audio force scaling - map RMS/mel bands to force magnitude and direction.
+  - Add 3D noise field (simplex/Perlin) for organic particle motion.
+  - Implement particle spawning - rate-controlled emission, audio-driven spawn bursts.
+  - Add particle lifecycle - age tracking, fadeout, respawn logic.
+  - Implement drag/damping for velocity decay (configurable 0.9-0.9999).
+  - Add particle-particle interactions (optional, expensive - neighbor search).
+  - Implement drawing system - point sprites (GL_POINTS) or instanced quads.
+  - Add audio-driven particle coloring (spectral mapping, palette LUTs).
+  - Support configurable particle counts (4k-16M) with dynamic buffer allocation.
+  - Optimize compute shader - coalesced memory access, shared memory for neighbors.
+  - Add GL 4.3+ backend with shader storage buffers (SSBO) and compute shaders.
+  - Add Vulkan 1.1+ backend with storage buffers and compute pipelines.
+  - Implement double-buffering for particle state (read from buffer A, write to buffer B).
+  - Add performance monitoring - particles simulated per second, memory usage.
+  - Create tests with various particle counts and force configurations.
+  - Write example presets demonstrating audio-reactive particle swarms.
+acceptance_criteria:
+  - Compute shader simulates 500k-1M particles at 60fps on mid-tier GPU (RTX 3060).
+  - High-end GPUs (RTX 4080+) handle 4M+ particles at 60fps.
+  - Audio forces modulate particle motion smoothly (no jitter or discontinuities).
+  - Noise field creates organic swirling motion (curl noise preferred for divergence-free flow).
+  - Spawn rate reacts to audio onsets - beat triggers particle bursts.
+  - Particle lifecycle works - particles fade out near end of life, respawn at origin.
+  - Drag parameter controls motion damping correctly (0.98 = quick decay, 0.999 = long trails).
+  - Drawing modes (points vs quads) render correctly with alpha blending.
+  - Particle size scaling works (0.5-6px range, audio-reactive size optional).
+  - Dynamic particle count changes without frame hitches (async buffer reallocation).
+  - Memory usage stays within bounds (16M particles ≈ 512MB GPU RAM with typical struct).
+  - Compute dispatch sizes optimize for GPU (workgroup size 64-256 threads).
+  - Double-buffering prevents read/write hazards (no flickering or corruption).
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: modern_3d_effects_tests with test_particle_field.cpp for various counts."
+  - "Performance benchmarks measuring particles per second vs GPU tier."
+  - "Memory usage tests verifying no leaks on particle count changes."
+  - "Audio reactivity tests with synthetic onset/force inputs."
+files_touched:
+  - libs/avs-effects-modern/include/avs/effects/render/3d/effect_particle_field.h
+  - libs/avs-effects-modern/src/render/3d/effect_particle_field.cpp
+  - resources/shaders/particles/advect.comp.glsl
+  - resources/shaders/particles/draw.vert.glsl
+  - resources/shaders/particles/draw.frag.glsl
+  - resources/shaders/particles/*.spv (Vulkan variants)
+  - resources/shaders/particles/noise3d.glsl (shared noise functions)
+  - libs/avs-render/src/backend/gl/GLComputeShader.h
+  - libs/avs-render/src/backend/gl/GLComputeShader.cpp
+  - libs/avs-render/src/backend/vk/VulkanComputePipeline.h
+  - libs/avs-render/src/backend/vk/VulkanComputePipeline.cpp
+  - libs/avs-audio/include/avs/audio/AudioFeatures.h (onset detection)
+  - libs/avs-audio/src/AudioFeatures.cpp
+  - libs/avs-effects-modern/src/prime/RegisterModernEffects.cpp
+  - tests/modern/test_particle_field.cpp
+  - tests/data/presets/particle_field_*.json
+  - docs/effects/compute_particle_field.md
+  - CMakeLists.txt (compute shader support detection)
+notes: >
+  Compute shaders require GL 4.3+ or Vulkan 1.1+. For older hardware, fall back to
+  vertex shader particle simulation (slower, lower counts). Curl noise is preferred over
+  Perlin for particle advection as it's divergence-free (no compression/expansion artifacts).
+  Workgroup size should match GPU warp/wavefront size (64 for AMD, 32 for NVIDIA, use 64
+  or 256 as compromise). Particle-particle interactions (flocking, collision) are O(n²)
+  without spatial acceleration structure - consider kd-tree or grid-based neighbor search
+  if implementing. Audio onset detection should have configurable threshold and cooldown
+  to avoid false triggers.

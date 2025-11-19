@@ -1,0 +1,180 @@
+id: preset-editor-controls-modulation
+title: Implement modulation matrix and controls mapping system with MIDI support
+status: TODO
+labels: [editor, modulation, controls, midi, performance]
+depends_on:
+  - preset-editor-inspector-autogen
+  - audio-features-extension
+goal: >
+  Implement the modulation matrix panel for routing audio features to effect parameters,
+  and the controls mapping system for macro/XY/button banks with MIDI CC integration.
+  Enables audio-reactive visualizations and live performance control via hardware controllers
+  (Akai APC, Novation Launchpad, MIDI keyboards). All mappings stored in preset for recall.
+steps:
+  - Design ModulationMatrix class managing collection of ModulationRoute objects.
+  - Implement ModMatrixPanel UI with table/grid displaying all routes (source, dest, amount, curve, lag).
+  - Create route addition UI - dropdowns for source (audio features), dest (node.param), amount slider.
+  - Add audio feature source browser - hierarchical tree (Levels, Spectral, Tempo, Pitch, Stereo).
+  - Implement destination param picker - tree of nodes with expandable params, checkboxes for modulation targets.
+  - Add curve selector - dropdown with curve types (linear, log, exp, s-curve), preview visualization.
+  - Implement lag/smoothing control - slider for lag_ms (0-500ms), preview of smoothing response.
+  - Create amount control - slider for amount (-2.0 to 2.0), negative inverts modulation direction.
+  - Add when clause editor - text input for conditional modulation (e.g., "implementation == 'sdf'").
+  - Implement route deletion - delete button or right-click context menu.
+  - Add route enable/disable toggle - checkbox to temporarily disable route without deleting.
+  - Create drag-and-drop - drag param from inspector to modulation matrix to create route.
+  - Implement route reordering - drag routes up/down to change evaluation order (if order matters).
+  - Add route duplication - right-click duplicate to create copy for editing.
+  - Create audio feature preview - real-time meters showing current values of sources.
+  - Implement modulation preview - visualize modulation amount applied to param (before/after values).
+  - Add route conflict detection - warn if multiple routes target same param (last wins or additive?).
+  - Design ControlBank class - manages macro knobs, XY pads, button banks.
+  - Implement ControlsPanel UI with multiple pages (tabs), each page has 8-16 control slots.
+  - Create macro knobs - virtual knobs mapped to params, display current value and range.
+  - Add XY pads - 2D control surfaces mapping to two params simultaneously (e.g., cam.orbit_phi/theta).
+  - Implement button banks - grid of buttons for triggering events (future: trigger scenes, effects on/off).
+  - Create control-to-param mapping UI - drag param from inspector to control slot.
+  - Add range remapping - map control range (0-1) to param range (custom min/max), with curve.
+  - Implement control labels - editable text labels for each control (stored in preset).
+  - Add MIDI learn - click "Learn" button, move MIDI controller, auto-assigns CC to control.
+  - Implement MIDI CC input handling - listen for MIDI CC messages, update mapped controls.
+  - Create MIDI device selector - dropdown listing available MIDI input devices (via RtMidi or similar).
+  - Add MIDI mapping visualization - show which CC is mapped to which control (colored indicators).
+  - Implement MIDI feedback - send CC values back to controller for LED updates (optional).
+  - Create control pages system - multiple pages (1-8), switch via tabs or MIDI program change.
+  - Add page-specific mappings - each page can have different param mappings for same controls.
+  - Implement control lock/unlock - prevent accidental changes during performance.
+  - Create control automation - record control changes over time (future: timeline automation).
+  - Add preset templates - save/load control layouts separately from presets (reusable across presets).
+  - Implement modulation+control interaction - controls override modulation temporarily (relative mode).
+  - Create visual feedback - controls light up when moved, params highlight when controlled.
+  - Add control smoothing - optional lag on control changes to prevent abrupt jumps.
+  - Implement MIDI velocity sensitivity - button velocity maps to amount (for velocity-sensitive pads).
+  - Create OSC support (optional) - receive Open Sound Control messages for control (TouchOSC, etc.).
+  - Document modulation system design and best practices.
+  - Create tutorial presets demonstrating modulation (bass → exposure, beat → color shift).
+acceptance_criteria:
+  - ModMatrixPanel displays all modulation routes in table with columns (source, dest, amount, curve, lag, when, enabled).
+  - Audio feature source browser shows all 50+ features organized by category (Levels, Spectral, Tempo, etc.).
+  - Destination param picker shows all nodes with modulation_targets from descriptors (non-modulatable params grayed out).
+  - Route creation works - select source, select dest, set amount, add route (appears in table).
+  - Curve visualization shows shape of curve (linear, log, exp, s) with preview graph.
+  - Lag control shows smoothing preview (step input → smoothed output visualization).
+  - Amount slider supports negative values (inverts modulation) and >1.0 (amplifies).
+  - When clause editor validates expressions and highlights syntax errors.
+  - Route deletion removes route from matrix and preset (with undo/redo).
+  - Drag param from inspector to matrix creates route with default settings.
+  - Audio feature preview meters show real-time values (bars, waveforms, text readouts).
+  - Modulation preview shows param value changing in response to audio feature (live visualization).
+  - Route conflict detection warns when multiple routes target same param (configurable behavior).
+  - ControlsPanel displays macro knobs with labels, current values, and visual feedback (knob position).
+  - XY pads respond to mouse drag, map X/Y to two params, show crosshair and grid.
+  - Control-to-param mapping works - drag param to control slot, configure range and curve.
+  - Range remapping maps control 0-1 to param custom range (e.g., 0-1 → 50-8000 Hz).
+  - MIDI learn assigns CC to control (move MIDI knob → CC detected and mapped).
+  - MIDI CC input updates controls in real-time (move hardware knob → virtual knob moves).
+  - MIDI device selector lists available devices, connects to selected device.
+  - Control pages switch via tabs, each page has independent mappings (same controls, different targets).
+  - Control labels display and edit correctly (click to rename).
+  - Control lock prevents accidental changes (locked controls grayed out, don't respond to input).
+  - Modulation routes evaluate every frame at audio control rate (500 Hz) without performance issues.
+  - Controls respond with <10ms latency from MIDI input to param change.
+  - All mappings serialize to preset and restore correctly on load.
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "Manual testing: Create modulation routes, play audio, verify params change."
+  - "MIDI testing: Connect MIDI controller, learn CCs, move knobs, verify control updates."
+  - "Unit tests for ModulationMatrix, ControlBank, MIDI CC parsing."
+  - "Performance tests: 100+ modulation routes at 500 Hz, measure CPU usage."
+files_touched:
+  - apps/avs_studio/ui/ModMatrixPanel.cpp (full implementation)
+  - apps/avs_studio/ui/ControlsPanel.cpp (full implementation)
+  - apps/avs_studio/ui/widgets/AudioFeatureMeter.h
+  - apps/avs_studio/ui/widgets/AudioFeatureMeter.cpp
+  - apps/avs_studio/ui/widgets/CurveEditor.h
+  - apps/avs_studio/ui/widgets/CurveEditor.cpp
+  - apps/avs_studio/ui/widgets/MacroKnob.h
+  - apps/avs_studio/ui/widgets/MacroKnob.cpp
+  - apps/avs_studio/ui/widgets/XYPadControl.h
+  - apps/avs_studio/ui/widgets/XYPadControl.cpp
+  - libs/avs-studio/include/avs/studio/ModulationMatrix.h
+  - libs/avs-studio/src/ModulationMatrix.cpp
+  - libs/avs-studio/include/avs/studio/ControlBank.h
+  - libs/avs-studio/src/ControlBank.cpp
+  - libs/avs-studio/include/avs/studio/MIDIInput.h
+  - libs/avs-studio/src/MIDIInput.cpp (RtMidi wrapper)
+  - libs/avs-studio/include/avs/studio/MIDILearn.h
+  - libs/avs-studio/src/MIDILearn.cpp
+  - libs/avs-studio/include/avs/studio/ControlPageManager.h
+  - libs/avs-studio/src/ControlPageManager.cpp
+  - apps/avs_studio/commands/AddModulationCommand.h
+  - apps/avs_studio/commands/RemoveModulationCommand.h
+  - apps/avs_studio/commands/MapControlCommand.h
+  - apps/avs_studio/commands/UnmapControlCommand.h
+  - tests/studio/test_modulation_matrix.cpp
+  - tests/studio/test_control_bank.cpp
+  - tests/studio/test_midi_input.cpp
+  - tests/studio/test_midi_learn.cpp
+  - presets/examples/modulation_tutorial.avx.yaml
+  - presets/examples/midi_performance.avx.yaml
+  - presets/templates/control_layout_8macro.yaml
+  - presets/templates/control_layout_4xy.yaml
+  - docs/studio/modulation_system.md
+  - docs/studio/midi_integration.md
+  - docs/studio/performance_controls.md
+  - CMakeLists.txt (add RtMidi dependency)
+notes: >
+  Modulation system architecture:
+  - Audio features computed at 500 Hz control rate (from audio-features-extension task).
+  - Modulation routes evaluated every control frame (500 Hz), outputs applied to params.
+  - Route evaluation: value = source_value * amount, apply curve, apply lag, clamp to param range.
+  - Multiple routes to same param: additive or last-wins? Consider making configurable per param.
+  - When clauses enable conditional modulation (check condition every frame, expensive if many routes).
+
+  Curve types implementation:
+  - Linear: y = x (identity)
+  - Log: y = log(x+eps) / log(max) (logarithmic scale, good for frequency)
+  - Exp: y = (exp(x) - 1) / (exp(1) - 1) (exponential scale, good for gain)
+  - S-curve: y = smoothstep(x) = 3x² - 2x³ (smooth ease-in-ease-out)
+  - Custom: Bezier curve or lookup table (future enhancement)
+
+  Lag/smoothing implementation:
+  - One-pole IIR filter: y[n] = alpha * x[n] + (1-alpha) * y[n-1]
+  - Alpha from lag_ms: alpha = 1 - exp(-dt / tau), tau = lag_ms / 1000
+  - Attack/release: different time constants for rising vs falling (future)
+
+  MIDI integration:
+  - RtMidi (MIT license): cross-platform MIDI library, supports Windows/macOS/Linux.
+  - MIDI CC range: 0-127 (7-bit). Map to control 0.0-1.0 range: value = cc / 127.0.
+  - MIDI learn: enter learn mode, wait for CC message, capture CC number and assign.
+  - MIDI feedback: send CC back to controller (e.g., Launchpad LEDs). Query device capabilities first.
+  - MIDI channel filtering: listen to specific channel (1-16) or omni (all channels).
+
+  Performance optimization:
+  - Modulation evaluation is hot path (500 Hz * N routes). Profile and optimize.
+  - Curve evaluation: use lookup tables for non-linear curves (pre-compute 256 values).
+  - Lag filter: simple IIR is fast (one multiply, one add per sample).
+  - When clauses: parse once at route creation, cache AST, evaluate per frame (expensive).
+  - Consider SIMD: evaluate multiple routes in parallel (AVX2 can do 8 floats at once).
+
+  Control bank design:
+  - Macro knobs: 8-16 per page, most common for performance (map to key params).
+  - XY pads: 2-4 per page, good for 2D params (camera orbit, color shifts).
+  - Buttons: 8-16 per page, for triggering (future: scenes, effect enable/disable).
+  - Pages: 4-8 pages switchable via tabs or MIDI program change (PC 0-7 → pages 1-8).
+
+  Range remapping:
+  - Control output 0-1, param range arbitrary (e.g., 20-20000 Hz for frequency).
+  - Remap: param_value = param_min + (control_value * (param_max - param_min))
+  - Apply curve before remap for non-linear scaling (log scale for frequency).
+
+  OSC support (optional, future):
+  - Open Sound Control: UDP-based protocol for control (TouchOSC, Lemur apps).
+  - Address pattern: /avs/macro/1, /avs/xy/1/x, etc.
+  - Type tags: f (float32), i (int32), s (string).
+  - Libraries: oscpack (zlib), tinyosc (public domain).
+
+  Security considerations:
+  - MIDI input is untrusted - validate CC numbers, channel, values.
+  - Don't crash on malformed MIDI messages (RtMidi handles most, but defensive coding).
+  - OSC is UDP, no authentication - consider adding password or IP whitelist if exposed to network.

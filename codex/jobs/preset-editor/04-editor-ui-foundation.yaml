@@ -1,0 +1,185 @@
+id: preset-editor-ui-foundation
+title: Implement AVS Studio editor with ImGui panels, node graph, and preview
+status: TODO
+labels: [editor, ui, imgui, sdl, application]
+depends_on:
+  - preset-editor-effect-catalog
+  - preset-editor-preset-format
+  - render-rendercontext-integration
+goal: >
+  Create the AVS Studio desktop application (apps/avs_studio/) using SDL2/SDL3 + Dear ImGui.
+  Implements core editor UI panels - Library (effect browser), Graph (node editor with ImNodes),
+  Inspector (parameter controls), Preview (live render), Console (logs), Transport (playback).
+  Provides foundation for schema-driven UI generation, undo/redo, and real-time visualization.
+steps:
+  - Set up AVS Studio application skeleton with SDL2/SDL3 window and GL/Vulkan context.
+  - Integrate Dear ImGui (latest docking branch) for UI framework.
+  - Integrate ImNodes for node graph editor visualization.
+  - Implement main window with dockable panels (ImGui docking API).
+  - Create MenuBar - File (New/Open/Save/Export), Edit (Undo/Redo/Prefs), View (Panels), Help.
+  - Implement LibraryPanel - effect catalog browser with categories, search, filtering.
+  - Display effects as tree view (Legacy/Modern categories) or grid view with icons.
+  - Add search bar with fuzzy matching (filter by name, tag, category).
+  - Implement drag-and-drop from library to graph (create new node).
+  - Create GraphPanel - node graph editor using ImNodes library.
+  - Display effect nodes as boxes with input/output pins (ImNodes style).
+  - Implement node creation (from library drag, or right-click context menu).
+  - Add connection drawing (drag from output pin to input pin).
+  - Implement node selection (single, multi with Shift/Ctrl).
+  - Add node positioning (drag to move, grid snap optional).
+  - Create InspectorPanel - displays properties of selected node(s).
+  - Show effect name, enabled checkbox, delete button at top.
+  - Display parameters (placeholder - will be auto-generated in task 05).
+  - Create PreviewPanel - live rendering viewport showing visualization output.
+  - Integrate with rendering backend (GL/Vulkan) for real-time preview.
+  - Add preview controls - play/pause, reset, FPS display, resolution selector.
+  - Implement viewport resizing maintaining aspect ratio.
+  - Create ConsolePanel - logs, errors, warnings from validation and rendering.
+  - Implement log levels (Debug/Info/Warning/Error) with color coding.
+  - Add log filtering and search.
+  - Create TransportPanel - audio playback controls and timeline.
+  - Display audio waveform or spectrogram (optional, nice-to-have).
+  - Add play/pause/stop buttons, time display, audio device selector.
+  - Implement ModMatrixPanel placeholder (full implementation in task 06).
+  - Create ControlsPanel placeholder (full implementation in task 06).
+  - Implement panel visibility toggles (View menu checkboxes).
+  - Add ImGui layout persistence (save window sizes, positions, docking state).
+  - Create EditorState class managing current preset, selection, undo stack.
+  - Implement undo/redo system using command pattern (Command base class, CommandStack).
+  - Define commands - AddNode, RemoveNode, SetParam, Connect, Disconnect, etc.
+  - Add undo/redo to Edit menu (Ctrl+Z, Ctrl+Shift+Z).
+  - Implement selection state - track selected nodes, copy/paste support (future).
+  - Create PresetManager - handles New/Open/Save with dirty flag tracking.
+  - Add "unsaved changes" dialog on quit or open (if dirty flag set).
+  - Implement Save vs Save As logic with file picker dialog (ImGui file dialog or native).
+  - Add recent files list in File menu (store in user prefs).
+  - Create application preferences system (JSON config file in user config dir).
+  - Add preference options - theme (dark/light), font size, grid snap, auto-save interval.
+  - Implement preference dialog with tabs (General, Editor, Rendering, Audio).
+  - Create keyboard shortcut system - rebindable hotkeys stored in prefs.
+  - Add default shortcuts - Ctrl+N (new), Ctrl+O (open), Ctrl+S (save), Delete (delete node), etc.
+  - Implement ImGui styling - custom colors, fonts (load TTF), icons (Font Awesome or similar).
+  - Add application icon and window title (AVS Studio - preset_name [modified]).
+  - Create splash screen on startup (optional, shows while loading catalog).
+  - Implement graceful shutdown - save layout, prefs, close resources cleanly.
+  - Add error handling - catch exceptions, show user-friendly dialogs, log details.
+acceptance_criteria:
+  - AVS Studio launches and shows main window with docked panels (Library, Graph, Inspector, Preview, Console).
+  - LibraryPanel displays all effects from catalog organized by category.
+  - Search bar filters effects in real-time with fuzzy matching.
+  - Drag effect from library to graph creates new node at drop position.
+  - GraphPanel displays nodes as boxes with input/output pins (ImNodes visualization).
+  - Nodes can be dragged to reposition, connections drawn between pins.
+  - Node selection works (single click, multi-select with Shift/Ctrl, box select).
+  - InspectorPanel shows selected node properties (name, enabled checkbox, placeholder params).
+  - PreviewPanel renders live visualization output at 60fps (1920x1080 or configurable).
+  - Preview controls (play/pause/reset) work correctly, FPS displays accurate frame time.
+  - ConsolePanel logs validation errors, warnings, and info messages with color coding.
+  - Undo/redo works for node add/remove operations (Ctrl+Z undoes, Ctrl+Shift+Z redoes).
+  - Undo stack limits to 100 commands (or configurable) to prevent memory growth.
+  - New/Open/Save commands work with file picker dialog (ImGui or native).
+  - "Unsaved changes" dialog appears on quit if preset modified.
+  - Recent files list shows last 10 opened presets in File menu.
+  - Preferences dialog allows customization of theme, font size, shortcuts.
+  - Keyboard shortcuts execute correct commands (Ctrl+S saves, Delete removes selected node).
+  - Panel visibility toggles work (View menu checkboxes show/hide panels).
+  - ImGui layout persists across sessions (window sizes, positions, docking state saved to imgui.ini).
+  - Application handles errors gracefully (invalid preset shows error dialog, doesn't crash).
+  - Application shuts down cleanly (saves prefs, layout, closes SDL/GL/Vulkan contexts).
+  - All required tests execute via ctest and pass (integration tests for basic workflows).
+test_hook:
+  - "Manual testing: Launch editor, create nodes, connect, undo/redo, save/load."
+  - "Integration tests: EditorState tests, CommandStack tests, PresetManager tests."
+  - "UI tests: Verify panels visible, drag-drop creates nodes, selection works."
+files_touched:
+  - apps/avs_studio/main.cpp
+  - apps/avs_studio/StudioApp.h
+  - apps/avs_studio/StudioApp.cpp
+  - apps/avs_studio/ui/MenuBar.h
+  - apps/avs_studio/ui/MenuBar.cpp
+  - apps/avs_studio/ui/LibraryPanel.h
+  - apps/avs_studio/ui/LibraryPanel.cpp
+  - apps/avs_studio/ui/GraphPanel.h
+  - apps/avs_studio/ui/GraphPanel.cpp
+  - apps/avs_studio/ui/InspectorPanel.h
+  - apps/avs_studio/ui/InspectorPanel.cpp
+  - apps/avs_studio/ui/PreviewPanel.h
+  - apps/avs_studio/ui/PreviewPanel.cpp
+  - apps/avs_studio/ui/ConsolePanel.h
+  - apps/avs_studio/ui/ConsolePanel.cpp
+  - apps/avs_studio/ui/TransportPanel.h
+  - apps/avs_studio/ui/TransportPanel.cpp
+  - apps/avs_studio/ui/ModMatrixPanel.h (stub)
+  - apps/avs_studio/ui/ControlsPanel.h (stub)
+  - apps/avs_studio/state/EditorState.h
+  - apps/avs_studio/state/EditorState.cpp
+  - apps/avs_studio/state/CommandStack.h
+  - apps/avs_studio/state/CommandStack.cpp
+  - apps/avs_studio/commands/Command.h (base class)
+  - apps/avs_studio/commands/AddNodeCommand.h
+  - apps/avs_studio/commands/RemoveNodeCommand.h
+  - apps/avs_studio/commands/SetParamCommand.h
+  - apps/avs_studio/commands/ConnectCommand.h
+  - apps/avs_studio/commands/DisconnectCommand.h
+  - apps/avs_studio/PresetManager.h
+  - apps/avs_studio/PresetManager.cpp
+  - apps/avs_studio/Preferences.h
+  - apps/avs_studio/Preferences.cpp
+  - apps/avs_studio/KeyboardShortcuts.h
+  - apps/avs_studio/KeyboardShortcuts.cpp
+  - apps/avs_studio/resources/fonts/Roboto-Regular.ttf
+  - apps/avs_studio/resources/fonts/FontAwesome.ttf
+  - apps/avs_studio/resources/icons/avs_studio.ico (or .png)
+  - tests/studio/test_editor_state.cpp
+  - tests/studio/test_command_stack.cpp
+  - tests/studio/test_preset_manager.cpp
+  - docs/studio/editor_ui_guide.md
+  - docs/studio/keyboard_shortcuts.md
+  - CMakeLists.txt (add SDL2/SDL3, Dear ImGui, ImNodes, ImGuiFileDialog dependencies)
+notes: >
+  Library choices and rationale:
+  - Dear ImGui (MIT): Industry-standard immediate-mode GUI for tools/editors. Docking branch
+    essential for multi-panel layout. Very active development, excellent documentation.
+  - ImNodes (MIT): Node graph visualization built on ImGui. Clean API, supports custom styling.
+    Alternative: imnodes or custom implementation.
+  - SDL2/SDL3 (zlib): Cross-platform windowing/input. SDL3 has better Vulkan support, but
+    SDL2 more stable. Start with SDL2, migrate to SDL3 when stable.
+  - ImGuiFileDialog or nativefiledialog: File picker. Native dialogs better UX but add dependency.
+    ImGuiFileDialog is pure ImGui, cross-platform, but less polished.
+
+  Immediate-mode GUI principles:
+  - UI state is transient (recreated every frame). Persistent state in EditorState.
+  - No widget pointers/callbacks - just if(Button("X")) { action(); }.
+  - Fast iteration - change code, compile, see result (no designer tools needed).
+  - Great for tools/editors, less ideal for game UI (retained mode better for mobile).
+
+  Undo/redo architecture:
+  - Command pattern: each action encapsulated as Command object with execute() and undo().
+  - CommandStack: vector of Commands with current index (for undo/redo traversal).
+  - Commands must be reversible - store old and new values.
+  - Macro commands group multiple commands (e.g., delete node deletes connections too).
+  - Memory management: limit stack depth (100-1000 commands), discard old commands.
+
+  Performance considerations:
+  - ImGui rendering is fast (thousands of widgets at 60fps), but heavy nesting slows down.
+  - Node graph with 100+ nodes may lag - consider occlusion culling (only draw visible nodes).
+  - Preview rendering can be expensive - run in separate thread, sync framebuffer to UI thread.
+  - Hot-reload catalog: don't rebuild entire UI, just update affected widgets (descriptor changed).
+
+  Cross-platform concerns:
+  - File paths: use std::filesystem (C++17) or boost::filesystem for portability.
+  - User config dir: Linux ~/.config/avs_studio/, macOS ~/Library/Application Support/AVS Studio/,
+    Windows %APPDATA%/AVS Studio/.
+  - Font rendering: bundle TTF fonts, don't rely on system fonts (inconsistent across platforms).
+  - High-DPI displays: ImGui has DPI scaling support, but needs explicit handling (SDL_WINDOW_ALLOW_HIGHDPI).
+
+  Accessibility (nice-to-have):
+  - Keyboard navigation: Tab to focus widgets, Enter to activate, arrow keys to navigate.
+  - Tooltips: hover over widgets shows description (from effect descriptor).
+  - Screen reader support: ImGui has limited accessibility, may need custom implementation.
+
+  Testing strategy:
+  - Unit tests for EditorState, CommandStack, PresetManager (headless, no UI).
+  - Integration tests: launch app with test preset, execute commands, verify state.
+  - UI tests challenging (ImGui no built-in test framework) - manual testing or custom harness.
+  - Consider fuzzing: random command sequences should not crash (robustness testing).

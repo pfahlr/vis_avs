@@ -1,0 +1,160 @@
+id: audio-features-extension
+title: Implement comprehensive audio features extension system
+status: TODO
+labels: [audio, dsp, features, real-time, high-priority]
+depends_on:
+  - audio-resampling-negotiation
+  - engine-eel-scripted-parity
+goal: >
+  Extend the audio analysis pipeline with rich, real-time audio descriptors beyond
+  classic AVS (576 FFT bins + oscilloscope + beat gate). Provides 50+ features including
+  spectral shape, loudness, onset/tempo/beat, pitch/harmony/chroma, timbre (MFCCs),
+  stereo imaging, and event detection. All features are additive and optional, preserving
+  strict AVS compatibility. Features are normalized, smoothed, and published via lock-free
+  transport at 500 Hz control rate for consumption by effects and modulation system.
+steps:
+  - Design AudioFeaturesFrame struct (C++ ABI) containing all scalar/vector/event features.
+  - Implement lock-free ring buffer transport (audio thread → render thread, 8k frame capacity).
+  - Create clocking system - 500 Hz control rate with configurable heavy feature decimation (10 Hz, 2 Hz).
+  - Implement STFT infrastructure (2048 window, 512 hop, Hann) with configurable parameters.
+  - Add backend selection system for optional DSP libraries (FFTW/KissFFT/PFFFT, aubio, libebur128, WebRTC VAD).
+  - Implement license checking system for backend libraries (LGPL/GPL compatibility warnings).
+  - "Feature Category 1: Time-domain levels - RMS, peak, crest factor, dynamic range, zero crossing rate."
+  - "Feature Category 2: Loudness - EBU R128 momentary/short-term LUFS, true peak (BS.1770)."
+  - "Feature Category 3: Spectral shape - centroid, bandwidth, rolloff (85%/95%), flatness, flux, slope, decrease, entropy, crest."
+  - "Feature Category 4: Filterbanks - Mel (64 bands), Bark (24 bands), ERB (40 bands), octave bands (10)."
+  - "Feature Category 5: Onsets/tempo/beat - onset strength, onset events, BPM tracking, beat phase (0-1), downbeat detection, meter estimation, swing."
+  - "Feature Category 6: Pitch/harmony - YIN fundamental F0, confidence, HPSS (harmonic/percussive separation), HPCP chroma (12D), key detection, mode (major/minor), chord estimation."
+  - "Feature Category 7: Timbre - 13 MFCCs + deltas + delta-deltas, spectral contrast (6 bands), Tonnetz (6D), optional embeddings."
+  - "Feature Category 8: Stereo/spatial - M/S energy, stereo width, interchannel correlation, ILD/IPD per band (16 bands), optional DOA (mic arrays)."
+  - "Feature Category 9: Phase/partials - spectral peaks (top 32), instantaneous frequency per band, group delay."
+  - "Feature Category 10: Events/classifiers - kick/snare/hihat heuristics, silence detection, VAD (speech), novelty segmentation."
+  - Implement normalization strategies - min/max fixed, z-score (online mean/std), perceptual dB scaling.
+  - Implement smoothing filters - one-pole IIR (configurable alpha_ms), attack/release envelope followers.
+  - Apply default normalization/smoothing to all features (0-1 range for scalars, events as boolean).
+  - Create DSL bindings for EEL2/scripting - audio.rms, audio.mel[i], audio.chroma[i], audio.bpm, etc.
+  - Implement helper functions - getmel(band, width), getchroma(bin), getfeat(name), is_onset(), is_beat(div), pitch(), key().
+  - Create modulation matrix source registration - publish all scalar/vector features as mod sources.
+  - Implement performance tier system (low/mid/high) with automatic quality/compute tradeoffs.
+  - Add validation tests - sine sweep centroid tracking, step gain RMS, click onset timing, tempo phase lock.
+  - Implement graceful degradation - publish zeros/NaNs for features when backend missing, emit warnings.
+  - Create comprehensive documentation for all 50+ features with units, ranges, and use cases.
+  - Optimize for real-time constraints - compute budget <1.5ms per control frame on mid-tier hardware.
+  - Add threading discipline - audio thread computes and enqueues non-blocking, render thread dequeues latest ≤ video time.
+  - Preserve legacy compatibility - getspec/getosc/isBeat unchanged, new features gated by feature_bus_enabled flag.
+acceptance_criteria:
+  - Audio features pipeline computes all enabled features at 500 Hz control rate without dropouts.
+  - Lock-free transport delivers features to render thread with <2ms latency (sample-accurate timestamps).
+  - All spectral features (centroid, bandwidth, rolloff, etc.) track correctly on test signals (sine sweeps, noise).
+  - Mel/Bark/ERB/octave filterbanks produce expected energy distributions across frequency ranges.
+  - Onset detection fires within ±10ms of ground truth on click tracks and drum samples.
+  - Tempo tracking locks to BPM within ±1 BPM on drum loops (60-200 BPM range).
+  - Beat phase advances uniformly 0→1 per beat, synchronized to onset events.
+  - Pitch tracking (YIN) extracts F0 within ±5 cents on monophonic pitched audio (40-1000 Hz range).
+  - Chroma (HPCP) 12D vectors represent pitch class distribution correctly.
+  - Key detection identifies correct key/mode with >80% confidence on tonal music.
+  - MFCCs (13 coefficients + deltas) capture timbral characteristics for genre/instrument discrimination.
+  - HPSS separates harmonic vs percussive energy components with >10dB separation on mixed content.
+  - EBU R128 loudness (LUFS momentary/short-term) matches reference implementation within ±0.5 LU.
+  - Stereo features (width, correlation, M/S energy) respond correctly to stereo test signals.
+  - Normalization strategies produce 0-1 range for all scalars (no overflow or NaN).
+  - Smoothing filters prevent jitter - one-pole and attack/release produce stable outputs.
+  - DSL bindings accessible from EEL2 scripts - audio.rms, audio.mel[32], audio.chroma[7] all readable.
+  - Modulation system can route any feature to effect parameters (test with 10+ simultaneous mappings).
+  - Performance tiers switch cleanly - low tier runs on Raspberry Pi 4, high tier uses full feature set.
+  - Total compute budget <1.5ms per control frame (2ms @ 500 Hz) on mid-tier CPU (Ryzen 5 5600 / i5-12400).
+  - Heavy features (chroma, key, HPSS) decimate to 10 Hz without blocking main feature computation.
+  - Very heavy features (embeddings, separation) decimate to 2 Hz or disabled by default.
+  - Backend fallback works - missing libebur128 disables LUFS, missing aubio disables pitch/tempo.
+  - Legacy compatibility maintained - existing presets using getspec/getosc/isBeat work unchanged.
+  - Validation tests pass - centroid tracking >0.98 correlation, onset timing ±10ms, tempo lock ±1 BPM.
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: audio_features_tests with test_audio_features.cpp covering all feature categories."
+  - "Validation tests with known signals (sine sweeps, click tracks, drum loops, tonal music)."
+  - "Performance benchmarks measuring compute time per feature and total budget per control frame."
+  - "Real-time stability tests - 24-hour run with live audio input, verify no dropouts or memory leaks."
+  - "Backend availability tests - verify graceful degradation when optional libraries missing."
+files_touched:
+  - libs/avs-audio/include/avs/audio/AudioFeaturesFrame.h
+  - libs/avs-audio/include/avs/audio/AudioFeaturesPipeline.h
+  - libs/avs-audio/src/AudioFeaturesPipeline.cpp
+  - libs/avs-audio/include/avs/audio/FeatureTransport.h
+  - libs/avs-audio/src/FeatureTransport.cpp (lock-free ring buffer)
+  - libs/avs-audio/include/avs/audio/features/TimeDomain.h
+  - libs/avs-audio/src/features/TimeDomain.cpp (RMS, peak, crest, ZCR)
+  - libs/avs-audio/include/avs/audio/features/Loudness.h
+  - libs/avs-audio/src/features/Loudness.cpp (EBU R128 via libebur128)
+  - libs/avs-audio/include/avs/audio/features/SpectralShape.h
+  - libs/avs-audio/src/features/SpectralShape.cpp (centroid, bandwidth, rolloff, flatness, flux, etc.)
+  - libs/avs-audio/include/avs/audio/features/Filterbanks.h
+  - libs/avs-audio/src/features/Filterbanks.cpp (Mel, Bark, ERB, octave)
+  - libs/avs-audio/include/avs/audio/features/OnsetTempo.h
+  - libs/avs-audio/src/features/OnsetTempo.cpp (onset strength, tempo, beat, via aubio)
+  - libs/avs-audio/include/avs/audio/features/Pitch.h
+  - libs/avs-audio/src/features/Pitch.cpp (YIN F0, confidence, via aubio)
+  - libs/avs-audio/include/avs/audio/features/Harmony.h
+  - libs/avs-audio/src/features/Harmony.cpp (HPCP chroma, key detection, chord estimation)
+  - libs/avs-audio/include/avs/audio/features/HPSS.h
+  - libs/avs-audio/src/features/HPSS.cpp (harmonic-percussive source separation)
+  - libs/avs-audio/include/avs/audio/features/Timbre.h
+  - libs/avs-audio/src/features/Timbre.cpp (MFCCs, spectral contrast, Tonnetz)
+  - libs/avs-audio/include/avs/audio/features/Stereo.h
+  - libs/avs-audio/src/features/Stereo.cpp (M/S, width, correlation, ILD/IPD)
+  - libs/avs-audio/include/avs/audio/features/Events.h
+  - libs/avs-audio/src/features/Events.cpp (kick/snare/hihat heuristics, silence, VAD)
+  - libs/avs-audio/include/avs/audio/Normalization.h
+  - libs/avs-audio/src/Normalization.cpp (min/max, z-score, perceptual dB)
+  - libs/avs-audio/include/avs/audio/Smoothing.h
+  - libs/avs-audio/src/Smoothing.cpp (one-pole, attack/release)
+  - libs/avs-dsl/include/avs/dsl/AudioBindings.h
+  - libs/avs-dsl/src/AudioBindings.cpp (EEL2 variable/function registration)
+  - libs/avs-core/include/avs/core/ModulationMatrix.h (feature source registration)
+  - libs/avs-core/src/ModulationMatrix.cpp
+  - tests/audio/test_audio_features.cpp
+  - tests/audio/test_feature_transport.cpp
+  - tests/audio/test_normalization_smoothing.cpp
+  - tests/audio/validation/test_sine_sweep.cpp
+  - tests/audio/validation/test_onset_timing.cpp
+  - tests/audio/validation/test_tempo_tracking.cpp
+  - tests/audio/validation/test_pitch_accuracy.cpp
+  - tests/audio/validation/test_loudness_ebu.cpp
+  - tests/data/audio/sine_sweep_20_20k.wav
+  - tests/data/audio/click_track_120bpm.wav
+  - tests/data/audio/drums_120bpm.wav
+  - tests/data/audio/step_gain.wav
+  - tests/data/audio/tonal_music_cmajor.wav
+  - docs/audio/features_reference.md
+  - docs/audio/features_dsl_bindings.md
+  - docs/audio/features_performance.md
+  - CMakeLists.txt (optional dependencies: aubio, libebur128, webrtc-audio-processing)
+notes: >
+  This is a foundational infrastructure change that significantly expands audio analysis
+  capabilities. Implementation should be phased: Phase 1 - basic scalars (RMS, centroid,
+  mel bands), Phase 2 - tempo/beat/onset (aubio integration), Phase 3 - pitch/harmony
+  (chroma, key detection), Phase 4 - timbre/stereo/events. Lock-free ring buffer is
+  critical for audio thread safety - use single-producer-single-consumer queue (no locks).
+
+  Backend integration notes:
+  - aubio: onset, tempo, beat tracking, YIN pitch (LGPL)
+  - libebur128: EBU R128 loudness (MIT)
+  - webrtc-audio-processing: VAD (BSD)
+  - FFTW: fastest FFT but GPL (use KissFFT as default, FFTW opt-in)
+
+  Performance optimization critical - budget is tight at 1.5ms per frame. Profile and
+  optimize hot paths (STFT, filterbanks, MFCCs). Consider SIMD (SSE2/NEON) for filterbanks.
+  Heavy features (HPSS, chroma, key) should run at lower rates (10 Hz, 2 Hz) to stay within
+  budget. Feature computation should be parallelizable (split into worker threads if needed).
+
+  Normalization/smoothing must prevent audio-rate jitter from causing visual artifacts.
+  One-pole filter with 20ms alpha is good default for most features. Attack/release better
+  for envelope-following (fast attack 10ms, slow release 120ms for beats/onsets).
+
+  Testing is critical - validate against ground truth on synthetic signals. Onset timing
+  must be <10ms error for tight sync. Tempo tracking must lock quickly (2-4 bar latency).
+  Pitch accuracy matters for harmonic visualization (±5 cents tolerance). LUFS must match
+  EBU R128 spec within 0.5 LU for broadcast compliance.
+
+  DSL bindings should feel natural - audio.mel[32] for mel band 32, audio.chroma[7] for
+  G pitch class. Consider adding aliases (audio.bass for audio.mel[0..3] average, audio.treble
+  for audio.mel[56..63] average) for user convenience.

@@ -1,0 +1,76 @@
+id: vst-framework-integration
+title: Integrate JUCE framework for VST3 plugin support
+status: TODO
+labels: [vst, plugin, infrastructure, build-system]
+depends_on:
+  - render-framebuffer-abstraction
+  - presets-json-format-support
+goal: >
+  Set up JUCE framework as a third-party dependency and create the foundation for VST3 plugin development.
+  JUCE provides VST3/AU/AAX/CLAP support, cross-platform audio plugin infrastructure, and OpenGL/Vulkan
+  context management within plugin editors. This task establishes the build infrastructure without
+  implementing the full plugin yet.
+
+technical_decisions:
+  framework_choice: JUCE
+  rationale: >
+    JUCE chosen over alternatives (iPlug2, VST3 SDK) because:
+    - Mature OpenGL/Vulkan integration for plugin editors
+    - Built-in VST3/CLAP/AU support (future-proof)
+    - Excellent host compatibility (tested with major DAWs)
+    - MIT license since v7 (commercial-friendly)
+    - Active development and community
+    - Cross-platform (Windows/macOS/Linux)
+
+  version: "7.0.12 or later"
+  components_needed:
+    - juce_audio_plugin_client
+    - juce_audio_utils
+    - juce_gui_extra
+    - juce_opengl
+    - juce_graphics
+
+  integration_method: "FetchContent in CMake (or git submodule if preferred)"
+
+steps:
+  - Add JUCE to libs/third_party/ via CMake FetchContent or git submodule.
+  - Create libs/avs-vst-plugin/ library directory with CMakeLists.txt.
+  - Set up JUCE configuration in cmake/JUCEConfig.cmake (disable unwanted modules, set compile flags).
+  - Create apps/avs-vst3/ plugin target directory.
+  - Add CMake option AVS_BUILD_VST3 (default OFF initially) to top-level CMakeLists.txt.
+  - Create minimal "hello world" VST3 plugin stub (no AVS integration yet) to verify build.
+  - Configure plugin metadata (vendor, bundle ID, VST3 category, stereo I/O).
+  - Test build on Linux; document macOS/Windows build requirements.
+  - Add JUCE dependency installation to tools/ensure_build_dependencies.sh.
+  - Update documentation with VST3 build instructions.
+
+acceptance_criteria:
+  - JUCE framework builds successfully as part of vis_avs CMake project.
+  - Minimal VST3 plugin stub loads in Reaper/Bitwig/Ableton (Linux host).
+  - Plugin appears in host's FX browser as "AVS Visualizer (Dev)".
+  - Build time increase is acceptable (<30s on cold build).
+  - CMake option AVS_BUILD_VST3=ON/OFF controls VST3 target.
+  - No regressions in existing avs-player or avs-studio builds.
+  - Documentation includes VST3 build steps and DAW testing guide.
+
+test_hook:
+  - "ctest: basic plugin instantiation test (if possible in headless)."
+  - "Manual: Load plugin in at least 2 DAWs and verify no crashes."
+
+files_touched:
+  - CMakeLists.txt  # Add AVS_BUILD_VST3 option
+  - libs/CMakeLists.txt
+  - libs/third_party/juce/  # Via FetchContent or submodule
+  - cmake/JUCEConfig.cmake
+  - libs/avs-vst-plugin/CMakeLists.txt
+  - libs/avs-vst-plugin/include/avs/vst/PluginProcessor.hpp
+  - libs/avs-vst-plugin/src/PluginProcessor.cpp
+  - apps/avs-vst3/CMakeLists.txt
+  - apps/avs-vst3/main.cpp  # JUCE plugin entry point
+  - tools/ensure_build_dependencies.sh
+  - docs/building_vst3.md
+
+notes: >
+  This is the foundation task. Once complete, all subsequent VST tasks can proceed in parallel.
+  Keep the initial plugin stub simple - just process audio passthrough and open an empty editor window.
+  The goal is to validate the JUCE integration and build system before adding AVS-specific features.

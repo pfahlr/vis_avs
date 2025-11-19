@@ -1,0 +1,79 @@
+id: vst-stable-parameter-bank
+title: Implement stable VST parameter bank with DAW automation
+status: TODO
+labels: [vst, plugin, parameters, automation]
+depends_on:
+  - vst-framework-integration
+goal: >
+  Create a fixed, stable set of VST parameters that never changes across plugin versions or preset loads.
+  This "stable bank" approach (32 Macros, 8 Buttons, 2 XY pads, 8 Scenes, Crossfader) prevents DAW automation
+  breakage when users switch presets. Parameters are later mapped to engine controls via preset metadata.
+
+technical_decisions:
+  parameter_architecture: "Stable bank with runtime mapping"
+
+  parameter_count: 56
+  breakdown:
+    macros: 32          # Continuous controls (0..1 normalized)
+    buttons: 8          # Momentary/toggle controls
+    xy_pads: 2          # 2 pads × 2 axes = 4 params
+    scenes: 8           # Scene triggers (quantized to beat)
+    crossfader: 1       # Morph between presets/scenes
+    preset_nav: 2       # Next/Previous preset (action params)
+
+  normalization: >
+    All VST parameters normalized to 0..1 range. Preset mappings define scale/curve/quantization.
+    This allows DAW automation to work consistently regardless of underlying parameter type.
+
+  smoothing: >
+    Per-parameter smoothing (default 30-40ms) to prevent zipper noise when DAW automation jumps.
+    Implemented in audio thread via lock-free queue + exponential smoothing.
+
+  thread_safety: >
+    Audio thread: Read smoothed values from lock-free queue.
+    UI/automation thread: Write to lock-free queue (non-blocking).
+    No mutexes in audio callback path.
+
+steps:
+  - Define ParameterBank class in libs/avs-vst-plugin/include/avs/vst/ParameterBank.hpp.
+  - Implement 56 VST parameters with stable IDs (macro.1 through macro.32, button.1-8, etc.).
+  - Add JUCE AudioProcessorParameter wrappers for each parameter type.
+  - Implement lock-free parameter queue (ring buffer) for audio thread communication.
+  - Add per-parameter smoothing with configurable time constants (exponential filter).
+  - Create ParameterState serialization for plugin state save/restore.
+  - Implement parameter value formatting (display 0..1 as percentages, or custom labels).
+  - Add parameter metadata (names, units, groups for DAW organization).
+  - Create automation mapping layer (VST param ID → engine parameter, to be wired later).
+  - Write unit tests for parameter smoothing, serialization, thread safety.
+
+acceptance_criteria:
+  - All 56 parameters visible in DAW automation lanes (organized in groups).
+  - Parameter changes from DAW automation are smoothed (no audio clicks/pops).
+  - Plugin state save/restore preserves parameter values correctly.
+  - No allocations or blocking calls in audio thread during parameter updates.
+  - Parameter values persist across preset changes (stable bank behavior).
+  - DAW automation recorded on Macro 1 still controls Macro 1 after preset switch.
+  - Unit tests validate smoothing algorithm and lock-free queue correctness.
+
+test_hook:
+  - "ctest: test_parameter_bank_smoothing, test_parameter_serialization."
+  - "Manual: Automate Macro 1 in DAW, switch presets, verify automation still applies."
+
+files_touched:
+  - libs/avs-vst-plugin/include/avs/vst/ParameterBank.hpp
+  - libs/avs-vst-plugin/include/avs/vst/ParameterDefs.hpp
+  - libs/avs-vst-plugin/include/avs/vst/LockFreeQueue.hpp
+  - libs/avs-vst-plugin/src/ParameterBank.cpp
+  - libs/avs-vst-plugin/src/ParameterSmoothing.cpp
+  - libs/avs-vst-plugin/src/PluginProcessor.cpp  # Wire parameters to JUCE
+  - tests/vst/test_parameter_bank.cpp
+  - docs/vst_parameter_architecture.md
+
+notes: >
+  This task focuses purely on the VST parameter layer - no AVS engine integration yet.
+  The goal is to have a working parameter bank that DAWs can automate, with proper smoothing
+  and state management. Preset mapping comes in task 28.
+
+  Key insight: By keeping parameter IDs stable, we decouple DAW automation from preset content.
+  A preset simply says "map Macro 1 to camera.radius" - the DAW doesn't care what Macro 1 controls,
+  it just sends automation data for the stable Macro 1 parameter.

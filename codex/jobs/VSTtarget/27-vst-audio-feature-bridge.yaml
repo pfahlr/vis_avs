@@ -1,0 +1,81 @@
+id: vst-audio-feature-bridge
+title: Bridge VST audio stream to AVS engine feature extraction
+status: TODO
+labels: [vst, plugin, audio, dsp]
+depends_on:
+  - vst-framework-integration
+goal: >
+  Implement zero-latency audio passthrough with lock-free feature extraction for the visualizer engine.
+  Audio flows: Host → Plugin processBlock() → Feature Extraction → Lock-free Ring Buffer → AVS Renderer.
+  Plugin reports zero latency to host and passes audio unmodified (or silently if host supports analyzer mode).
+
+technical_decisions:
+  audio_mode: "Stereo passthrough (2 in, 2 out) + optional sidechain (2 in)"
+
+  latency: 0 samples
+
+  feature_extraction: >
+    Reuse existing libs/avs-audio-dsp for FFT, beat detection, waveform analysis.
+    Run feature extraction in audio thread (lock-free push to ring buffer).
+    Renderer thread consumes features at its own rate (e.g., 60 FPS).
+
+  ring_buffer_size: "2 seconds of features @ 60 Hz = 120 frames"
+
+  passthrough_mode: >
+    Default: Copy input → output (zero latency, host sees FX plugin).
+    Optional: Silent output (if host supports analyzer-only plugins, reduces CPU).
+    Configurable via plugin setting or CMake build option.
+
+  sidechain: >
+    Optional sidechain input allows visualizing audio from another track while
+    processing a different signal (e.g., visualize kick drum, process master bus).
+
+steps:
+  - Create AudioFeatureBridge class in libs/avs-vst-plugin/include/avs/vst/AudioFeatureBridge.hpp.
+  - Implement lock-free ring buffer for audio features (boost::lockfree or custom SPSC queue).
+  - Integrate avs::audio-dsp feature extraction (FFT, beat detector, waveform).
+  - Wire processBlock() to extract features and push to ring buffer (audio thread).
+  - Implement zero-latency passthrough (memcpy input → output or optimized SIMD).
+  - Add configurable passthrough mode (passthrough vs. silent output).
+  - Implement sidechain input handling (optional stereo input pair).
+  - Create renderer-side feature consumer (pull from ring buffer, non-blocking).
+  - Handle buffer size changes, sample rate changes (re-init feature extractors).
+  - Add audio thread safety validation (no allocations, no blocking calls).
+  - Write unit tests for ring buffer, feature extraction, passthrough correctness.
+
+acceptance_criteria:
+  - Plugin reports 0 samples latency to host.
+  - Audio passes through unmodified (bit-perfect if no processing).
+  - Feature extraction runs in real-time without dropouts (measure in profiler).
+  - Ring buffer never blocks audio thread (validated via assertions).
+  - Sidechain input correctly feeds feature extraction when connected.
+  - Plugin handles sample rate changes (44.1k, 48k, 96k) without crashes.
+  - Plugin handles buffer size changes (32 to 2048 samples) gracefully.
+  - No allocations in processBlock() (verify with allocator instrumentation).
+  - Unit tests validate ring buffer thread safety and feature extraction accuracy.
+
+test_hook:
+  - "ctest: test_audio_feature_bridge, test_ring_buffer_spsc."
+  - "Manual: Load plugin in DAW, play audio, verify passthrough with null test (A/B bypass)."
+  - "Performance: Profile processBlock() to ensure <5% CPU at 512 samples/48kHz."
+
+files_touched:
+  - libs/avs-vst-plugin/include/avs/vst/AudioFeatureBridge.hpp
+  - libs/avs-vst-plugin/include/avs/vst/FeatureRingBuffer.hpp
+  - libs/avs-vst-plugin/src/AudioFeatureBridge.cpp
+  - libs/avs-vst-plugin/src/PluginProcessor.cpp  # Wire processBlock()
+  - libs/avs-audio-dsp/include/avs/audio/FeatureExtractor.hpp  # Extend if needed
+  - tests/vst/test_audio_feature_bridge.cpp
+  - docs/vst_audio_architecture.md
+
+notes: >
+  This task focuses on the audio path only - no rendering or parameter mapping yet.
+  The goal is to prove that audio can flow through the plugin with zero latency,
+  and features can be extracted lock-free for consumption by the renderer.
+
+  Key design: Ring buffer is single-producer (audio thread) single-consumer (render thread).
+  This allows lock-free implementation with minimal overhead. If the renderer falls behind,
+  old features are overwritten (acceptable for real-time visualization).
+
+  Future enhancement: Add multiple buffer slots if we need to support multiple renderer
+  instances (Renderer Hub multi-screen scenario from task 31).

@@ -1,0 +1,120 @@
+id: preset-editor-effect-catalog
+title: Implement effect catalog system with hot-reload and registry integration
+status: TODO
+labels: [editor, catalog, metadata, hot-reload]
+depends_on:
+  - preset-editor-schema-validation
+goal: >
+  Create the effect catalog loader that discovers, validates, and registers effect descriptors
+  from YAML/JSON files. Integrates with existing Effect Registry to provide metadata for UI
+  generation. Supports hot-reload for live descriptor updates without editor restart. Enables
+  one-truth-source for effect parameters, UI hints, and modulation targets.
+steps:
+  - Design EffectCatalog class managing collection of EffectDescriptor instances.
+  - Implement catalog directory structure (effects_catalog/legacy/, effects_catalog/modern/, effects_catalog/_sources/).
+  - Create catalog discovery - scan directory recursively for .yaml and .json files.
+  - Implement load_all(directory) - discover, load, validate all descriptors in batch.
+  - Implement load_file(path) - load single descriptor with schema validation.
+  - Add validation integration - use SchemaValidator from task 01, collect all errors before failing.
+  - Implement get(effect_id) - lookup descriptor by canonical id (e.g., "trans/color_modifier").
+  - Add list() and list_by_category() for catalog browsing.
+  - Implement exists(effect_id) - check if descriptor registered.
+  - Create catalog introspection - query available params, modulation targets, backend requirements.
+  - Integrate with existing Effect Registry - cross-reference against compiled effect factories.
+  - Add mismatch detection - descriptor exists but no factory, or factory exists but no descriptor.
+  - Create stub descriptors for legacy effects without YAML files (minimal metadata for sane UI).
+  - Implement hot-reload system - file watcher monitoring effects_catalog/ directory.
+  - Add file watching using inotify (Linux), kqueue (BSD/macOS), or portable library (efsw/fswatch).
+  - Implement reload_file(path) - re-validate and update descriptor on file change.
+  - Add change notification system - callbacks when descriptors update (for UI refresh).
+  - Implement graceful error handling - invalid descriptor doesn't crash, shows error in editor.
+  - Add descriptor caching - avoid re-parsing unchanged files (check mtime/hash).
+  - Create catalog statistics - count effects by category, backend requirements, modulation targets.
+  - Implement search/filter - find effects by name, id, tag, category, or param name (fuzzy matching).
+  - Add dependency tracking - detect circular dependencies in effect requirements.
+  - Create audio feature source catalog - load source/audio_features.yaml for modulation sources.
+  - Implement source introspection - query available scalars, vectors, events with units and ranges.
+  - Add catalog versioning - detect schema version mismatches and migrations needed.
+  - Implement catalog consistency checks - verify modulation targets reference actual params.
+  - Create catalog diff tool - compare two catalog states (for testing/CI).
+  - Add catalog export - serialize loaded catalog to single JSON for inspection.
+  - Document catalog structure and descriptor authoring workflow.
+  - Create example descriptors for 5+ legacy effects (ColorModifier, Blur, Mirror, Fadeout, Invert).
+  - Create example descriptors for modern effects (Unified3D, SDF, MeshPBR, Particles, SpectroTerrain).
+acceptance_criteria:
+  - EffectCatalog discovers all .yaml/.json files in effects_catalog/ directory recursively.
+  - Catalog loads 50+ effect descriptors in <500ms on cold start (no cache).
+  - Cached catalog loads in <50ms using mtime checks (hot start).
+  - Schema validation catches all invalid descriptors with clear error messages and file paths.
+  - Hot-reload detects file changes within 1 second and reloads affected descriptors.
+  - Registry integration flags mismatches - "descriptor missing" or "factory missing" warnings.
+  - Stub descriptors provide minimal UI for legacy effects without authored YAML files.
+  - get(effect_id) retrieves descriptor in O(1) time (hash map lookup).
+  - Search/filter supports fuzzy matching and returns results in <50ms for 100+ effects.
+  - Audio feature sources load from source/audio_features.yaml with all 50+ features.
+  - Source introspection provides units, ranges, types for all scalars/vectors/events.
+  - Catalog consistency checks detect orphaned modulation targets (target param doesn't exist).
+  - Hot-reload doesn't break active presets (non-destructive update, preserve param values).
+  - Change notifications trigger UI refresh in editor within 100ms of file change.
+  - Catalog handles malformed YAML gracefully (parse error doesn't crash, shows error in UI).
+  - Descriptor caching correctly invalidates on file changes (no stale data).
+  - Catalog diff tool detects added/removed/changed descriptors between versions.
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: catalog_tests with test_effect_catalog.cpp covering discovery, load, lookup."
+  - "Hot-reload tests with simulated file changes (write temp files, verify reload)."
+  - "Registry integration tests verifying mismatch detection."
+  - "Performance benchmarks measuring load time for 50+ descriptors."
+  - "Search/filter tests with fuzzy matching and edge cases."
+files_touched:
+  - libs/avs-studio/include/avs/studio/EffectCatalog.h
+  - libs/avs-studio/src/EffectCatalog.cpp
+  - libs/avs-studio/include/avs/studio/CatalogWatcher.h
+  - libs/avs-studio/src/CatalogWatcher.cpp (file watching implementation)
+  - libs/avs-studio/include/avs/studio/AudioFeatureSources.h
+  - libs/avs-studio/src/AudioFeatureSources.cpp
+  - effects_catalog/legacy/trans_color_modifier.yaml
+  - effects_catalog/legacy/trans_blur.yaml
+  - effects_catalog/legacy/trans_mirror.yaml
+  - effects_catalog/legacy/trans_fadeout.yaml
+  - effects_catalog/legacy/trans_invert.yaml
+  - effects_catalog/modern/3d_unified_generator.yaml
+  - effects_catalog/modern/3d_sdf_raymarch.yaml
+  - effects_catalog/modern/3d_mesh_pbr.yaml
+  - effects_catalog/modern/3d_particle_field.yaml
+  - effects_catalog/modern/3d_spectro_terrain.yaml
+  - effects_catalog/_sources/audio_features.yaml
+  - tools/catalog_diff/main.cpp
+  - tests/studio/test_effect_catalog.cpp
+  - tests/studio/test_catalog_watcher.cpp
+  - tests/studio/test_audio_sources.cpp
+  - docs/studio/catalog_structure.md
+  - docs/studio/authoring_descriptors.md
+  - CMakeLists.txt (add efsw or platform-specific file watching)
+notes: >
+  File watching strategy: Linux has inotify, macOS/BSD have kqueue, Windows has ReadDirectoryChangesW.
+  Consider using a portable library like efsw (MIT license) to abstract platform differences.
+  Alternatively, implement a polling fallback (check directory every 1 second) for simplicity.
+
+  Hot-reload must be careful - if an effect is currently used in the open preset, changing its
+  descriptor should update UI but preserve param values where possible. Use param id matching
+  for migration (if param "exposure" exists in both old and new descriptor, keep value).
+
+  Registry integration is critical - the Effect Registry knows which effects are compiled into
+  the engine. The catalog knows which effects have descriptors. Mismatches indicate:
+  1. Descriptor but no factory → effect not implemented yet (show as "Coming Soon" in UI)
+  2. Factory but no descriptor → use fallback stub descriptor (minimal UI, no modulation)
+
+  Catalog should be thread-safe - file watcher runs on separate thread, catalog accessed from
+  main UI thread. Use read-write locks or immutable data structures (copy-on-write).
+
+  Search/filter is user-facing and should feel instant. Use fuzzy matching algorithm (Levenshtein
+  distance or similar) with score threshold. Index by name, id, tags, category, param names.
+
+  Audio feature sources are special - they're not effects, but modulation sources. They need
+  their own catalog entry (source/audio_features.yaml) with the same schema structure. This
+  populates the "Source" dropdown in the modulation matrix.
+
+  Performance: yaml-cpp is slower than parsing JSON. Consider pre-converting all catalog YAMLs
+  to JSON at build time for faster startup. Or cache parsed descriptors as binary (MessagePack,
+  FlatBuffers) with mtime validation.

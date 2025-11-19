@@ -1,0 +1,107 @@
+id: preset-editor-schema-validation
+title: Implement schema-driven effect and preset descriptors with validation
+status: TODO
+labels: [editor, schema, validation, metadata, foundation]
+depends_on:
+  - render-framebuffer-abstraction
+  - audio-features-extension
+goal: >
+  Create the foundational schema system for declarative effect and preset descriptions.
+  Define JSON schemas for effect descriptors and preset format (.avx), implement validation
+  pipeline using nlohmann/json + json-schema-validator. This enables schema-driven UI
+  generation, hot-reload, and metadata evolution without C++ recompilation.
+steps:
+  - Research JSON Schema 2020-12 specification and validation strategies.
+  - Design effect descriptor schema covering all parameter types, UI hints, modulation targets, backend requirements.
+  - Design preset schema (.avx format) covering graph nodes, connections, modulation matrix, controls mapping, MIDI.
+  - Create schemas/effect.schema.json with comprehensive parameter type definitions.
+  - Define parameter types - f32, i32, bool, enum, color, vec2, vec3, str with range constraints.
+  - Add UI hints - widget type (knob/slider/toggle/dropdown/picker/xy), labels, units, grouping.
+  - Add behavior hints - smoothing_ms, quantize_steps, curve (linear/log/exp/s), lag, clamping.
+  - Add conditional visibility - when expressions (e.g., "implementation == 'sdf_raymarch'").
+  - Define modulation targets list (which params can be automated).
+  - Define backend requirements (gl/vk/cpu, min versions, required extensions).
+  - Define resource declarations (shaders, textures, meshes with paths).
+  - Create schemas/preset.schema.json for .avx preset format.
+  - Define graph structure - nodes with effect_id, param values, input/output connections.
+  - Define modulation matrix - routes with src, dst, amount, curve, lag_ms, when clauses.
+  - Define controls mapping - pages with macro/xy/button slots mapped to effect params with ranges.
+  - Define MIDI mapping - CC numbers to macro/xy controls.
+  - Add preset metadata - name, author, tags, description, thumbnail path.
+  - Integrate nlohmann/json library for JSON parsing (header-only, MIT license).
+  - Integrate json-schema-validator library (nlohmann/json-schema-validator, MIT license).
+  - Create SchemaValidator class wrapping validation with clear error messages.
+  - Implement EffectDescriptor C++ struct matching effect.schema.json structure.
+  - Implement PresetDescriptor C++ struct matching preset.schema.json structure.
+  - Add YAML support via yaml-cpp library (MIT license) - convert YAML to JSON for validation.
+  - Implement validation error reporting - line numbers, field paths, constraint violations.
+  - Create validation test suite with valid and invalid descriptors.
+  - Add schema versioning support (effect_schema_version, preset_schema_version fields).
+  - Implement backward compatibility checks - detect schema version mismatches.
+  - Create catalog lint tool (tools/catalog_lint) for batch validation.
+  - Add lint checks - unused params, invalid ranges, missing labels, orphaned modulation targets.
+  - Document schema design patterns and best practices.
+  - Create example effect descriptors for legacy and modern effects.
+acceptance_criteria:
+  - effect.schema.json validates all parameter types (f32, i32, bool, enum, color, vec2, vec3, str).
+  - preset.schema.json validates complete preset structure (graph, mod_matrix, controls, MIDI).
+  - SchemaValidator produces clear error messages with field paths and constraint violations.
+  - YAML effect descriptors load and validate correctly (convert YAML → JSON → validate).
+  - Conditional visibility (when expressions) parse and validate syntactically.
+  - Invalid descriptors reject with specific error messages (e.g., "param.min > param.max").
+  - Valid descriptors round-trip through load → serialize → load without data loss.
+  - Schema versioning detects mismatches and warns appropriately.
+  - Catalog lint tool validates entire effects_catalog/ directory in <1 second.
+  - Lint detects common errors - typos, range issues, missing required fields, broken references.
+  - C++ EffectDescriptor and PresetDescriptor structs map 1:1 to JSON schemas.
+  - All parameter UI hints (widget, units, smoothing, quantize) validate correctly.
+  - Backend requirements validate (gl/vk/cpu with version constraints).
+  - Resource paths (shaders, textures) validate as non-empty strings when required.
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: schema_tests with test_schema_validation.cpp covering valid/invalid cases."
+  - "Unit tests for SchemaValidator error messages and field path extraction."
+  - "Catalog lint tests with intentionally broken descriptors."
+  - "Round-trip tests loading and saving descriptors without data loss."
+files_touched:
+  - schemas/effect.schema.json
+  - schemas/preset.schema.json
+  - schemas/audio_features.schema.json (source descriptors)
+  - libs/avs-studio/include/avs/studio/SchemaValidator.h
+  - libs/avs-studio/src/SchemaValidator.cpp
+  - libs/avs-studio/include/avs/studio/EffectDescriptor.h
+  - libs/avs-studio/include/avs/studio/PresetDescriptor.h
+  - libs/avs-studio/src/EffectDescriptor.cpp
+  - libs/avs-studio/src/PresetDescriptor.cpp
+  - tools/catalog_lint/main.cpp
+  - tools/catalog_lint/LintRules.h
+  - tools/catalog_lint/LintRules.cpp
+  - tests/studio/test_schema_validation.cpp
+  - tests/studio/data/valid_effect.yaml
+  - tests/studio/data/invalid_effect_*.yaml (various error cases)
+  - tests/studio/data/valid_preset.yaml
+  - tests/studio/data/invalid_preset_*.yaml
+  - docs/studio/schema_reference.md
+  - docs/studio/effect_descriptor_guide.md
+  - CMakeLists.txt (add nlohmann/json, json-schema-validator, yaml-cpp dependencies)
+notes: >
+  Schema design is critical - changes are expensive after adoption. Prioritize extensibility
+  (additionalProperties for future fields). Use JSON Schema 2020-12 for modern features
+  (unevaluatedProperties, dynamic refs). Consider using $ref for reusable sub-schemas
+  (e.g., common param types, UI hint blocks).
+
+  Library choices:
+  - nlohmann/json: Most popular C++ JSON library, excellent error messages, header-only
+  - json-schema-validator: Works with nlohmann/json, supports Draft 7+ (use pboettch/json-schema-validator)
+  - yaml-cpp: Stable YAML parser, converts to JSON easily via intermediate representation
+
+  When expressions (conditional visibility) should be simple - don't build a full expression
+  parser initially. Support basic comparisons: "param == value", "param != value", boolean
+  AND/OR. Consider using a tiny expression evaluator library (e.g., tinyexpr fork) or
+  implement a minimal recursive descent parser for the subset needed.
+
+  Validation performance matters for hot-reload. Cache compiled schemas. Consider lazy
+  validation (validate on save, not on every keystroke) for editor responsiveness.
+
+  Error messages should be actionable - "param[2].range.min (10.0) > max (5.0)" better than
+  "schema violation at /params/2/range". Include suggested fixes when possible.

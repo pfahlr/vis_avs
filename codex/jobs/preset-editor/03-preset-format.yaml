@@ -1,0 +1,139 @@
+id: preset-editor-preset-format
+title: Implement .avx preset format with graph, modulation, and controls mapping
+status: TODO
+labels: [editor, preset, format, serialization]
+depends_on:
+  - preset-editor-schema-validation
+  - preset-editor-effect-catalog
+goal: >
+  Define and implement the new .avx preset format (YAML/JSON) that replaces legacy binary
+  AVS format. Supports directed acyclic graph (DAG) of effect nodes, modulation matrix
+  routing audio features to parameters, controls mapping (Macro/XY/Button banks), MIDI CC
+  mapping, and metadata. Enables version control, diffing, and schema-driven editor integration.
+steps:
+  - Design Preset class representing loaded .avx preset with graph, modulation, controls.
+  - Design EffectNode structure - id, effect_id, parameters (dict), enabled flag, position (for editor UI).
+  - Design Connection structure - from_node, from_output, to_node, to_input, enabled flag.
+  - Design ModulationRoute structure - source, destination, amount, curve, lag_ms, when condition.
+  - Design ControlSlot structure - control_id (macro.1, xypad.1.x), target param path, range, curve, label.
+  - Design ControlPage structure - id, label, list of control slots.
+  - Design MIDIMapping structure - CC number to control_id mapping.
+  - Implement Preset::load(path) - parse YAML/JSON, validate against preset.schema.json.
+  - Implement Preset::save(path) - serialize to YAML/JSON with formatting (indented, sorted keys).
+  - Add graph validation - check for cycles (DAG constraint), verify effect_id references exist in catalog.
+  - Add parameter validation - check param values against descriptor ranges, types, enums.
+  - Implement connection validation - verify output/input names match effect descriptor ports.
+  - Add modulation validation - verify source exists in audio features, destination param exists in target node.
+  - Implement controls validation - verify target param paths resolve to actual params in graph nodes.
+  - Add MIDI validation - verify CC numbers in range 0-127, no duplicate mappings.
+  - Create Preset::get_node(id) - lookup node by unique identifier.
+  - Implement Preset::add_node(effect_id) - create new effect node with default params from catalog.
+  - Implement Preset::remove_node(id) - delete node and all connections to/from it.
+  - Create Preset::connect(from, to) - add connection between nodes with validation.
+  - Implement Preset::disconnect(from, to) - remove specific connection.
+  - Add Preset::set_param(node_id, param_id, value) - set parameter value with type validation.
+  - Create Preset::add_modulation_route(src, dst, amount) - add modulation with validation.
+  - Implement Preset::remove_modulation_route(index) - remove modulation by index.
+  - Add Preset::map_control(control_id, target_path, range) - map macro/XY to param.
+  - Create Preset::unmap_control(control_id) - remove control mapping.
+  - Implement Preset::set_midi_cc(cc, control_id) - map MIDI CC to control.
+  - Add graph traversal - topological sort for execution order (ensure inputs rendered before consumers).
+  - Create Preset::get_execution_order() - returns sorted list of nodes for rendering.
+  - Implement graph introspection - find all nodes using specific effect, params with modulation, etc.
+  - Add preset metadata - name, author, description, tags, thumbnail_path, created/modified timestamps.
+  - Create Preset::get_dependencies() - list of effects, audio features, resources required.
+  - Implement preset versioning - preset_version field, migration support for format changes.
+  - Add preset validation report - comprehensive check returning list of errors/warnings.
+  - Create round-trip tests - load preset, modify, save, reload, verify identical.
+  - Implement preset diff tool - compare two presets showing graph/param/modulation changes.
+  - Add preset merge support - combine modulation/controls from two presets (for templating).
+  - Create example presets - minimal (1 node), complex (10+ nodes), modulation-heavy, controls showcase.
+  - Document preset format specification and authoring guidelines.
+acceptance_criteria:
+  - .avx presets load and save without data loss (round-trip fidelity).
+  - Schema validation catches all structural errors (invalid graph, bad param types, broken references).
+  - Graph validation enforces DAG constraint (cycle detection rejects invalid presets).
+  - Parameter validation checks types (f32/i32/bool/enum/color/vec2/vec3/str) and ranges (min/max/enum values).
+  - Connection validation verifies input/output port names match effect descriptors.
+  - Modulation validation ensures sources exist (audio.rms, audio.mel[0], etc.) and destinations exist.
+  - Controls validation resolves target paths (node_id.param_id) to actual parameters in graph.
+  - MIDI validation prevents duplicate CC mappings and enforces CC range 0-127.
+  - Topological sort produces valid execution order for complex graphs (10+ nodes).
+  - Cycle detection correctly identifies and rejects cyclic graphs.
+  - Preset dependencies list accurately reflects all required effects and audio features.
+  - Round-trip tests pass - save → load → save produces identical file (modulo whitespace).
+  - Preset diff tool accurately shows added/removed/changed nodes, params, connections, modulations.
+  - Validation report provides actionable errors with specific field paths and suggestions.
+  - Example presets cover common use cases - single effect, effect chain, modulated params, macro mappings.
+  - Preset format supports 100+ nodes without performance degradation (load <100ms).
+  - YAML formatting is human-readable (indented, sorted keys, sensible line breaks).
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "ctest: preset_tests with test_preset_format.cpp covering load, save, validation."
+  - "Round-trip tests for all example presets."
+  - "Graph validation tests with cyclic and acyclic graphs."
+  - "Modulation validation tests with valid/invalid source/destination pairs."
+  - "Topological sort tests with various graph topologies."
+files_touched:
+  - libs/avs-studio/include/avs/studio/Preset.h
+  - libs/avs-studio/src/Preset.cpp
+  - libs/avs-studio/include/avs/studio/EffectNode.h
+  - libs/avs-studio/include/avs/studio/Connection.h
+  - libs/avs-studio/include/avs/studio/ModulationRoute.h
+  - libs/avs-studio/include/avs/studio/ControlSlot.h
+  - libs/avs-studio/include/avs/studio/ControlPage.h
+  - libs/avs-studio/include/avs/studio/MIDIMapping.h
+  - libs/avs-studio/src/PresetValidator.h
+  - libs/avs-studio/src/PresetValidator.cpp
+  - libs/avs-studio/src/GraphTopology.h
+  - libs/avs-studio/src/GraphTopology.cpp (cycle detection, topological sort)
+  - tools/preset_diff/main.cpp
+  - presets/examples/minimal.avx.yaml
+  - presets/examples/sdf_neon.avx.yaml
+  - presets/examples/particle_swarm.avx.yaml
+  - presets/examples/modulation_showcase.avx.yaml
+  - presets/examples/controls_template.avx.yaml
+  - tests/studio/test_preset_format.cpp
+  - tests/studio/test_preset_validation.cpp
+  - tests/studio/test_graph_topology.cpp
+  - tests/studio/data/preset_cyclic.yaml (invalid)
+  - tests/studio/data/preset_valid_complex.yaml
+  - docs/studio/preset_format_spec.md
+  - docs/studio/authoring_presets.md
+  - CMakeLists.txt
+notes: >
+  Preset format design trade-offs:
+  1. YAML vs JSON: YAML is more human-readable (no quotes, comments), JSON faster to parse.
+     Support both - use .avx.yaml or .avx.json extension.
+  2. Node IDs: Use UUIDs or sequential integers? UUIDs avoid collisions but verbose.
+     Use short string IDs (e.g., "node_1", "node_2") generated by editor, allow user renames.
+  3. Param paths: Use dot notation (node_id.param_id) or structured? Dot notation simpler
+     for controls mapping, but breaks with param IDs containing dots. Use slash (node_id/param_id).
+
+  Graph topology:
+  - DAG validation is critical - cycles cause infinite loops in rendering.
+  - Use Kahn's algorithm or DFS for cycle detection (DFS easier, Kahn's produces topo sort directly).
+  - Execution order matters - render sources first, then consumers.
+  - Consider parallel execution - nodes with no interdependencies can render in parallel (future opt).
+
+  Modulation routing:
+  - When clauses enable conditional modulation (e.g., only when effect in specific mode).
+  - Amount can be negative (invert modulation direction).
+  - Curves shape response: linear, log, exp, s-curve (smooth step).
+  - Lag smooths audio jitter (one-pole filter with configurable time constant).
+
+  Controls mapping:
+  - Macro banks: 8-16 knobs/sliders mapped to params (hardware controller integration).
+  - XY pads: 2D control surface mapping to two params simultaneously.
+  - Buttons: trigger events or toggle states.
+  - MIDI CC mapping enables external hardware control (Akai APC, Novation Launchpad, etc.).
+
+  Performance considerations:
+  - Parameter validation is expensive (type checking, range clamping) - cache results.
+  - Topological sort is O(V+E) - fine for typical graphs (10-50 nodes).
+  - Modulation evaluation every frame - keep route count reasonable (<100 routes).
+
+  Versioning strategy:
+  - preset_version field enables format migrations (v1 → v2 with param renames, etc.).
+  - Include editor version that created preset (for debugging compatibility issues).
+  - Schema evolution should be backward compatible (new optional fields, not breaking changes).

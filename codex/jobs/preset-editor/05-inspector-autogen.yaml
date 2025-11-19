@@ -1,0 +1,150 @@
+id: preset-editor-inspector-autogen
+title: Implement schema-driven parameter inspector with auto-generated UI widgets
+status: TODO
+labels: [editor, ui, inspector, widgets, autogen]
+depends_on:
+  - preset-editor-ui-foundation
+  - preset-editor-effect-catalog
+goal: >
+  Implement the Inspector panel's parameter UI auto-generation system. Reads effect descriptors
+  from catalog and generates appropriate ImGui widgets based on parameter types, ranges, and
+  UI hints. Supports all parameter types (f32, i32, bool, enum, color, vec2, vec3, str),
+  conditional visibility (when clauses), grouping, tooltips, and real-time updates with
+  undo/redo integration. No C++ recompilation needed when descriptor changes.
+steps:
+  - Design WidgetFactory system - maps param type + UI hint to ImGui widget generator.
+  - Implement widget generators for each parameter type with appropriate ImGui widgets.
+  - "f32 type: SliderFloat (default), DragFloat (ui: drag), Knob (ui: knob, custom widget)."
+  - "i32 type: SliderInt (default), DragInt (ui: drag), InputInt (ui: input)."
+  - "bool type: Checkbox (default), ToggleButton (ui: toggle, custom widget)."
+  - "enum type: Combo dropdown (default), RadioButtons (ui: radio), ButtonGroup (ui: buttons)."
+  - "color type: ColorEdit4 (default), ColorPicker4 (ui: picker)."
+  - "vec2 type: SliderFloat2 (default), DragFloat2 (ui: drag), XYPad (ui: xy, custom widget)."
+  - "vec3 type: SliderFloat3 (default), DragFloat3 (ui: drag), ColorEdit3 for RGB."
+  - "str type: InputText (default), TextMultiline (ui: multiline)."
+  - Implement custom widgets - Knob (circular slider), ToggleButton (on/off), XYPad (2D control surface).
+  - Add range enforcement - min/max clamping for numeric types, automatic from descriptor.
+  - Implement step/quantization - discrete steps for sliders/drags (step: 0.01 → 100 steps).
+  - Add units display - show units next to widget (e.g., "Hz", "ms", "dB", "%").
+  - Implement labels - use descriptor label field or fallback to param_id (humanized).
+  - Add tooltips - show description on hover (from descriptor description field).
+  - Implement grouping - collapsible headers from descriptor ui.groups.
+  - Add conditional visibility - evaluate when expressions to show/hide params dynamically.
+  - Implement when expression evaluator - simple parser for "param == value", "param != value", boolean logic.
+  - Create ParamWidgetContext - current param value, descriptor, callback for changes.
+  - Implement value change callback - on widget edit, create SetParamCommand and push to undo stack.
+  - Add real-time updates - widget reflects current param value from preset node (not cached).
+  - Implement multi-node selection - show params common to all selected nodes (intersection).
+  - Add batch editing - change param on multiple selected nodes simultaneously.
+  - Create reset-to-default button - small "R" button next to each param, resets to descriptor default.
+  - Implement modulation indicators - visual cue when param has active modulation routes.
+  - Add right-click context menu - "Add Modulation", "Copy Value", "Paste Value", "Reset to Default".
+  - Implement keyboard input - Enter commits value, Esc cancels edit and reverts.
+  - Add drag-and-drop - drag param label to modulation matrix to create route (future integration).
+  - Create parameter search/filter - search bar at top of inspector filters visible params.
+  - Implement preset defaults - load effect with defaults from catalog, not hardcoded.
+  - Add value formatting - format floats with appropriate precision (0.001 → "0.001", 1.0 → "1.0").
+  - Implement curve visualization - show curve shape for params with smoothing (optional, nice-to-have).
+  - Add mini-scopes - inline waveform/spectrum for audio-related params (optional, nice-to-have).
+  - Create inspector presets - save/load inspector layout (group expand/collapse state).
+  - Document widget customization and extension patterns.
+acceptance_criteria:
+  - Inspector generates widgets for all parameter types (f32, i32, bool, enum, color, vec2, vec3, str).
+  - Widget selection follows UI hints (knob, slider, drag, toggle, dropdown, picker, xy).
+  - Range enforcement works - sliders/drags respect min/max from descriptor.
+  - Step quantization produces discrete values (step: 0.1 → only 0.0, 0.1, 0.2, ... allowed).
+  - Units display correctly next to widgets (frequency params show "Hz", time shows "ms").
+  - Labels display from descriptor or humanized param_id ("cam.fov_deg" → "Camera FOV Deg").
+  - Tooltips appear on hover showing parameter descriptions from descriptor.
+  - Groups create collapsible headers organizing related params (Main, Advanced, Colors).
+  - Conditional visibility works - params with when clauses show/hide based on other param values.
+  - When expressions evaluate correctly ("implementation == 'sdf_raymarch'" hides/shows params).
+  - Value changes push SetParamCommand to undo stack (Ctrl+Z reverts param change).
+  - Inspector reflects current preset values in real-time (no stale cached values).
+  - Multi-node selection shows intersection of common params (only params all nodes have).
+  - Batch editing works - change "exposure" on 3 selected nodes changes all 3.
+  - Reset-to-default button restores descriptor default value.
+  - Modulation indicators show visual cue (icon, color change) when param is modulated.
+  - Right-click context menu provides param actions (modulation, copy/paste, reset).
+  - Keyboard input works - Enter commits, Esc cancels and reverts value.
+  - Parameter search filters visible params in real-time (type "color" shows only color-related params).
+  - Custom widgets render correctly - Knob for rotary control, XYPad for 2D surface.
+  - Hot-reload updates inspector UI when descriptor changes (without editor restart).
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "Manual testing: Open effect, verify all widgets appear, edit values, check undo/redo."
+  - "Unit tests for WidgetFactory, when expression evaluator, value formatting."
+  - "Integration tests: Create node, edit params, verify SetParamCommand created."
+files_touched:
+  - apps/avs_studio/ui/InspectorPanel.cpp (implement full auto-generation)
+  - apps/avs_studio/ui/widgets/WidgetFactory.h
+  - apps/avs_studio/ui/widgets/WidgetFactory.cpp
+  - apps/avs_studio/ui/widgets/KnobWidget.h
+  - apps/avs_studio/ui/widgets/KnobWidget.cpp
+  - apps/avs_studio/ui/widgets/ToggleButtonWidget.h
+  - apps/avs_studio/ui/widgets/ToggleButtonWidget.cpp
+  - apps/avs_studio/ui/widgets/XYPadWidget.h
+  - apps/avs_studio/ui/widgets/XYPadWidget.cpp
+  - apps/avs_studio/ui/widgets/ModulationIndicator.h
+  - apps/avs_studio/ui/widgets/ModulationIndicator.cpp
+  - apps/avs_studio/expressions/WhenExpressionEvaluator.h
+  - apps/avs_studio/expressions/WhenExpressionEvaluator.cpp
+  - apps/avs_studio/commands/SetParamCommand.cpp (implement execute/undo)
+  - apps/avs_studio/utils/ValueFormatter.h
+  - apps/avs_studio/utils/ValueFormatter.cpp
+  - apps/avs_studio/utils/LabelHumanizer.h
+  - apps/avs_studio/utils/LabelHumanizer.cpp
+  - tests/studio/test_widget_factory.cpp
+  - tests/studio/test_when_evaluator.cpp
+  - tests/studio/test_value_formatter.cpp
+  - docs/studio/inspector_widgets.md
+  - docs/studio/custom_widgets.md
+  - CMakeLists.txt
+notes: >
+  Widget factory design pattern:
+  - Factory takes (ParamDescriptor, current_value, callback) → renders appropriate widget.
+  - Use std::function<void(Value)> for callback to decouple from command system.
+  - Widget rendering is immediate-mode (ImGui) - state lives in preset, not widgets.
+
+  Custom widgets implementation:
+  - Knob: Circular slider using ImGui::InvisibleButton + custom drawing (ImDrawList).
+    Track angle, convert to value. Consider mouse wheel, drag sensitivity.
+  - XYPad: 2D square area, track mouse position, map to two param values simultaneously.
+    Draw crosshair, optional grid, value readout on hover.
+  - ToggleButton: Like checkbox but styled as button (filled when on, outline when off).
+
+  When expression evaluator:
+  - Keep it simple initially - only support basic comparisons and boolean logic.
+  - Grammar: expr := term (("&&" | "||") term)*
+              term := param op value | "!" term | "(" expr ")"
+              op := "==" | "!=" | "<" | ">" | "<=" | ">="
+  - Use recursive descent parser (50-100 lines) or simple tokenizer + eval.
+  - Future: consider integrating lua or chaiscript for full expressiveness.
+
+  Value formatting:
+  - Float precision: use descriptor hint or auto-detect (step: 0.01 → 2 decimal places).
+  - Scientific notation for very large/small values (1e-6).
+  - Duration formatting: 1000ms → "1.0 s", 500ms → "500 ms".
+  - Frequency formatting: 1000Hz → "1.0 kHz", 1000000Hz → "1.0 MHz".
+  - Percentage formatting: 0.5 → "50%", 1.0 → "100%".
+
+  Performance:
+  - Inspector may have 50+ widgets per effect. ImGui handles this fine (thousands possible).
+  - When expression evaluation per frame per param - cache results if expression unchanged.
+  - Don't regenerate widgets every frame if descriptor unchanged (check hash/version).
+
+  Multi-node editing complexity:
+  - Find param intersection: only show params present in all selected nodes.
+  - Handle type mismatches: if param "exposure" is f32 in one node, i32 in another, skip it.
+  - Show "mixed values" state: if 3 nodes have different values for same param, show "---".
+
+  Modulation indicators:
+  - Visual cue: small icon next to param (e.g., "⚡" or "~" or colored dot).
+  - Tooltip on hover: "Modulated by audio.rms (amount: 0.5)".
+  - Click indicator to jump to modulation matrix entry (highlight route).
+
+  Keyboard shortcuts in inspector:
+  - Tab: next param, Shift+Tab: previous param (focus traversal).
+  - Up/Down arrows: adjust value (for numeric types).
+  - Ctrl+C / Ctrl+V: copy/paste param value (store in clipboard as string).
+  - R: reset to default (when focused on param).

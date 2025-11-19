@@ -1,0 +1,173 @@
+id: preset-editor-hot-reload-migration
+title: Implement hot-reload system and preset migration for schema evolution
+status: TODO
+labels: [editor, hot-reload, migration, versioning, workflow]
+depends_on:
+  - preset-editor-effect-catalog
+  - preset-editor-inspector-autogen
+goal: >
+  Implement hot-reload system enabling live updates to effect descriptors and schemas without
+  editor restart. Implement preset migration system for handling format version changes,
+  parameter renames, and effect ID changes. Enables iterative descriptor authoring workflow
+  and long-term preset compatibility as system evolves.
+steps:
+  - Design hot-reload architecture - file watcher detects changes, validates, updates catalog, refreshes UI.
+  - Implement descriptor reload strategy - compare old vs new descriptor, determine UI changes needed.
+  - Create UI refresh system - inspector regenerates widgets, library updates effect list, graph updates node appearance.
+  - Add non-destructive parameter migration - preserve param values when descriptor changes.
+  - Implement param ID matching - if param exists in both old/new descriptor, keep value.
+  - Add param alias support - descriptor can specify aliases: [old_id1, old_id2] for renames.
+  - Create type coercion - attempt safe conversions (i32 → f32, enum → str) when types change.
+  - Implement default insertion - new params in descriptor get default values, existing nodes updated.
+  - Add obsolete param handling - removed params from descriptor → drop from preset (warn user).
+  - Create change notification system - show toast/banner when descriptor reloaded ("Effect XYZ updated").
+  - Implement conflict resolution - if reload would break preset, show dialog with options (keep old, migrate, cancel).
+  - Add validation after reload - re-validate preset against new descriptor, report errors.
+  - Create reload history - track descriptor changes for debugging (timestamp, what changed).
+  - Implement schema versioning system - preset_version and effect_schema_version fields.
+  - Design migration pipeline - chain of migration steps (v1 → v2 → v3 → ... → current).
+  - Create Migration base class - apply(preset) method returns migrated preset or error.
+  - Implement common migrations - param rename, effect ID change, param type change, param removal.
+  - Add migration registry - map version ranges to migration instances.
+  - Create automatic migration - on preset load, check version, apply migrations if needed.
+  - Implement manual migration tool - CLI tool for batch migration (tools/migrate_presets).
+  - Add migration dry-run mode - show what would change without modifying files.
+  - Create migration report - list of changes made (params renamed, values changed, etc.).
+  - Implement migration validation - verify migrated preset is valid against target schema.
+  - Add migration testing - test each migration with before/after preset pairs.
+  - Create migration documentation generator - auto-generate changelog from migration code.
+  - Implement backward compatibility checks - detect if preset uses features not in older version.
+  - Add forward compatibility warnings - loading newer preset in older editor shows informative error.
+  - Create preset repair tool - fix common issues (broken references, invalid values, etc.).
+  - Implement catalog consistency checks - detect descriptor changes that break existing presets.
+  - Add CI/CD integration - run catalog lint and migration tests on every descriptor change.
+  - Create regression test suite - golden presets that must migrate correctly.
+  - Document hot-reload workflow and best practices for descriptor authoring.
+  - Document migration system and how to write new migrations.
+acceptance_criteria:
+  - Hot-reload detects descriptor file changes within 1 second and reloads affected effects.
+  - Inspector UI refreshes when descriptor changes (new params appear, removed params disappear).
+  - Non-destructive parameter migration preserves values for unchanged params (matched by ID).
+  - Parameter aliases enable renames (old_id → new_id) without data loss.
+  - Type coercion handles safe conversions (i32 → f32, bool → i32) with warning.
+  - New params in descriptor populate with defaults in existing nodes.
+  - Obsolete params removed from preset with warning logged to console.
+  - Change notifications appear when descriptor reloads (toast message with effect name).
+  - Validation after reload catches broken presets (modulation routes to removed params, etc.).
+  - Schema versioning detects version mismatches (preset v2, editor expects v3).
+  - Automatic migration applies on preset load (v1 → v2 → v3 transparently).
+  - Migration pipeline supports arbitrary version ranges (v1 → v5 applies migrations 1→2, 2→3, 3→4, 4→5).
+  - Manual migration tool migrates batch of presets (tools/migrate_presets presets/*.avx.yaml).
+  - Dry-run mode shows migration preview without modifying files.
+  - Migration report lists all changes made (10 params renamed, 2 effects changed ID, etc.).
+  - Migration validation ensures migrated preset is valid (schema validation passes).
+  - Migration tests cover all migrations with before/after preset pairs (no regressions).
+  - Backward compatibility checks warn when using new features (e.g., preset uses compute shaders, target doesn't support).
+  - Forward compatibility error is informative ("Preset created with editor v2.1, this is v2.0. Please upgrade.").
+  - Preset repair tool fixes common issues (dangling connections, out-of-range values).
+  - Catalog consistency checks detect breaking changes in descriptors (fail CI if existing presets break).
+  - Regression tests ensure golden presets migrate correctly across all versions.
+  - All required tests execute via ctest and pass.
+test_hook:
+  - "Manual testing: Edit descriptor, save, verify editor reloads and UI updates."
+  - "Migration tests: Load v1 preset, verify v3 after migration, compare params."
+  - "Unit tests for Migration classes, version detection, param matching."
+  - "CI tests: Run catalog lint and migration tests on descriptor changes."
+files_touched:
+  - libs/avs-studio/src/CatalogWatcher.cpp (implement reload logic)
+  - libs/avs-studio/include/avs/studio/HotReloadManager.h
+  - libs/avs-studio/src/HotReloadManager.cpp
+  - libs/avs-studio/include/avs/studio/ParamMigrator.h
+  - libs/avs-studio/src/ParamMigrator.cpp
+  - libs/avs-studio/include/avs/studio/Migration.h
+  - libs/avs-studio/src/Migration.cpp
+  - libs/avs-studio/include/avs/studio/MigrationRegistry.h
+  - libs/avs-studio/src/MigrationRegistry.cpp
+  - libs/avs-studio/migrations/Migration_v1_to_v2.h
+  - libs/avs-studio/migrations/Migration_v1_to_v2.cpp
+  - libs/avs-studio/migrations/Migration_v2_to_v3.h
+  - libs/avs-studio/migrations/Migration_v2_to_v3.cpp
+  - tools/migrate_presets/main.cpp
+  - tools/migrate_presets/MigrationReport.h
+  - tools/migrate_presets/MigrationReport.cpp
+  - tools/preset_repair/main.cpp
+  - tools/preset_repair/RepairRules.h
+  - tools/preset_repair/RepairRules.cpp
+  - libs/avs-studio/src/PresetValidator.cpp (add compatibility checks)
+  - apps/avs_studio/ui/ChangeNotification.h
+  - apps/avs_studio/ui/ChangeNotification.cpp (toast notifications)
+  - apps/avs_studio/ui/MigrationDialog.h
+  - apps/avs_studio/ui/MigrationDialog.cpp
+  - tests/studio/test_hot_reload.cpp
+  - tests/studio/test_migration.cpp
+  - tests/studio/test_param_migrator.cpp
+  - tests/studio/migrations/preset_v1.yaml
+  - tests/studio/migrations/preset_v2_expected.yaml
+  - tests/studio/migrations/preset_v3_expected.yaml
+  - tests/regression/golden_presets/*.avx.yaml
+  - docs/studio/hot_reload_workflow.md
+  - docs/studio/migration_guide.md
+  - docs/studio/writing_migrations.md
+  - .github/workflows/catalog_ci.yml (CI integration)
+  - CMakeLists.txt
+notes: >
+  Hot-reload implementation strategies:
+  1. Incremental reload: Only reload changed descriptor, minimize UI disruption.
+  2. Full rebuild: Reload entire catalog, regenerate all UI. Simpler but slower.
+  3. Hybrid: Reload changed descriptor, update only affected UI panels.
+  Choose hybrid for best UX - fast for single descriptor changes, comprehensive for schema changes.
+
+  Parameter matching algorithm:
+  1. Exact ID match: param exists in old and new with same ID → preserve value.
+  2. Alias match: param in new has alias matching old ID → migrate value, update ID.
+  3. Type conversion: param matched but type changed → attempt safe conversion (i32→f32 ok, f32→enum not ok).
+  4. Default insertion: param in new, not in old → insert default from descriptor.
+  5. Obsolete removal: param in old, not in new, no alias → log warning, drop param.
+
+  Migration system design:
+  - Version-based: each preset has preset_version field (integer, starts at 1).
+  - Linear version sequence: v1 → v2 → v3 → ... (no branches, no semantic versioning).
+  - Migration applies sequentially: v1→v3 = apply(Migration_v1_to_v2, apply(Migration_v2_to_v3, preset_v1)).
+  - Each migration is idempotent: apply(migrate, preset) == apply(migrate, apply(migrate, preset)).
+  - Migrations are pure functions: no side effects, no network, no file writes (just data transform).
+
+  Common migration patterns:
+  - Param rename: "old_name" → "new_name" (use alias in descriptor, or explicit migration code).
+  - Effect ID change: "old/effect" → "new/effect" (update all nodes with old ID).
+  - Param removal: drop param from all nodes, log warning.
+  - Param split: "color" → "r", "g", "b" (extract components from old color value).
+  - Param merge: "x", "y" → "pos" (combine into vec2).
+  - Enum value rename: "mode: old_value" → "mode: new_value" (map old enum to new enum).
+  - Range change: param range [0,100] → [0,1] (scale values: new = old / 100).
+
+  Migration testing:
+  - For each migration, create test preset at source version (v1), expected preset at target (v2).
+  - Apply migration, compare result with expected (deep equality check).
+  - Test edge cases: missing params, invalid values, empty nodes, complex graphs.
+  - Test idempotence: apply migration twice, verify same result.
+  - Test chain: v1 → v2 → v3 should match v1 → v3 (if v1→v3 migration exists).
+
+  Backward compatibility strategy:
+  - Older presets should always load in newer editor (forward-migrate automatically).
+  - Newer presets may not load in older editor (missing features, new param types).
+  - On save, include editor_version in preset (for diagnostics, not strict validation).
+  - Consider "downgrade" migrations (v3 → v2) for rare cases, but usually not worth complexity.
+
+  Catalog consistency checks (CI):
+  - On descriptor change, run migration tests for all golden presets.
+  - If any preset fails to migrate or becomes invalid, fail CI (breaking change).
+  - Descriptor author must either fix descriptor or provide migration.
+  - This prevents accidental breaking changes to descriptor API.
+
+  Performance considerations:
+  - Hot-reload should not block editor (async reload on background thread).
+  - UI refresh should be smooth (no flicker, no lost selection/focus).
+  - Migration should be fast (<100ms for typical preset, <1s for complex).
+  - Batch migration tool should parallelize (migrate multiple presets concurrently).
+
+  User experience:
+  - Hot-reload is transparent (user doesn't need to manually reload).
+  - Change notifications are non-intrusive (toast, not modal dialog).
+  - Migration is automatic (user doesn't need to understand versions).
+  - Migration errors are actionable (show what failed, suggest fix).
+  - Preset repair is one-click (detect issues, offer auto-fix).

@@ -1,6 +1,36 @@
-# AVS Cross-Platform Port
+# Advanced Visualization Studio 2K25 
 
-This repository hosts a cross-platform reimplementation of Winamp's Advanced Visualization Studio (AVS).
+This is a reimplementation of Winamp's Advanced Visualization Studio (AVS) created
+to run natively on current hardware and graphics implementations. 
+
+The idea behind the project is to provide an updated audio visualizer that takes
+advantage of the technology improvements of the two decades between now and the
+era of the original AVS, but to create a new visualization system while the
+extensive library of presets created for AVS become less and less accessible 
+didn't feel right. First of all like reinventing the wheel, and there also
+seems to be this acceptance that digital artforms be lost to the obsolesence of the
+technology they were created on. Imagine if we treated the music that they were 
+created to enhance that way. Aside from that, I can't think of any reason why 
+it would be better to create a project like this that could release with 2 decades
+worth of supported media but instead release with just the handful I might create 
+during development.
+
+That being said. I do not intend for this project to stop at implementing effects needed 
+to run the presets built for the original. Instead, once those have been implemented, 
+I will begin to design new effects that either were not imagined 20 years ago or were
+not possible on the technology of that time. There will be a standard interface
+for implementing new effects. And it will be documented as soon as it is implemented. 
+I welcome the collaboration of anyone who wishes to have some say in regards to what
+that standard interface should be. It should be required that any such effects make
+its source code available because 2 decades from now, it may be that it is time
+to provide a 3rd generation of this software, and when that time comes, it will be
+necessary to reimplement all of the effects. For a moment during this development
+I thought it might not be possible to fully bring this software into the present day
+because many of the presets I tested were dependent on 5 .ape (compiled windows dll)
+effects. Fortunately, I was able to find the source code at 
+[https://github.com/Const-me/vis_avs_dx/blob/master/avs_dx/DxVisuals/Effects/Trans/Convolution/Convolution.cpp]
+
+
 The legacy Nullsoft source is preserved under `docs/avs_original_source` for reference.
 
 See [docs/README.md](docs/README.md) for build and contribution instructions.
@@ -72,3 +102,15 @@ invokes the tool and verifies the output JSON matches the committed version.
 > CMake configure step. Installing a system package `>= 2.28` is still
 > preferred when available.
 
+
+## Resources 
+- [https://visbot.net/]
+- [https://forums.winamp.com/forum/visualizations/avs]
+- [https://visbot.github.io/AVS-Forums/html/f-85.html]
+- [https://avs.sh]: 
+- [https://avs.sh/collections/APEs/]
+
+
+
+## Related Projects 
+ 

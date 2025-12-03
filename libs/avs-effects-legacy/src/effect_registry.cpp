@@ -62,6 +62,33 @@ struct PayloadReader {
   std::size_t pos = 0;
 };
 
+class AddBordersCompatEffect : public avs::Effect {
+ public:
+  void setParams(const avs::core::ParamBlock& params) { coreEffect_.setParams(params); }
+
+  void init(int w, int h) override {
+    (void)w;
+    (void)h;
+  }
+
+  void process(const avs::Framebuffer& in, avs::Framebuffer& out) override {
+    out.w = in.w;
+    out.h = in.h;
+    out.rgba = in.rgba;
+
+    avs::core::RenderContext context{};
+    context.width = out.w;
+    context.height = out.h;
+    context.framebuffer.data = out.rgba.data();
+    context.framebuffer.size = out.rgba.size();
+
+    coreEffect_.render(context);
+  }
+
+ private:
+  avs::effects::trans::AddBorders coreEffect_;
+};
+
 //=============================================================================
 // Trans / Blur (ID 6)
 //=============================================================================
@@ -1048,12 +1075,12 @@ std::unique_ptr<avs::Effect> makeAddBorders(const LegacyEffectEntry& entry, Pars
   reader.readU32(color);
   reader.readI32(size);
 
-  auto effect = std::make_unique<avs::effects::trans::AddBorders>();
+  auto effect = std::make_unique<AddBordersCompatEffect>();
 
   avs::core::ParamBlock params;
-  params.set("enabled", enabled != 0);
-  params.set("color", static_cast<int>(color));
-  params.set("size", size);
+  params.setBool("enabled", enabled != 0);
+  params.setInt("color", static_cast<int>(color));
+  params.setInt("size", size);
   effect->setParams(params);
 
   return effect;

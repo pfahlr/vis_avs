@@ -1,0 +1,6 @@
+- [ ] 25-effects-implement-supershape-bloom.yaml
+- [ ] 26-effects-implement-unified-3d-generator.yaml
+- [ ] 27-effects-implement-sdf-raymarcher.yaml
+- [ ] 28-effects-implement-mesh-pbr-instancer.yaml
+- [ ] 29-effects-implement-compute-particle-field.yaml
+- [ ] 30-effects-implement-spectro-terrain.yaml

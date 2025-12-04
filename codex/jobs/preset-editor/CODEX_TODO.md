@@ -1,0 +1,7 @@
+- [ ] preset-editor/01-schema-validation.yaml
+- [ ] preset-editor/02-effect-catalog.yaml
+- [ ] preset-editor/03-preset-format.yaml
+- [ ] preset-editor/04-editor-ui-foundation.yaml
+- [ ] preset-editor/05-inspector-autogen.yaml
+- [ ] preset-editor/06-controls-modulation.yaml
+- [ ] preset-editor/07-hot-reload-migration.yaml

@@ -27,3 +27,12 @@
 - [✅] 23-integration-demo-preset-validation.yaml
 - [✅] 24-cleanup-registry-consolidation.yaml
 
+./new_effects
+- [ ] ./new_effects/CODEX_TODO.md
+
+./preset-editor
+- [ ] ./preset-editor/CODEX_TODO.md
+
+./VSTtarget 
+- [ ] ./VSTtarget/CODEX_TODO.md
+
